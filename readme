@@ -1,0 +1,8 @@
+Git readme - created 20 April 2017 (Jonathan Cohn)
+
+Files:
+fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector
+
+quickgrab.py: simple code cannibalized from Prospector tutorial for plotting Prospector output
+
+prospector.py: prospector python file with initial guess SED plotting code added
