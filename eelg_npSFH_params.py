@@ -1,24 +1,22 @@
 import numpy as np
 import os
 from prospect.models import priors, sedmodel
-from prospect.sources import FastStepBasis  # new, replaced CSPBasis
+from prospect.sources import FastStepBasis  # NEW, replaced CSPBasis
 from sedpy import observate
 from astropy.cosmology import WMAP9
-# from td_io import load_zp_offsets  # ignoring for now (5% to 20% effect)
 
 tophat = priors.tophat
 logarithmic = priors.logarithmic
-# APPS = os.getenv('APPS')
-# APPS = os.getenv('snowflakes')
 
 #############
 # RUN_PARAMS
 #############
 
+id = str(2329)  # 1824
+
 run_params = {'verbose': True,
               'debug': False,
-              # 'outfile': os.getenv('APPS')+'/threedhst_bsfh/results/fast_mimic/fast_mimic',
-              'outfile': 'output/2329',  # 1824
+              'outfile': 'output/' + id,  # 1824
               'nofork': True,
               # Optimizer params
               'ftol': 0.5e-5,
@@ -33,15 +31,12 @@ run_params = {'verbose': True,
               'compute_vega_mags': False,
               'initial_disp': 0.1,
               'interp_type': 'logarithmic',
-              'agelims': [0.0, 8.0, 8.5, 9.0, 9.5, 9.8, 10.0],  # NEW RESET THESE? (SEE BELOW)
+              'agelims': [0.0, 8.0, 8.5, 9.0, 9.5, 9.8, 10.0],  # NEW RESET THESE? (SEE load_model)
               # Data info
-              # 'photname':APPS+'/threedhst_bsfh/data/3dhst/COSMOS_td_massive.cat',
-              # 'datname':APPS+'/threedhst_bsfh/data/3dhst/COSMOS_td_massive.dat',
-              # 'fastname':APPS+'/threedhst_bsfh/data/3dhst/COSMOS_td_massive.fout',
               'photname': '/home/jonathan/cosmos/cosmos.v1.3.8.cat',
               'datname': '/home/jonathan/cosmos/cosmos.v1.3.8.cat',
-              'fastname': '/home/jonathan/cosmos/cosmos.v1.3.6.awk.fout',  # .fout edited to correct format with awk
-              'objname': '2329',  # 1824
+              'fastname': '/home/jonathan/cosmos/cosmos.v1.3.6.awk.fout',  # .fout edited to correct format using awk
+              'objname': id,  # 1824
               }
 run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']
 
@@ -67,11 +62,9 @@ fourstar_pre = 'FOURSTAR-'
 fourstar_suffix = '_cam_optics_sky'
 fstar = [folder+fourstar_pre+n+fourstar_suffix for n in ['Hlong', 'Hshort', 'J1', 'J2', 'J3', 'Ks']]
 nb_pre = 'LCO_FourStar_NB'
-# nb_suff = '_filter'
 nb = [folder+nb_pre+n for n in ['118', '209']]
 hst_prefix = 'hst-wfc3-'
 hst = [folder+hst_prefix+n for n in ['IR-f125w', 'IR-f140w', 'IR-f160w', 'UVIS-f606w', 'UVIS-f814w']]
-# hst = [folder+hst_prefix+n for n in ['IR-f125w', 'IR-f160w', 'UVIS-f606w', 'UVIS-f814w']]
 vista_prefix = 'VISTA-'
 vista_suff = '_system+atmos'
 vista = [folder+vista_prefix+n+vista_suff for n in ['J', 'H', 'Ks', 'Y']]
@@ -79,8 +72,6 @@ irac_pre = 'IRAC-irac_tr'
 irac_suffix = '_2004-08-09'
 irac = [folder+irac_pre+n+irac_suffix for n in ['1', '2', '3', '4']]
 
-# filts = [folder+n for n in [capak_0, mega_1, subaru, mega_2, capak_1, fstar, nb, hst, vista, irac]
-# filts = [capak[0], mega[1], mega[3], subaru, mega[2], mega[0], mega[4], capak[1], capak[2], fstar, nb, hst, vista, irac]
 filts = capak_1 + mega_1 + subaru + mega_2 + capak_0 + mega_3 + capak_2 + fstar + nb + hst + vista + irac
 filtersets = (filts, filts)
 
@@ -110,21 +101,9 @@ def load_obs(photname, objname, err_floor=0.05, zperr=True, **extras):
     flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filternames])
     unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
-    '''
-    ### add correction to MIPS magnitudes (only MIPS 24 right now!)
-    # due to weird MIPS filter conventions
-    dAB_mips_corr = np.array([-0.03542, -0.07669, -0.03807])  # 24, 70, 160, in AB magnitudes
-    dflux = 10 ** (-dAB_mips_corr / 2.5)
-
-    mips_idx = np.array(['mips_24um' in f for f in filters], dtype=bool)
-    flux[mips_idx] *= dflux[0]
-    unc[mips_idx] *= dflux[0]
-    '''
-
     ### define photometric mask, convert to maggies
     phot_mask = (flux != unc) & (flux != -99.0)
-    # phot_mask[mips_idx] = False  # NO DUST EMISSION FOR FAST!
-    maggies = flux * 10**-6 / 3631  # flux [uJy] * e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
+    maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
     maggies_unc = unc * 10**-6 / 3631
     # print(maggies, 'maggies')
     # print(flux, 'flux')
@@ -133,19 +112,6 @@ def load_obs(photname, objname, err_floor=0.05, zperr=True, **extras):
 
     ### implement error floor
     maggies_unc = np.clip(maggies_unc, maggies * err_floor, np.inf)
-
-    ### inflate errors by zeropoint offsets from Table 11, Skelton+14
-    # ~5% to ~20% effect
-    '''
-    if zperr:
-        zp_offsets = load_zp_offsets(None)
-        band_names = np.array([x['Band'].lower() + '_' + x['Field'].lower() for x in zp_offsets])
-        for ii, f in enumerate(filters):
-            match = band_names == f
-            if match.sum():
-                maggies_unc[ii] = ((maggies_unc[ii] ** 2) + (
-                maggies[ii] * (1 - zp_offsets[match]['Flux-Correction'][0])) ** 2) ** 0.5
-    '''
 
     ### build output dictionary
     obs = {}
@@ -242,7 +208,7 @@ model_params.append({'name': 'sfh', 'N': 1,
                      'prior_function_name': None,
                      'prior_args': None})
 
-model_params.append({'name': 'tau', 'N': 1,  # NEW TURN OFF! HOW? SET N: 0?
+model_params.append({'name': 'tau', 'N': 1,
                      'isfree': False,
                      'init': 10,
                      'depends on': transform_logtau_to_tau,
@@ -252,15 +218,15 @@ model_params.append({'name': 'tau', 'N': 1,  # NEW TURN OFF! HOW? SET N: 0?
                      'prior_args': {'mini': 0.1,
                                     'maxi': 100.0}})
 
-model_params.append({'name': 'logtau', 'N': 1,
+model_params.append({'name': 'logtau', 'N': 1,  # NEW TURN OFF -- HOW? SET N: 0?
                         'isfree': True,
                         'init': 1,
                         'init_disp': 0.5,
                         'units': 'Gyr',
                         'prior_function':tophat,
-                        'prior_args': {'mini':-1, 'maxi':2}})  # truths is -1.2 for 2329 s extend prior?
+                        'prior_args': {'mini':-1, 'maxi':2}})
 
-model_params.append({'name': 'tage', 'N': 1,  # NEW TURN OFF! HOW? SET N: 0?
+model_params.append({'name': 'tage', 'N': 1,  # NEW TURN OFF -- HOW? SET N: 0?
                      'isfree': True,
                      'init': 1.0,
                      'units': 'Gyr',
@@ -614,7 +580,7 @@ def load_model(objname='', datname='', fastname='', agelims=[], **extras):
     ncomp = len(agelims) - 1
     agelims = [0.0, 7.0, 8.0, (8.0 + (np.log10(tuniv*1e9)-8.0)/4), (8.0 + 2*(np.log10(tuniv*1e9)-8.0)/4),
                (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
-    # calculate somethings: [0, a, b, b + (f-b)/4, b + 2*(f-b)/4, b + 3*(f-b)/4, b + 4*(f-b)/4 = f]
+    # calculate the somethings: [0, a, b, b + (f-b)/4, b + 2*(f-b)/4, b + 3*(f-b)/4, b + 4*(f-b)/4 = f]
 
     #### INITIAL VALUES
     logtau = np.log10(10 ** fast['ltau'][idx][0] / 1e9)
@@ -667,24 +633,3 @@ def load_model(objname='', datname='', fastname='', agelims=[], **extras):
 
 
 model_type = BurstyModel
-
-# git: https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
-# more git: https://help.github.com/articles/setting-your-username-in-git/
-# in model space, plot grids of different model parameters
-# (high ionization, low metallicity)
-# Byler emission line paper (Cloudy): https://arxiv.org/pdf/1611.08305.pdf
-# switch to non-parametric SFH
-# SED / SFH info for high-z EELGs
-# plot comparisons of output params (prospector vs FAST) (relative improvement in param fits)
-# (and compare output param values to green pea values) (be careful if there's an offset between prospector)
-
-
-# ask Joel: if we use known emission line ratios for 1824 to constrain how we're doing models for 1824
-# narrow in on measuring stellar metallicity (can do if assuming 1824-type galaxies are young, dust free)
-# read papers z~3 (think of Qs to exploit with Prospector)
-
-# for SED plot best fit: add rest frame wavelength labels to upper axis,
-# remember to note: FAST downweights IRAC bands
-# always use vector graphics for paper figs
-
-# also do stuff for post starburst galaxies too
