@@ -35,16 +35,21 @@ run_params = {'verbose': True,
               # Data info
               'photname': '/home/jonathan/cosmos/cosmos.v1.3.8.cat',
               'datname': '/home/jonathan/cosmos/cosmos.v1.3.8.cat',
-              'fastname': '/home/jonathan/cosmos/cosmos.v1.3.6.awk.fout',  # .fout edited to correct format using awk
+              # 'fastname': '/home/jonathan/cosmos/cosmos.v1.3.6.awk.fout',  # .fout edited to correct format using awk
               'zname': '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout',  # main cat has z_spec, but not z_phot
               'objname': id,  # 1824
               }
 run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']
 
+############
+# FILTERS
+#############
+# Names of filter columns in the datafile (datname)
 filternames = ['B', 'G', 'I', 'IA427', 'IA484', 'IA505', 'IA527', 'IA624', 'IA709', 'IA738', 'R', 'U', 'V', 'Rp', 'Z',
                'Zp', 'Hl', 'Hs', 'J1', 'J2', 'J3', 'Ks', 'NB118', 'NB209', 'F125W', 'F140W', 'F160W', 'F606W', 'F814W',
                'UVISTA_J', 'UVISTA_H', 'UVISTA_Ks', 'UVISTA_Y', 'IRAC_36', 'IRAC_45', 'IRAC_58', 'IRAC_80']
 
+# Names of filter response curve files (in the Filters folder)
 folder = 'cat_filters/'
 mega_prefix = 'megaprime-cfht_mega_'
 mega = [folder+mega_prefix+n for n in ['u_cfh9301', 'g_cfh9401', 'r_cfh9601', 'i_cfh9701', 'z_cfh9801']]  # U G R I Z
@@ -381,7 +386,7 @@ class BurstyModel(sedmodel.SedModel):  # NEW, replacing below
         lnp_prior = 0
 
         # sum of SFH fractional bins <= 1.0
-        print(self.theta_index, 'theta_index')
+        print(self.theta_index['sfr_fraction'], 'theta_index')
         print(theta, 'theta')
         # print(theta[0], 'sfr_theta_index')
         if 'sfr_fraction' in self.theta_index:
