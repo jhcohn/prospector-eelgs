@@ -16,7 +16,7 @@ id = str(1824)  # 1824 (eelg), 2329 (normal)
 
 run_params = {'verbose': True,
               'debug': False,
-              'outfile': 'output/' + id,  # 1824
+              'outfile': 'output/' + id,
               'nofork': True,
               # Optimizer params
               'ftol': 0.5e-5,
@@ -37,7 +37,9 @@ run_params = {'verbose': True,
               'datname': '/home/jonathan/cosmos/cosmos.v1.3.8.cat',
               # 'fastname': '/home/jonathan/cosmos/cosmos.v1.3.6.awk.fout',  # .fout edited to correct format using awk
               'zname': '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout',  # main cat has z_spec, but not z_phot
-              'objname': id,  # 1824
+              'objname': id,
+              'convergence_check_interval': 100,
+              'convergence_kl_threshold': 0.0  # This should fix your problem regardless
               }
 run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']
 
@@ -359,7 +361,8 @@ model_params.append({'name': 'mass_units', 'N': 1,
 #### resort list of parameters
 #### so that major ones are fit first
 parnames = [m['name'] for m in model_params]
-fit_order = ['logmass', 'tage', 'logtau', 'dust2']
+# fit_order = ['logmass', 'tage', 'logtau', 'dust2']
+fit_order = ['logmass', 'sfr_fraction', 'dust2']
 tparams = [model_params[parnames.index(i)] for i in fit_order]
 for param in model_params:
     if param['name'] not in fit_order:
@@ -524,3 +527,10 @@ def load_model(objname='', datname='', zname='', agelims=[], **extras):
 
 
 model_type = BurstyModel
+
+# see joel's paper (sec 3 for fitting info), see for mackey for more detail
+# May 17: present on mackey paper at group meeting
+# When Joel pushes fix: update prospector, run param file (see if get same, new, or no error when running params and
+#   when building results in quickgrab)
+
+# During summer: get results for all galaxies on this laptop, then switch over to Pistachio while starting analysis

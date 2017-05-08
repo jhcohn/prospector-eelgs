@@ -1,8 +1,16 @@
 Git readme - created 20 April 2017 (Jonathan Cohn)
 
 Files:
+eelg_npSFH_params.py: param file for running prospector fits on EELGs
+
 fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector
+
+input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq
+
+nonparameteric_sfh_example_params.py: Joel's example of nonparametric SFH param file, off of which I'm basing eelg_npSFH_params.py
 
 quickgrab.py: simple code cannibalized from Prospector tutorial for plotting Prospector output
 
 prospector.py: prospector python file with initial guess SED plotting code added
+
+prospector_nest.py: new file from bd-j prospector
