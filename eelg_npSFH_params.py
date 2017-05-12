@@ -31,15 +31,15 @@ run_params = {'verbose': True,
               'compute_vega_mags': False,
               'initial_disp': 0.1,
               'interp_type': 'logarithmic',
-              'agelims': [0.0, 8.0, 8.5, 9.0, 9.5, 9.8, 10.0],  # NEW RESET THESE? (SEE load_model)
+              'agelims': [0.0, 8.0, 8.5, 9.0, 9.5, 9.8, 10.0],  # NEW reset these? (see load_model)
               # Data info
               'photname': '/home/jonathan/cosmos/cosmos.v1.3.8.cat',
               'datname': '/home/jonathan/cosmos/cosmos.v1.3.8.cat',
               # 'fastname': '/home/jonathan/cosmos/cosmos.v1.3.6.awk.fout',  # .fout edited to correct format using awk
               'zname': '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout',  # main cat has z_spec, but not z_phot
               'objname': id,
-              'convergence_check_interval': 100,
-              'convergence_kl_threshold': 0.0  # This should fix your problem regardless
+              'convergence_check_interval': 100,  # Fix convergence test problem
+              'convergence_kl_threshold': 0.0  # Fix convergenve test problem
               }
 run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']
 
@@ -459,7 +459,7 @@ class FracSFH(FastStepBasis):  # NEW CLASS
         return wave, spec / mtot, self.ssp.stellar_mass / mtot
 
 def load_sps(**extras):
-    sps = FracSFH(**extras)  # new, replaced CSPBasis
+    sps = FracSFH(**extras)  # NEW, replaced CSPBasis
     return sps
 
 
@@ -527,10 +527,3 @@ def load_model(objname='', datname='', zname='', agelims=[], **extras):
 
 
 model_type = BurstyModel
-
-# see joel's paper (sec 3 for fitting info), see for mackey for more detail
-# May 17: present on mackey paper at group meeting
-# When Joel pushes fix: update prospector, run param file (see if get same, new, or no error when running params and
-#   when building results in quickgrab)
-
-# During summer: get results for all galaxies on this laptop, then switch over to Pistachio while starting analysis
