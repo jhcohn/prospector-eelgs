@@ -363,7 +363,7 @@ model_params.append({'name': 'mass_units', 'N': 1,
 #### so that major ones are fit first ####
 parnames = [m['name'] for m in model_params]
 # fit_order = ['logmass', 'tage', 'logtau', 'dust2']  # for FAST mimic
-fit_order = ['logmass', 'sfr_fraction', 'dust2']
+fit_order = ['gas_logz', 'gas_logu', 'logmass', 'sfr_fraction', 'dust2']  # BUCKET order?
 tparams = [model_params[parnames.index(i)] for i in fit_order]
 for param in model_params:
     if param['name'] not in fit_order:
