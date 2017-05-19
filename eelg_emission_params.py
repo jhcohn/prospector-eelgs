@@ -31,7 +31,7 @@ run_params = {'verbose': True,
               'compute_vega_mags': False,
               'initial_disp': 0.1,
               'interp_type': 'logarithmic',
-              'agelims': [0.0, 8.0, 8.5, 9.0, 9.5, 9.8, 10.0],  # NEW reset these? (see load_model)
+              'agelims': [0.0, 8.0, 8.5, 9.0, 9.5, 9.8, 10.0],  # NEW (see load_model)
               # Data info
               'photname': '/home/jonathan/cosmos/cosmos.v1.3.8.cat',
               'datname': '/home/jonathan/cosmos/cosmos.v1.3.8.cat',
@@ -201,7 +201,7 @@ model_params.append({'name': 'mass', 'N': 1,
                      'prior_args': {'mini': 1e1, 'maxi': 1e14}})
 
 model_params.append({'name': 'logzsol', 'N': 1,
-                     'isfree': False,
+                     'isfree': True,  # BUCKET1 isfree: True when doing emission lines
                      'init': 0.0,
                      'init_disp': 0.4,
                      'log_param': True,
@@ -321,23 +321,23 @@ model_params.append({'name': 'add_dust_emission', 'N': 1,
                      'prior_args': None})
 
 ###### Nebular Emission ###########
-model_params.append({'name': 'add_neb_emission', 'N': 1,  # BUCKET NEED TO TURN ANYTHING ELSE ON TOO OR NO?
+model_params.append({'name': 'add_neb_emission', 'N': 1,
                      'isfree': False,
-                     'init': True,  # BUCKET1 emission lines make init: True instead of isfree?
+                     'init': True,  # BUCKET1 emission lines --> init: True
                      'units': r'log Z/Z_\odot',
-                     'prior_function_name': None,  # BUCKET1 prior_function_name: None throws error when isfree: True
+                     'prior_function_name': None,
                      'prior_args': None})
 
 model_params.append({'name': 'gas_logz', 'N': 1,
-                     'isfree': False,  # BUCKET need to turn this on too or no?
+                     'isfree': False,
                      'init': 0.0,
-                     'depends_on': tie_gas_logz,  # BUCKET1 tie_gas_logz added
+                     'depends_on': tie_gas_logz,  # BUCKET1 emission lines --> tie_gas_logz
                      'units': r'log Z/Z_\odot',
                      'prior_function': tophat,
                      'prior_args': {'mini': -2.0, 'maxi': 0.5}})
 
 model_params.append({'name': 'gas_logu', 'N': 1,
-                     'isfree': True,  # BUCKET1 emission lines
+                     'isfree': True,  # BUCKET1 emission lines --> isfree: True
                      'init': -2.0,
                      'units': '',
                      'prior_function': tophat,
@@ -363,7 +363,7 @@ model_params.append({'name': 'mass_units', 'N': 1,
 #### so that major ones are fit first ####
 parnames = [m['name'] for m in model_params]
 # fit_order = ['logmass', 'tage', 'logtau', 'dust2']  # for FAST mimic
-fit_order = ['gas_logz', 'gas_logu', 'logmass', 'sfr_fraction', 'dust2']  # BUCKET order?
+fit_order = ['logmass', 'sfr_fraction', 'dust2']
 tparams = [model_params[parnames.index(i)] for i in fit_order]
 for param in model_params:
     if param['name'] not in fit_order:
@@ -480,7 +480,7 @@ def load_model(objname='', datname='', zname='', agelims=[], **extras):
     zout = np.loadtxt(zname, comments = '#', delimiter=' ', dtype = dtype_z)
 
     idx = dat['id'] == objname
-    zred = zout['z_spec'][idx][0]  # BUCKET FIX THE INDEX HERE
+    zred = zout['z_spec'][idx][0]  # FIX THE INDEX HERE
     if zred == -99:
         zred = zout['z_peak'][idx][0]
 
@@ -498,7 +498,7 @@ def load_model(objname='', datname='', zname='', agelims=[], **extras):
     ncomp = len(agelims) - 1
     agelims = [0.0, 7.0, 8.0, (8.0 + (np.log10(tuniv*1e9)-8.0)/4), (8.0 + 2*(np.log10(tuniv*1e9)-8.0)/4),
                (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
-    agebins = np.array([agelims[:-1], agelims[1:]])
+    agebins = np.array([agelims[:-1], agelims[1:]])  # agelims[1:] or agelims[0:]?
     # calculate the somethings: [0, a, b, b + (f-b)/4, b + 2*(f-b)/4, b + 3*(f-b)/4, b + 4*(f-b)/4 = f]
 
     #### INSERT REDSHIFT INTO MODEL PARAMETER DICTIONARY ####
