@@ -12,7 +12,7 @@ logarithmic = priors.logarithmic
 # RUN_PARAMS
 #############
 
-id = str(1824)  # 1824 (eelg), 2329 (normal), 3921 (normal-er)
+id = str(1824)  # 1614, 1824 (eelg), 2329 (normal), 3921 (normal-er)
 
 run_params = {'verbose': True,
               'debug': False,
@@ -342,6 +342,13 @@ model_params.append({'name': 'gas_logu', 'N': 1,
                      'units': '',
                      'prior_function': tophat,
                      'prior_args': {'mini': -4, 'maxi': -1}})
+
+model_params.append({'name': 'add_neb_continuum', 'N': 1,  # BUCKET1
+                        'isfree': False,
+                        'init': True,
+                        'units': '',
+                        'prior_function_name': None,
+                        'prior_args': None})
 
 ####### Calibration ##########
 model_params.append({'name': 'phot_jitter', 'N': 1,
