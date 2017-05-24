@@ -1,13 +1,21 @@
 Git readme - created 20 April 2017 (Jonathan Cohn)
 
 Files:
-eelg_npSFH_params.py: param file for running prospector fits on EELGs
+eelg_5bins_params.py: tweak using different arrangements/numbers of SFH bins
+
+eelg_emission_params.py: same as eelg_npSFH_params.py, now with nebular emission turned on
+
+eelg_npSFH_params.py: param file for running prospector fits on EELGs, using nonparametric SFHs
+
+eelg_quickstart_params.py: skip do_Powell process, start run by using previous best fit values as input initial parameter values
 
 fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector
 
 input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq
 
 nonparameteric_sfh_example_params.py: Joel's example of nonparametric SFH param file, off of which I'm basing eelg_npSFH_params.py
+
+model_test.py: load model, test lnp of initial model given different values of metallicity
 
 quickgrab.py: simple code cannibalized from Prospector tutorial for plotting Prospector output
 
