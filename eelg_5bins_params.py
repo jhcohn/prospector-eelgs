@@ -112,7 +112,7 @@ def load_obs(photname, objname, err_floor=0.05, zperr=True, **extras):
     unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
     ### define photometric mask, convert to maggies
-    phot_mask = (flux != unc) & (flux != -99.0)
+    phot_mask = (flux != -99.0)
     maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
     maggies_unc = unc * 10**-6 / 3631
     # print(maggies, 'maggies')
@@ -330,9 +330,9 @@ model_params.append({'name': 'add_neb_emission', 'N': 1,
                      'prior_args': None})
 
 model_params.append({'name': 'gas_logz', 'N': 1,
-                     'isfree': False,
+                     'isfree': True,  # DECOUPLED (False when coupled)
                      'init': 0.0,
-                     'depends_on': tie_gas_logz,  # BUCKET1 emission lines --> tie_gas_logz
+                     # 'depends_on': tie_gas_logz,  # BUCKET1 emission lines --> tie_gas_logz  # DECOUPLED
                      'units': r'log Z/Z_\odot',
                      'prior_function': tophat,
                      'prior_args': {'mini': -2.0, 'maxi': 0.5}})
@@ -509,6 +509,7 @@ def load_model(objname='', datname='', zname='', agelims=[], **extras):
                (7.0 + 3*(np.log10(tuniv*1e9)-7.0)/4), np.log10(tuniv*1e9)]
     agebins = np.array([agelims[:-1], agelims[1:]])
     ncomp = len(agelims) - 1
+    print(ncomp, 'ncomp')
     # calculate the somethings: [0, b, b + (f-b)/4, b + 2*(f-b)/4, b + 3*(f-b)/4, b + 4*(f-b)/4 = f]
 
     #### INSERT REDSHIFT INTO MODEL PARAMETER DICTIONARY ####

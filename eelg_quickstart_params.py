@@ -112,7 +112,7 @@ def load_obs(photname, objname, err_floor=0.05, zperr=True, **extras):
     unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
     ### define photometric mask, convert to maggies
-    phot_mask = (flux != unc) & (flux != -99.0)
+    phot_mask = (flux != -99.0)
     maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
     maggies_unc = unc * 10**-6 / 3631
     # print(maggies, 'maggies')

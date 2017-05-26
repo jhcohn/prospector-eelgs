@@ -12,7 +12,7 @@ logarithmic = priors.logarithmic
 # RUN_PARAMS
 #############
 
-id = str(1824)  # 1824 (eelg), 2329 (normal)
+id = str(1824)  # 1824 (eelg), 2329 (normal), 3921 (normal-er)
 
 run_params = {'verbose': True,
               'debug': False,
@@ -24,7 +24,7 @@ run_params = {'verbose': True,
               # MCMC params
               'nwalkers': 140,
               'nburn': [50, 100],
-              'niter': 500,
+              'niter': 500,  # 900
               'interval': 0.2,
               # Model info
               'zcontinuous': 2,
@@ -110,7 +110,7 @@ def load_obs(photname, objname, err_floor=0.05, zperr=True, **extras):
     unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
     ### define photometric mask, convert to maggies
-    phot_mask = (flux != unc) & (flux != -99.0)
+    phot_mask = (flux != -99.0)
     maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
     maggies_unc = unc * 10**-6 / 3631
     # print(maggies, 'maggies')
@@ -152,6 +152,7 @@ def add_dust1(dust2=None, **extras):
 
 def tie_gas_logz(logzsol=None, **extras):
     return logzsol
+
 
 def transform_logtau_to_tau(tau=None, logtau=None, **extras):
     return 10**logtau
@@ -356,12 +357,11 @@ model_params.append({'name': 'mass_units', 'N': 1,
                      'isfree': False,
                      'init': 'mstar'})
 
-#### resort list of parameters
 
-#### resort list of parameters
-#### so that major ones are fit first
+#### resort list of parameters ####
+#### so that major ones are fit first ####
 parnames = [m['name'] for m in model_params]
-# fit_order = ['logmass', 'tage', 'logtau', 'dust2']
+# fit_order = ['logmass', 'tage', 'logtau', 'dust2']  # for FAST mimic
 fit_order = ['logmass', 'sfr_fraction', 'dust2']
 tparams = [model_params[parnames.index(i)] for i in fit_order]
 for param in model_params:

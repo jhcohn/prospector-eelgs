@@ -13,6 +13,8 @@ logarithmic = priors.logarithmic
 #############
 
 id = str(1824)  # 1614, 1824 (eelg), 2329 (normal), 3921 (normal-er)
+# 12105, z = 3.298 (eelg)
+# 17423, z = 3.526 (eelg)
 
 run_params = {'verbose': True,
               'debug': False,
@@ -110,7 +112,7 @@ def load_obs(photname, objname, err_floor=0.05, zperr=True, **extras):
     unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
     ### define photometric mask, convert to maggies
-    phot_mask = (flux != unc) & (flux != -99.0)
+    phot_mask = (flux != -99.0)
     maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
     maggies_unc = unc * 10**-6 / 3631
     # print(maggies, 'maggies')
@@ -224,16 +226,15 @@ model_params.append({'name': 'tau', 'N': 1,
                      'init_disp': 0.5,
                      'units': 'Gyr',
                      'prior_function': tophat,
-                     'prior_args': {'mini': 0.1,
-                                    'maxi': 100.0}})
+                     'prior_args': {'mini': 0.1, 'maxi': 100.0}})
 
 model_params.append({'name': 'logtau', 'N': 1,
                         'isfree': False,  # NEW turn off
                         'init': 1,
                         'init_disp': 0.5,
                         'units': 'Gyr',
-                        'prior_function':tophat,
-                        'prior_args': {'mini':-1, 'maxi':2}})
+                        'prior_function': tophat,
+                        'prior_args': {'mini': -1, 'maxi': 2}})
 
 model_params.append({'name': 'tage', 'N': 1,
                      'isfree': False,  # NEW turn off
@@ -270,22 +271,21 @@ model_params.append({'name': 'sf_start', 'N': 1,
                      'init': 0.0,
                      'units': 'Gyr',
                      'prior_function': tophat,
-                     'prior_args': {'mini': 0.0,
-                                    'maxi': 14.0}})
+                     'prior_args': {'mini': 0.0, 'maxi': 14.0}})
 
 model_params.append({'name': 'agebins', 'N': 1,  # NEW
                         'isfree': False,
                         'init': [],
                         'units': 'log(yr)',
                         'prior_function': priors.tophat,
-                        'prior_args':{'mini':0.1, 'maxi':15.0}})
+                        'prior_args': {'mini': 0.1, 'maxi': 15.0}})
 
 model_params.append({'name': 'sfr_fraction', 'N': 1,  # NEW
                         'isfree': True,
                         'init': [],
                         'units': 'Msun',
                         'prior_function': priors.tophat,
-                        'prior_args':{'mini':0.0, 'maxi':1.0}})
+                        'prior_args': {'mini': 0.0, 'maxi': 1.0}})
 
 ########    IMF  ##############
 model_params.append({'name': 'imf_type', 'N': 1,
@@ -309,8 +309,7 @@ model_params.append({'name': 'dust2', 'N': 1,
                      'init_disp': 0.2,
                      'units': '',
                      'prior_function': tophat,
-                     'prior_args': {'mini': 0.0,
-                                    'maxi': 4.0}})
+                     'prior_args': {'mini': 0.0, 'maxi': 4.0}})
 
 ###### Dust Emission ##############
 model_params.append({'name': 'add_dust_emission', 'N': 1,
@@ -329,9 +328,9 @@ model_params.append({'name': 'add_neb_emission', 'N': 1,
                      'prior_args': None})
 
 model_params.append({'name': 'gas_logz', 'N': 1,
-                     'isfree': False,
+                     'isfree': True,  # DECOUPLE (False when coupled)
                      'init': 0.0,
-                     'depends_on': tie_gas_logz,  # BUCKET1 emission lines --> tie_gas_logz
+                     # 'depends_on': tie_gas_logz,  # BUCKET1 emission lines --> tie_gas_logz  # DECOUPLE
                      'units': r'log Z/Z_\odot',
                      'prior_function': tophat,
                      'prior_args': {'mini': -2.0, 'maxi': 0.5}})
@@ -357,6 +356,7 @@ model_params.append({'name': 'phot_jitter', 'N': 1,
                      'units': 'mags',
                      'prior_function': tophat,
                      'prior_args': {'mini': 0.0, 'maxi': 0.2}})
+
 model_params.append({'name': 'peraa', 'N': 1,
                      'isfree': False,
                      'init': False})
@@ -364,6 +364,7 @@ model_params.append({'name': 'peraa', 'N': 1,
 model_params.append({'name': 'mass_units', 'N': 1,
                      'isfree': False,
                      'init': 'mstar'})
+# mstar = stellar mass; to convert to SFH, need mass formed (requires calling fsps to convert)
 
 
 #### resort list of parameters ####
@@ -505,7 +506,7 @@ def load_model(objname='', datname='', zname='', agelims=[], **extras):
     ncomp = len(agelims) - 1
     agelims = [0.0, 7.0, 8.0, (8.0 + (np.log10(tuniv*1e9)-8.0)/4), (8.0 + 2*(np.log10(tuniv*1e9)-8.0)/4),
                (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
-    agebins = np.array([agelims[:-1], agelims[1:]])  # agelims[1:] or agelims[0:]?
+    agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
     # calculate the somethings: [0, a, b, b + (f-b)/4, b + 2*(f-b)/4, b + 3*(f-b)/4, b + 4*(f-b)/4 = f]
 
     #### INSERT REDSHIFT INTO MODEL PARAMETER DICTIONARY ####
@@ -525,7 +526,7 @@ def load_model(objname='', datname='', zname='', agelims=[], **extras):
                                                            # NOTE: ncomp instead of ncomp-1 makes the prior take into
                                                            # account the implicit Nth variable too
                                                           }
-    model_params[n.index('sfr_fraction')]['init'] =  np.zeros(ncomp-1)+1./ncomp
+    model_params[n.index('sfr_fraction')]['init'] = np.zeros(ncomp-1)+1./ncomp
     model_params[n.index('sfr_fraction')]['init_disp'] = 0.02
 
     #### CREATE MODEL
