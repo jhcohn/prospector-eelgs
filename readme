@@ -1,13 +1,15 @@
 Git readme - created 20 April 2017 (Jonathan Cohn)
 
 Files:
-eelg_5bins_params.py: tweak using different arrangements/numbers of SFH bins
+eelg_5bins_params.py: same as eelg_emission_params.py, but tweak using different arrangements/numbers of SFH bins
+
+eelg_all_fields_params.py: same as eelg_emission_params.py, but can use for CDFS, COSMOS, and UDS galaxies, rather than just COSMOS
 
 eelg_emission_params.py: same as eelg_npSFH_params.py, now with nebular emission turned on
 
 eelg_npSFH_params.py: param file for running prospector fits on EELGs, using nonparametric SFHs
 
-eelg_quickstart_params.py: skip do_Powell process, start run by using previous best fit values as input initial parameter values
+eelg_quickstart_params.py: same as eelg_emission_params.py, but skip do_Powell process; start run by using previous best fit values as input initial parameter values
 
 fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector
 
