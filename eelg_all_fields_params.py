@@ -12,7 +12,11 @@ logarithmic = priors.logarithmic
 # RUN_PARAMS
 #############
 
-field = 'cosmos'
+field = 'uds'
+id = str(8084)
+# cdfs: 16675 (quiescent)
+# uds: 13173, 8084 (quiescent)
+# cosmos: 1824 (eelg), 12105 (eelg, z=3.298), 17423 (eelg, z=3.526), 2329, 3921 (normal)
 
 if field == 'cosmos':
     photname = '/home/jonathan/cosmos/cosmos.v1.3.8.cat'
@@ -28,10 +32,6 @@ elif field == 'uds':
     photname = '/home/jonathan/uds/uds.v1.5.10.cat'
     datname = '/home/jonathan/uds/uds.v1.5.10.cat'
     zname = '/home/jonathan/uds/uds.v1.5.8.awk.zout'
-
-id = str(1824)  # 1614, 1824 (eelg), 2329 (normal), 3921 (normal-er)
-# 12105, z = 3.298 (eelg)
-# 17423, z = 3.526 (eelg)
 
 run_params = {'verbose': True,
               'debug': False,
@@ -64,14 +64,15 @@ run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']
 ############
 # FILTERS
 #############
-folder = 'cat_filters/'  # SAME for all fields
+folder = 'cat_filters/'  # folder in /sedpy-0.1.0-py2.7.egg/sedpy/data/filters containing all filters for all fields
+
 irac_pre = 'IRAC-irac_tr'  # SAME for all fields
-irac_suffix = '_2004-08-09'  # SAME for all fields
-irac = [folder + irac_pre + n + irac_suffix for n in ['1', '2', '3', '4']]  # SAME for all fields
+irac_suf = '_2004-08-09'  # SAME for all fields
+irac = [folder + irac_pre + n + irac_suf for n in ['1', '2', '3', '4']]  # SAME for all fields
 KsHI = ['VLT-hawki_k_ETC']  # SAME for CDFS, UDS (see: cdfs/eazy/cdfs.v1.6.9.translate, uds/eazy/uds.v1.5.8.translate)
 fourstar_pre = 'FOURSTAR-'  # SAME for all fields
-fourstar_suffix = '_cam_optics_sky'  # SAME for all fields
-subaru_prefix = 'Subaru_MB-IA'  # SAME for all fields
+fourstar_suf = '_cam_optics_sky'  # SAME for all fields
+subaru_pre = 'Subaru_MB-IA'  # SAME for all fields
 nb_pre = 'LCO_FourStar_NB'  # SAME for COSMOS, CDFS
 nb = [folder + nb_pre + n for n in ['118', '209']]  # SAME for COSMOS, CDFS
 
@@ -87,21 +88,21 @@ if field == 'cosmos':
     mega_1 = [mega[1], mega[3]]  # G, I
     mega_2 = [mega[2], mega[0]]  # R, U
     mega_3 = [mega[4]]  # Z
-    capak_prefix = 'CAPAK_v2-'
-    capak_suffix = '_subaru'
-    capak = [folder+capak_prefix+n+capak_suffix for n in ['V', 'B', 'r', 'z']]  # V, B, Rp, Zp
+    capak_pre = 'CAPAK_v2-'
+    capak_suf = '_subaru'
+    capak = [folder+capak_pre+n+capak_suf for n in ['V', 'B', 'r', 'z']]  # V, B, Rp, Zp
     capak_0 = [capak[0], capak[2]]  # V, Rp
     capak_1 = [capak[1]]  # B
     capak_2 = [capak[3]]  # Zp
-    subaru = [folder+subaru_prefix+n for n in ['427', '484', '505', '527', '624', '709', '738']]
-    fstar = [folder+fourstar_pre+n+fourstar_suffix for n in ['Hlong', 'Hshort', 'J1', 'J2', 'J3', 'Ks']]
-    hst_prefix = 'hst-wfc3-'
-    hst = [folder+hst_prefix+n for n in ['IR-f125w', 'IR-f140w', 'IR-f160w', 'UVIS-f606w', 'UVIS-f814w']]
-    vista_prefix = 'VISTA-'
-    vista_suff = '_system+atmos'
-    vista = [folder+vista_prefix+n+vista_suff for n in ['J', 'H', 'Ks', 'Y']]
+    sub = [folder+subaru_pre+n for n in ['427', '484', '505', '527', '624', '709', '738']]
+    fstar = [folder+fourstar_pre+n+fourstar_suf for n in ['Hlong', 'Hshort', 'J1', 'J2', 'J3', 'Ks']]
+    hst_pre = 'hst-wfc3-'
+    hst = [folder+hst_pre+n for n in ['IR-f125w', 'IR-f140w', 'IR-f160w', 'UVIS-f606w', 'UVIS-f814w']]
+    vista_pre = 'VISTA-'
+    vista_suf = '_system+atmos'
+    vista = [folder+vista_pre+n+vista_suf for n in ['J', 'H', 'Ks', 'Y']]
 
-    filts = capak_1 + mega_1 + subaru + mega_2 + capak_0 + mega_3 + capak_2 + fstar + nb + hst + vista + irac
+    filts = capak_1 + mega_1 + sub + mega_2 + capak_0 + mega_3 + capak_2 + fstar + nb + hst + vista + irac
 
 
 elif field == 'cdfs':
@@ -113,23 +114,22 @@ elif field == 'cdfs':
 
     # Names of filter response curve files (in the Filters folder)
     acs_pre = 'hst-ACS_update_sep07-wfc_'
-    acs_suffix = '_t77'
-    acs = [folder+acs_pre+n+acs_suffix for n in ['f435w', 'f775w', 'f606w', 'f850lp', 'f814w']]
+    acs_suf = '_t77'
+    acs = [folder+acs_pre+n+acs_suf for n in ['f435w', 'f775w', 'f606w', 'f850lp', 'f814w']]
     acs_1 = [acs[0], acs[1]]  # f435w, f775w = B, I
     acs_2 = [acs[2], acs[3]]  # f606w, f850lp = V, Z
     acs_3 = [acs[4]]  # F814W
     vimos_pre = 'ESO-'
     vimos = [vimos_pre+n for n in ['VIMOS-R', 'vimos_u']]  # R, U
-    fstar = [folder+fourstar_pre+n+fourstar_suffix for n in ['Hshort', 'Hlong', 'J1', 'J2', 'J3', 'Ks']]  # DIFF ORDER
+    fstar = [folder+fourstar_pre+n+fourstar_suf for n in ['Hshort', 'Hlong', 'J1', 'J2', 'J3', 'Ks']]  # DIFF ORDER
     hstIR_pre = 'hst-wfc3-IR-f'
-    hstIR = [folder+hst_IRpre+n for n in ['098m', '105w', '125w', '140w', '160w']]
-    subaru = [folder+subaru_prefix+n for n in ['484', '527', '574', '598', '624', '651', '679', '738', '768', '797',
-                                               '856']]
+    hstIR = [folder+hstIR_pre+n for n in ['098m', '105w', '125w', '140w', '160w']]
+    sub = [folder+subaru_pre+n for n in ['484', '527', '574', '598', '624', '651', '679', '738', '768', '797', '856']]
     wfi_pre = 'ESO-'
-    wfi = [folder+wfi_pre+n for n in ['VWFI-89_843', 'WFI-Rc162_844', 'wfi_BB_U38_ESO841']]  # WFI_V, WFI_Rc, WFI_U38
+    wfi = [folder+wfi_pre+n for n in ['WFI-V89_843', 'WFI-Rc162_844', 'wfi_BB_U38_ESO841']]  # WFI_V, WFI_Rc, WFI_U38
     tenisK = ['WIRCam-cfh8302_Ks']  # (according to: cdfs/eazy/cdfs.v1.6.9.translate)
 
-    filts = acs_1 + vimos + acs_2 + fstar + KsHI + nb + hstIR + acs_3 + subaru + wfi + tenisK + irac
+    filts = acs_1 + vimos + acs_2 + fstar + KsHI + nb + hstIR + acs_3 + sub + wfi + tenisK + irac
 
 
 elif field == 'uds':
@@ -139,19 +139,19 @@ elif field == 'uds':
 
     # Names of filter response curve files (in the Filters folder)
     mega_u = ['megaprime-cfht_mega_u_cfh9301']
-    ukidss_pre = 'UKIDSS'
+    ukidss_pre = 'UKIDSS-'
     ukidss_suf = '_qe'
     ukidss = [ukidss_pre+n+ukidss_suf for n in ['B', 'R', 'i', 'z']]
     ukidss_1 = [ukidss[0]]  # B
     ukidss_2 = [ukidss[1], ukidss[2], ukidss[3]]  # R, i, z
     subaru_V = ['COSMOS-SUBARU_filter_V']
-    fstar = [folder+fourstar_pre+n+fourstar_suffix for n in ['J1', 'J2', 'J3', 'Hshort', 'Hlong', 'Ks']]  # DIFF ORDER
+    fstar = [folder+fourstar_pre+n+fourstar_suf for n in ['J1', 'J2', 'J3', 'Hshort', 'Hlong', 'Ks']]  # DIFF ORDER
     jhk_pre = 'UKIDSS-Table0'
     jhk_suf = '_online'
     jhk = [jhk_pre+n+jhk_suf for n in ['4', '5', '6']]  # J, H, K
     hst_pre = 'hst-wfc3-'
     hst = [folder+hst_pre+n for n in ['IR-f125w', 'IR-f140w', 'IR-f160w', 'UVIS-f606w']]
-    f814 = ['hst-ACS_update_sep07_wfc_f814w_t81']
+    f814 = ['hst-ACS_update_sep07-wfc_f814w_t81']
     vlt_y = ['VLT-hawki_y_ETC']
 
     filts = mega_u + ukidss_1 + subaru_V + ukidss_2 + fstar + jhk + KsHI + hst + f814 + vlt_y + irac
