@@ -7,6 +7,8 @@ eelg_all_fields_params.py: same as eelg_emission_params.py, but can use for CDFS
 
 eelg_emission_params.py: same as eelg_npSFH_params.py, now with nebular emission turned on
 
+eelg_multirun_params.py: same as eelg_emission_params.py, but now with field and objname as command line arguments
+
 eelg_npSFH_params.py: param file for running prospector fits on EELGs, using nonparametric SFHs
 
 eelg_quickstart_params.py: same as eelg_emission_params.py, but skip do_Powell process; start run by using previous best fit values as input initial parameter values
