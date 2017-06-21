@@ -596,7 +596,7 @@ def generate_basenames(runname, ancilname=None):
 
 
 def chop_chain(chain, convergence_check_interval=None, convergence_chunks=325,
-               convergence_stable_points_criteria=3, nchop=1.33, weights=None, size=3e5, **extras):
+               convergence_stable_points_criteria=3, nchop=1.15, weights=None, size=3e5, **extras):
     '''
     if we used emcee, either (a) use the final 1/4th of the chain, or (b) use KL divergence convergence criteria
     if we used nestle, sample chain nestle_nsample times according to weights
@@ -853,7 +853,6 @@ def return_full_sfh(t, sfh_params, **kwargs):
     '''
 
     deltat = 1e-8  # Gyr
-    # deltat = 0.01  # Gyr # PRINTER trying this....
 
     # calculate new time vector such that
     # the spacing from tage back to zero
@@ -862,23 +861,11 @@ def return_full_sfh(t, sfh_params, **kwargs):
         tcalc = t - sfh_params['tage']
     except ValueError:
         tcalc = t - np.max(10 ** sfh_params['agebins']) / 1e9
-
-    print(np.max(10 ** sfh_params['agebins']) / 1e9, 'max')
-    print(tcalc, 'tcalc')  # PRINTER (is indeed an array of len=18)
     tcalc = tcalc[tcalc < 0] * -1
-    print(tcalc, 'tcalced')  # PRINTER (cuts positive values, then takes negative values and makes them positive)
-    # now is an array of len=17
 
     intsfr = np.zeros(len(t))
     for mm in xrange(len(tcalc)):
-        # print(0)  # PRINTER
-        print(tcalc[mm], 'mm')  # PRINTER as long as this changes, this function through here is fine?
-        # tcalc[mm] has two of the same in a row, then goes to the next two that are the same, and so on; sfr for whole
-        # loop is the same, though
         intsfr[mm] = calculate_sfr(sfh_params, deltat, tcalc=tcalc[mm], **kwargs)
-        # print(intsfr[mm], 'intsfr[mm]')  # PRINTER (all same for given loop)
-        # print(deltat, tcalc[mm], 'deltat, tcalc')  # PRINTER
-    # print(intsfr, 'intsfr what now?')  # PRINTER (all SAME, except for last element, which is 0.)
 
     return intsfr
 
@@ -897,9 +884,6 @@ def calculate_sfr(sfh_params, timescale, tcalc=None,
     returns in [Msun/yr]
 
     '''
-    # print(timescale, 'timescale')  # PRINTER
-    # for intsfr: 1e-8
-    # for sfr_10, sfr_100: 0.01, 0.1
 
     if sfh_params['sfh'] > 0:
         tage = sfh_params['tage']
@@ -909,21 +893,9 @@ def calculate_sfr(sfh_params, timescale, tcalc=None,
     if tcalc is None:
         tcalc = tage
 
-    # print(tcalc - timescale, 'tdiff')  # intsfr --> calculating from tdiff = ~1 Gyr to 0.01188 Gyr  # PRINTER
-    # print(tcalc, 'tcalc')  # PRINTER
-    # for intsfr, deltat = 1e-8, tcalc goes 0.999, 0.90000999..., 0.90000999..., 0.8999, 0.8999, -.7855, 0.7855,
-    # sfr_10 --> calculating tdiff = 2.1075... = tuniv - 0.01 Gyr
-    # sfr_10: tcalc is tuniv?
-    # sfr_100 --> calculating tdiff = 2.0175... = tuniv - 0.1 Gyr
-    # sfr_100: tcalc is tuniv?
-    # SO: timescale for intsfr is 1e-8 = ~10 yr?
-    # print(timescale, 'timescale')  # PRINTER always 1e-8 for main intsfr thing
     sfr = integrate_sfh(tcalc - timescale, tcalc, sfh_params) * \
           sfh_params['mformed'].sum() / (timescale * 1e9)
-    # print(sfh_params['mformed'].sum(), 'mformed sum')  # PRINTER (consistently on order ~2e+10)
-    # same for intsfr, fr_10, and sfr_100 for each given iteration / round of iterations
-    # print(tcalc - timescale, tcalc, timescale, 'tcalc - timescale')  # PRINTER tcalc changes, timescale doesn't
-    print(sfr, 'sfr')  # PRINTER sfr same for whole thing regardless of individual tcalc value?!
+
     if minsfr is None:
         minsfr = sfh_params['mformed'].sum() / (tage * 1e9 * 10000)
 
@@ -932,7 +904,6 @@ def calculate_sfr(sfh_params, timescale, tcalc=None,
 
     sfr = np.clip(sfr, minsfr, maxsfr)
 
-    # print(sfr, 'sfr_clipped')  # PRINTER same as 'sfr'
     return sfr
 
 
@@ -943,8 +914,8 @@ def transform_zfraction_to_sfrfraction(zfraction):
         zfraction = np.atleast_2d(zfraction).transpose()
     sfr_fraction = np.zeros_like(zfraction)
     sfr_fraction[:, 0] = 1 - zfraction[:, 0]
-    for i in xrange(1, sfr_fraction.shape[1]):
-        sfr_fraction[:, i] = np.prod(zfraction[:, :i], axis=1) * (1 - zfraction[:, i])
+    for i in xrange(1, sfr_fraction.shape[1]): sfr_fraction[:, i] = np.prod(zfraction[:, :i], axis=1) * (
+    1 - zfraction[:, i])
     # sfr_fraction[:,-1] = np.prod(zfraction,axis=1)  #### THIS IS SET IMPLICITLY
     return sfr_fraction
 
@@ -982,15 +953,6 @@ def integrate_sfh(t1, t2, sfh_params):
     sfh = dictionary of SFH parameters
     returns FRACTION OF TOTAL MASS FORMED in given time inteval
     '''
-
-    # PRINTER t1 = tcalc - timescale, t2 = tcalc
-    # print(sfh_params, 'params')  # PRINTER same for a cycle of same sfrs, then different with new sfr
-    # print(t1, 't1')  # PRINTER
-    # print(t2, 't2')  # PRINTER
-    # for intsfr[:, jj]: t1 alternates changes constantly in loop
-    # print(0)  # PRINTER above and print(0.5)  # PRINTER in only_sfh.py confirm that the loop when t1 = array([0.]) is
-    # associated with half-mass assembly time half_time[jj]
-    # for sfr_10 and sfr_100: t1 is tuniv - timescale, t2 = tuniv (yep when tcalc=None, tcalc=tage from calcualte_sfr)
 
     # copy so we don't overwrite values
     sfh = sfh_params.copy()
@@ -1072,27 +1034,15 @@ def integrate_sfh(t1, t2, sfh_params):
 
         ### put bins in proper units
         to_linear_bins = 10 ** sfh_params['agebins'] / 1e9
-        # print(to_linear_bins, 'linear bins')  # PRINTER (same for intsfr, sfr_10, sfr_100):
-        # returns: [[1e-9, 0.1],[0.1, 0.2145],[0.2145,0.46],[0.46,0.987],[0.987,tuniv]]
         time_per_bin = to_linear_bins[:, 1] - to_linear_bins[:, 0]
-        # print(time_per_bin, 'tpb')  # PRINTER [0.1, 0.11451503, 0.24565197, 0.5269604 , 1.13040929]
-        # (same for intsfr, sfr_10, sfr_100)
         time_bins = np.max(to_linear_bins) - to_linear_bins
-        # print(time_bins, 'time_bins')  # PRINTER
-        # returns: [[tuniv, 2.0175],[2.0175,1.903],[1.903,1.657],[1.657,1.130],[1.130,0.]]
-        # where time_bins[0][1] = tuniv - time_per_bin[0], time_bins[3][1] = time_per_bin[:-1]
-        # (same for intsfr, sfr_10, sfr_100)
 
         ### if it's outside the SFH bins, clip it
         t1 = np.clip(t1, np.min(time_bins), np.max(time_bins))
         t2 = np.clip(t2, np.min(time_bins), np.max(time_bins))
-        # print(t1, 't1 clipped')  # PRINTER
-        # print(t2, 't2 clipped')  # PRINTER these seem unchanged from t1, t2 for intsfr; t1 and t2 are 1e-8 apart
-        # if trying deltat = 1e-3, t1 and t2 are probably 1e-3 apart
 
         # annoying edge cases
         if t1 == t2:
-            # print('boo')  # PRINTER
             return 0.0
         if (t2 > time_bins[0, 0]) & (t1 > time_bins[0, 0]):
             sys.exit('SFR is undefined in this time region, outside youngest bin!')
@@ -1100,28 +1050,16 @@ def integrate_sfh(t1, t2, sfh_params):
         ### which bins to integrate?
         in_range = (time_bins >= t1) & (time_bins <= t2)
         bin_ids = in_range.sum(axis=1)
-        print(t1, t2, time_bins, 'allofem')
-        # print(time_bins >= t1, 'inrange1')  # PRINTER
-        # print(time_bins <= t2, 'inrange2')  # PRINTER
-        # print(in_range, 'in_range_real')  # PRINTER
-        # print(in_range, 'range')  # PRINTER (all false for intsfr; 1 True for sfr_10, 3 True for sfr_100)
-        # print(bin_ids, 'ids')  # PRINTER ([0,0,0,0,0] for intsfr; [1,0,0,0,0] for sfr_10, [2,1,0,0,0] for sfr_100)
-        # print(in_range.sum(), 'sum')  # PRINTER 0 for intsfr, 1 for sfr_10, 3 for sfr_100
 
         ### this doesn't work if we're fully inside a single bin...
         if in_range.sum() == 0:
             bin_ids = (time_bins[:, 1] <= t1) & (time_bins[:, 0] >= t2)
-            # print(bin_ids, 'ids edited')  # PRINTER (converts array of 5 0s to array of 4 Falses followed by 1 True)
-            # this is only done for intsfr, since for sfr_10
 
         ### weights
         weights = np.zeros(sfh_params['mass_fraction'].shape)
-        # print(weights, 'weights')  # PRINTER array([0.,0.,0.,0.,0.])
         # if we're all in one bin
         if np.sum(bin_ids) == 1:
             weights[bin_ids == 1] = t2 - t1
-            # print(weights, 'weights maybe edited')  # PRINTER for intsfr, sets weights[:-1] = 1.00000001e-8
-
         # else do the whole thing
         else:
             for i in xrange(bin_ids.shape[0]):
@@ -1135,20 +1073,13 @@ def integrate_sfh(t1, t2, sfh_params):
                 if bin_ids[i] == 0:  # no contribution
                     continue
 
-        print(weights, 'final_weights')  # PRINTER
-        # for intsfr: [0,0,0,0,1e-8]; for sfr_10: [0.01,0,0,0,0]; for sfr_100: [0.1,0,0,0,0]
         ### bug catch
         try:
             np.testing.assert_approx_equal(np.sum(weights), t2 - t1, significant=5)
         except AssertionError:
             sys.exit('weights do not sum to 1')
 
-        print(weights / time_per_bin, 'ratio')  # PRINTER
-        # for intsfr: [0,0,0,0,8.84635337e-9]; for sfr_10: [0.099999,0,0,0,0]; for sfr_100: [1,0,0,0,0]
         tot_mformed = np.sum((weights / time_per_bin) * sfh_params['mass_fraction'])
-        print(tot_mformed, 'mformed')  # PRINTER
-        # for intsfr: 5.895432...e-10; for sfr_10: 0.0242355...; for sfr_100: 0.242355... =~ 10*sfr_10
-        # for intsfr: 1.15233...e-9; for sfr_10: 0.02121846057979946; for sfr_100: 0.2128462489461734 =~ 10*sfr_10
 
     return tot_mformed
 
@@ -1274,6 +1205,7 @@ def measure_restframe_properties(sps, model=None, obs=None, thetas=None, emlines
     ##### measure emission lines
     if emlines:
         out['emlines'] = measure_emlines(smooth_spec, sps)
+
     if measure_ir:
         out['lir'] = return_lir(w, spec, z=None,
                                 alt_file=None) / constants.L_sun.cgs.value  # comes out in ergs/s, convert to Lsun
