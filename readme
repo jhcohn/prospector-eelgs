@@ -15,12 +15,20 @@ fast_mimic_params_latest.py: latest iteration of parameter file for running FAST
 
 input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq
 
-nonparameteric_sfh_example_params.py: Joel's example of nonparametric SFH param file, off of which I'm basing eelg_npSFH_params.py
-
 model_test.py: load model, test lnp of initial model given different values of metallicity
 
-quickgrab.py: simple code cannibalized from Prospector tutorial for plotting Prospector output
+nonparameteric_sfh_example_params.py: Joel's example of nonparametric SFH param file, off of which I'm basing eelg_npSFH_params.py
+
+only_sfh.py: modified from Joel's extra_output.py, with lots of things cut/print statements added to figure out what's going on
+
+prosp_dutils.py: code from Joel for plotting SFH (and other extras); I've edited this one a fair bit to figure out what's going on
+
+prosp_dutils_orig.py: code from Joel for plotting SFH (and other extras); I've left this one untouched
 
 prospector.py: prospector python file with initial guess SED plotting code added
 
 prospector_nest.py: new file from bd-j prospector
+
+quickgrab.py: simple code cannibalized from Prospector tutorial for plotting Prospector output
+
+sfh_plot.py: copied from Joel's extra_output.py, for outputting the SFH, with minimal changes to Joel's code
