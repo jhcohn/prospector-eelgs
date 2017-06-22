@@ -41,7 +41,7 @@ run_params = {'verbose': True,
               'zname': '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout',  # main cat has z_spec, but not z_phot
               'objname': id,
               'convergence_check_interval': 100,  # Fix convergence test problem
-              'convergence_kl_threshold': 0.0  # Fix convergenve test problem
+              'convergence_kl_threshold': 0.0  # Fix convergence test problem
               }
 run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']
 
@@ -100,10 +100,9 @@ def load_obs(photname, objname, err_floor=0.05, zperr=True, **extras):
     with open(photname, 'r') as f:
         hdr = f.readline().split()
     dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
-    dat = np.loadtxt(photname, comments='#', delimiter=' ',
-                     dtype=dtype)
+    dat = np.loadtxt(photname, comments='#', delimiter=' ', dtype=dtype)
 
-    ### extract filters, fluxes, errors for object
+    # extract filters, fluxes, errors for object
     # from ReadMe: "All fluxes are normalized to an AB zeropoint of 25, such that: magAB = 25.0-2.5*log10(flux)
     obj_idx = (dat['id'] == objname)
     # print(dat[obj_idx]['id'], 'idx')
@@ -111,7 +110,7 @@ def load_obs(photname, objname, err_floor=0.05, zperr=True, **extras):
     flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filternames])
     unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
-    ### define photometric mask, convert to maggies
+    # define photometric mask, convert to maggies
     phot_mask = (flux != -99.0)
     maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
     maggies_unc = unc * 10**-6 / 3631
@@ -120,10 +119,10 @@ def load_obs(photname, objname, err_floor=0.05, zperr=True, **extras):
     # print(maggies_unc, 'maggies_unc')
     # print(unc, 'unc')
 
-    ### implement error floor
+    # implement error floor
     maggies_unc = np.clip(maggies_unc, maggies * err_floor, np.inf)
 
-    ### build output dictionary
+    # build output dictionary
     obs = {}
     obs['filters'] = observate.load_filters(filters)
     obs['wave_effective'] = np.array([filt.wave_effective for filt in obs['filters']])
@@ -204,7 +203,7 @@ model_params.append({'name': 'mass', 'N': 1,
 
 model_params.append({'name': 'logzsol', 'N': 1,
                      'isfree': True,  # BUCKET1 isfree: True when doing emission lines
-                     'init': 0.0,
+                     'init': 0.0,  # -0.795 (Sanders et al.); originally, init: 0.0
                      'init_disp': 0.4,
                      'log_param': True,
                      'units': r'$\log (Z/Z_\odot)$',
@@ -229,19 +228,12 @@ model_params.append({'name': 'tau', 'N': 1,
                      'prior_args': {'mini': 0.1, 'maxi': 100.0}})
 
 model_params.append({'name': 'logtau', 'N': 1,
-                        'isfree': False,  # NEW turn off
-                        'init': 1,
-                        'init_disp': 0.5,
-                        'units': 'Gyr',
-                        'prior_function': tophat,
-                        'prior_args': {'mini': -1, 'maxi': 2}})
-
-model_params.append({'name': 'tage', 'N': 1,
                      'isfree': False,  # NEW turn off
-                     'init': 1.0,
+                     'init': 1,
+                     'init_disp': 0.5,
                      'units': 'Gyr',
                      'prior_function': tophat,
-                     'prior_args': {'mini': 0.1, 'maxi': 14.0}})  # 0.01, 'maxi': 14.0}})
+                     'prior_args': {'mini': -1, 'maxi': 2}})
 
 model_params.append({'name': 'tburst', 'N': 1,
                      'isfree': False,
@@ -274,18 +266,18 @@ model_params.append({'name': 'sf_start', 'N': 1,
                      'prior_args': {'mini': 0.0, 'maxi': 14.0}})
 
 model_params.append({'name': 'agebins', 'N': 1,  # NEW
-                        'isfree': False,
-                        'init': [],
-                        'units': 'log(yr)',
-                        'prior_function': priors.tophat,
-                        'prior_args': {'mini': 0.1, 'maxi': 15.0}})
+                     'isfree': False,
+                     'init': [],
+                     'units': 'log(yr)',
+                     'prior_function': priors.tophat,
+                     'prior_args': {'mini': 0.1, 'maxi': 15.0}})
 
 model_params.append({'name': 'sfr_fraction', 'N': 1,  # NEW
-                        'isfree': True,
-                        'init': [],
-                        'units': 'Msun',
-                        'prior_function': priors.tophat,
-                        'prior_args': {'mini': 0.0, 'maxi': 1.0}})
+                     'isfree': True,
+                     'init': [],
+                     'units': 'Msun',
+                     'prior_function': priors.tophat,
+                     'prior_args': {'mini': 0.0, 'maxi': 1.0}})
 
 ########    IMF  ##############
 model_params.append({'name': 'imf_type', 'N': 1,
@@ -328,9 +320,9 @@ model_params.append({'name': 'add_neb_emission', 'N': 1,
                      'prior_args': None})
 
 model_params.append({'name': 'gas_logz', 'N': 1,
-                     'isfree': True,  # DECOUPLE (False when coupled)
+                     'isfree': True,  # DECOUPLE: True (False when coupled)
                      'init': 0.0,
-                     # 'depends_on': tie_gas_logz,  # BUCKET1 emission lines --> tie_gas_logz  # DECOUPLE
+                     # 'depends_on': tie_gas_logz,  # BUCKET1 em lines --> tie_gas_logz  # DECOUPLE --> remove line
                      'units': r'log Z/Z_\odot',
                      'prior_function': tophat,
                      'prior_args': {'mini': -2.0, 'maxi': 0.5}})
@@ -343,11 +335,11 @@ model_params.append({'name': 'gas_logu', 'N': 1,
                      'prior_args': {'mini': -4, 'maxi': -1}})
 
 model_params.append({'name': 'add_neb_continuum', 'N': 1,  # BUCKET1
-                        'isfree': False,
-                        'init': True,
-                        'units': '',
-                        'prior_function_name': None,
-                        'prior_args': None})
+                     'isfree': False,
+                     'init': True,
+                     'units': '',
+                     'prior_function_name': None,
+                     'prior_args': None})
 
 ####### Calibration ##########
 model_params.append({'name': 'phot_jitter', 'N': 1,
@@ -478,19 +470,18 @@ def load_model(objname='', datname='', zname='', agelims=[], **extras):
 
     with open(datname, 'r') as f:
         hdr = f.readline().split()
-    dtype = np.dtype([(hdr[1],'S20')] + [(n, np.float) for n in hdr[2:]])
-    dat = np.loadtxt(datname, comments = '#', delimiter=' ',
-                     dtype = dtype)
+    dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
+    dat = np.loadtxt(datname, comments='#', delimiter=' ', dtype=dtype)
 
     with open(zname, 'r') as fz:
         hdr_z = fz.readline().split()
-    dtype_z = np.dtype([(hdr_z[1],'S20')] + [(n, np.float) for n in hdr_z[2:]])
-    zout = np.loadtxt(zname, comments = '#', delimiter=' ', dtype = dtype_z)
+    dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
+    zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
 
-    idx = dat['id'] == objname
-    zred = zout['z_spec'][idx][0]  # FIX THE INDEX HERE
-    if zred == -99:
-        zred = zout['z_peak'][idx][0]
+    idx = dat['id'] == objname  # creates array of True/False: True when dat[id] = objname
+    zred = zout['z_spec'][idx][0]  # use z_spec
+    if zred == -99:  # if z_spec doesn't exist
+        zred = zout['z_peak'][idx][0]  # use z_phot
 
     print(zred, 'zred')
 
@@ -499,13 +490,13 @@ def load_model(objname='', datname='', zname='', agelims=[], **extras):
     print(tuniv, 'tuniv')
 
     n = [p['name'] for p in model_params]
-    model_params[n.index('tage')]['prior_args']['maxi'] = tuniv
 
     #### NONPARAMETRIC SFH ######  # NEW
-#     agelims[-1] = np.log10(tuniv*1e9)
-    ncomp = len(agelims) - 1
+    # agelims[-1] = np.log10(tuniv*1e9)
+
     agelims = [0.0, 7.0, 8.0, (8.0 + (np.log10(tuniv*1e9)-8.0)/4), (8.0 + 2*(np.log10(tuniv*1e9)-8.0)/4),
                (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
+    ncomp = len(agelims) - 1
     agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
     # calculate the somethings: [0, a, b, b + (f-b)/4, b + 2*(f-b)/4, b + 3*(f-b)/4, b + 4*(f-b)/4 = f]
 
@@ -521,8 +512,8 @@ def load_model(objname='', datname='', zname='', agelims=[], **extras):
     # N-1 bins, last is set by x = 1 - np.sum(sfr_fraction)
     model_params[n.index('sfr_fraction')]['N'] = ncomp-1
     model_params[n.index('sfr_fraction')]['prior_args'] = {
-                                                           'maxi':np.full(ncomp-1,1.0),
-                                                           'mini':np.full(ncomp-1,0.0),
+                                                           'maxi': np.full(ncomp-1, 1.0),
+                                                           'mini': np.full(ncomp-1, 0.0),
                                                            # NOTE: ncomp instead of ncomp-1 makes the prior take into
                                                            # account the implicit Nth variable too
                                                           }
