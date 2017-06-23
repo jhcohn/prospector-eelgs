@@ -1,0 +1,93 @@
+import pickle
+import matplotlib.pyplot as plt
+import numpy as np
+
+objs = ['1824', '12105', '17423']  # object IDs
+base = '_sfh_out.pkl'  # pickled extra_output file base (file[i] = objs[i] + base)
+
+
+def add_sfh_plot(exout, fig, ax_loc=None,
+                 main_color=None, tmin=False,  # tmin was 0.01
+                 text_size=1, ax_inset=None, lw=1):
+    '''
+    add a small SFH plot at ax_loc
+    text_size: multiply font size by this, to accomodate larger/smaller figures
+    '''
+
+    # set up plotting
+    if ax_inset is None:
+        if fig is None:
+            ax_inset = ax_loc
+        else:
+            ax_inset = fig.add_axes(ax_loc, zorder=32)
+    axfontsize = 4 * text_size
+
+    xmin, ymin = np.inf, np.inf
+    xmax, ymax = -np.inf, -np.inf
+    for i, extra_output in enumerate(exout):
+
+        #### load SFH
+        t = extra_output['extras']['t_sfh']
+        perc = np.zeros(shape=(len(t), 3))
+        for jj in xrange(len(t)):
+            perc[jj, :] = np.percentile(extra_output['extras']['sfh'][jj, :], [16.0, 50.0, 84.0])
+            # 68.2% of population within 1 sigma <--> +/- 34.1%
+
+        #### plot SFH
+        ax_inset.plot(t, perc[:, 1], '-', color=main_color[i], lw=lw)
+        ax_inset.fill_between(t, perc[:, 0], perc[:, 2], color=main_color[i], alpha=0.3)
+        ax_inset.plot(t, perc[:, 0], '-', color=main_color[i], alpha=0.3, lw=lw)
+        ax_inset.plot(t, perc[:, 2], '-', color=main_color[i], alpha=0.3, lw=lw)
+
+        #### update plot ranges
+        # axis lims for nonparametric SFH
+        xmin = np.min([xmin, t.min()])
+        xmax = np.max([xmax, t.max()])
+        ymin = np.min([ymin, perc.min()])
+        ymax = np.max([ymax, perc.max()])
+
+    #### labels, format, scales !
+    if tmin:
+        xmin = tmin
+
+    axlim_sfh = [xmax, xmin, ymin * .7, ymax * 1.4]
+    ax_inset.axis(axlim_sfh)
+    ax_inset.set_ylabel(r'SFR [M$_{\odot}$/yr]', fontsize=axfontsize * 3, labelpad=2 * text_size)
+    ax_inset.set_xlabel(r't$_{\mathrm{lookback}}$ [Gyr]', fontsize=axfontsize * 3, labelpad=2 * text_size)
+
+    subsx = [2, 3, 4, 5, 6, 7, 8, 9]
+    subsy = [2, 3, 4, 5, 6, 7, 8, 9]
+
+    ax_inset.set_xscale('log', nonposx='clip', subsx=subsx)
+    ax_inset.xaxis.set_tick_params(labelsize=axfontsize * 2)
+
+    ax_inset.set_yscale('log', nonposy='clip', subsy=subsy)
+    ax_inset.yaxis.set_tick_params(labelsize=axfontsize * 2)
+
+    ax_inset.tick_params('both', length=lw * 3, width=lw * .6, which='major')
+
+    ax_inset.tick_params('both', length=lw, width=lw * .3, which='minor')
+
+    for axis in ['top', 'bottom', 'left', 'right']:
+        ax_inset.spines[axis].set_linewidth(lw * .6)
+
+
+for obj in objs:
+    with open(obj + base, 'rb') as file:
+        extra_output = pickle.load(file)
+        plt.plot(extra_output['extras']['t_sfh'], extra_output['bfit']['sfh'], lw=2)
+        plt.ylabel(r'Best-fit SFH [M$_\odot$ yr$^{-1}$]')
+        plt.xlabel('t [Gyr]')
+        plt.rc('xtick', labelsize=20)
+        plt.rc('ytick', labelsize=20)
+        plt.rcParams.update({'font.size': 22})
+        # plt.loglog()
+        # ax = plt.gca()
+        # ax.invert_xaxis()
+        plt.show()
+
+        fig = plt.figure()
+        sfh_ax = fig.add_axes([0.15, 0.15, 0.6, 0.6], zorder=32)
+        add_sfh_plot([extra_output], fig, main_color=['black'], ax_inset=sfh_ax, text_size=3, lw=3)  # lw=5
+        sfh_ax.invert_xaxis()
+        plt.show()
