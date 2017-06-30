@@ -1,9 +1,14 @@
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+import argparse  # testing
+# run from command line using (in snow environment): python print_sfh.py --obj=1824
 
-objs = ['1824', '12105', '17423']  # object IDs
+'''
+objs = ['1824', '7730', '12105', '17423']  # object IDs
+# objs = ['6459']
 base = '_sfh_out.pkl'  # pickled extra_output file base (file[i] = objs[i] + base)
+'''
 
 
 def add_sfh_plot(exout, fig, ax_loc=None,
@@ -33,7 +38,14 @@ def add_sfh_plot(exout, fig, ax_loc=None,
             perc[jj, :] = np.percentile(extra_output['extras']['sfh'][jj, :], [16.0, 50.0, 84.0])
             # 68.2% of population within 1 sigma <--> +/- 34.1%
 
-        #### plot SFH
+        '''
+        # REDSHIFT CONVERSION!
+        z = []
+        t = extra_output['extras']['t_sfh']
+        for j in range(len(t)):
+            z.append((2 / (3 * 7.22e-2 * t[j])) ** (2 / 3) - 1)
+        '''
+        #### plot SFH (t-->z)
         ax_inset.plot(t, perc[:, 1], '-', color=main_color[i], lw=lw)
         ax_inset.fill_between(t, perc[:, 0], perc[:, 2], color=main_color[i], alpha=0.3)
         ax_inset.plot(t, perc[:, 0], '-', color=main_color[i], alpha=0.3, lw=lw)
@@ -50,7 +62,9 @@ def add_sfh_plot(exout, fig, ax_loc=None,
     if tmin:
         xmin = tmin
 
-    axlim_sfh = [xmax, xmin, ymin * .7, ymax * 1.4]
+    # axlim_sfh = [xmax, xmin, ymin * .7, ymax * 1.4]
+    axlim_sfh = [13.6, 10**-3, 10**-1, 10**3]
+    # axlim_sfh = [4, 1., 10**-1, 10**3]  # redshift
     ax_inset.axis(axlim_sfh)
     ax_inset.set_ylabel(r'SFR [M$_{\odot}$/yr]', fontsize=axfontsize * 3, labelpad=2 * text_size)
     ax_inset.set_xlabel(r't$_{\mathrm{lookback}}$ [Gyr]', fontsize=axfontsize * 3, labelpad=2 * text_size)
@@ -72,8 +86,10 @@ def add_sfh_plot(exout, fig, ax_loc=None,
         ax_inset.spines[axis].set_linewidth(lw * .6)
 
 
-for obj in objs:
-    with open(obj + base, 'rb') as file:
+# objs = [kwargs['obj']]
+# for obj in objs:
+def plotter(input):
+    with open(input, 'rb') as file:
         extra_output = pickle.load(file)
         plt.plot(extra_output['extras']['t_sfh'], extra_output['bfit']['sfh'], lw=2)
         plt.ylabel(r'Best-fit SFH [M$_\odot$ yr$^{-1}$]')
@@ -91,3 +107,27 @@ for obj in objs:
         add_sfh_plot([extra_output], fig, main_color=['black'], ax_inset=sfh_ax, text_size=3, lw=3)  # lw=5
         sfh_ax.invert_xaxis()
         plt.show()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
+    parser.add_argument('--obj')
+    parser.add_argument('--field')
+
+    args = vars(parser.parse_args())
+    kwargs = {}
+    for key in args.keys():
+        kwargs[key] = args[key]
+
+    obj = kwargs['obj']
+
+    field = kwargs['field']
+    base = '_sfh_out.pkl'
+    file = obj + '_' + field + base
+
+    plotter(file)
+
+'''
+RUNNING WITH:
+
+python print_sfh.py --obj="1824" --field="cosmos
+'''

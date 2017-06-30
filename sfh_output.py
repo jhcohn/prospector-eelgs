@@ -92,7 +92,7 @@ def calc_extra_quantities(sample_results, ncalc=3000, **kwargs):
         'restframe_optical_photometry': False,  # currently deprecated! but framework exists in
                                                 # restframe_optical_properties
         'ir_priors': False,  # no cost
-        'measure_spectral_features': True,  # cost = 2 runtimes
+        'measure_spectral_features': False,  # cost = 2 runtimes
         'mags_nodust': False  # cost = 1 runtime
     }
     if kwargs:
@@ -220,6 +220,7 @@ def post_processing(out_file, filename, **kwargs):
     with open(filename, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(extra_output, newfile, pickle.HIGHEST_PROTOCOL)
 
+    '''
     # NEW PLOTTING
     fig = plt.figure()
     sfh_ax = fig.add_axes([0.15, 0.15, 0.6, 0.6], zorder=32)
@@ -227,7 +228,6 @@ def post_processing(out_file, filename, **kwargs):
     boop.add_sfh_plot([extra_output], fig, main_color=['black'], ax_inset=sfh_ax, text_size=3, lw=3)  # lw=5
     plt.show()
     # NEW PLOTTING
-    '''
     plt.plot(extra_output['extras']['t_sfh'], extra_output['bfit']['sfh'])
     plt.ylabel(r'M$_\odot$ yr$^{-1}$')
     plt.xlabel('Gyr')
@@ -245,11 +245,11 @@ if __name__ == "__main__":
 
     ### don't create keyword if not passed in!
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
-    parser.add_argument('parfile', type=str)
+    # parser.add_argument('parfile', type=str)
     parser.add_argument('--outname')
-    parser.add_argument('--measure_spectral_features', type=str2bool)
-    parser.add_argument('--mags_nodust', type=str2bool)
-    parser.add_argument('--ir_priors', type=str2bool)
+    # parser.add_argument('--measure_spectral_features', type=str2bool)
+    # parser.add_argument('--mags_nodust', type=str2bool)
+    # parser.add_argument('--ir_priors', type=str2bool)
     parser.add_argument('--ncalc', type=int)
 
     args = vars(parser.parse_args())
@@ -259,13 +259,19 @@ if __name__ == "__main__":
 
     outname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + kwargs['outname']
     obj = ''
+    count = 0
+    field = ''
     for i in kwargs['outname']:
         if i == '_':
-            break
-        else:
+            count += 1
+        if count == 0:
             obj += i
+        elif count == 1:
+            field += i
+        elif count == 2:
+            break
 
-    write = obj + '_sfh_out.pkl'
+    write = obj + field + '_sfh_out2.pkl'
 
     print(kwargs)
     post_processing(out_file=outname, filename=write, **kwargs)
@@ -273,7 +279,8 @@ if __name__ == "__main__":
 '''
 RUNNING WITH:
 
-python sfh_output.py --outname=17423_decoupled_1496353908_mcmc.h5 --ncalc=2000 --measure_spectral_features=False
---mags_nodust=False parfile=eelg_emission_params.py
+python sfh_output.py --outname=6459_multirun_commentedcontinuum_1498501917_mcmc.h5 --ncalc=2000
+--measure_spectral_features=False --mags_nodust=False parfile=eelg_multirun_params.py
 
+python sfh_output.py --outname=6459_cosmos_multirun_commentedcontinuum_1498501917_mcmc.h5 --ncalc=2000
 '''
