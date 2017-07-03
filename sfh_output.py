@@ -264,14 +264,14 @@ if __name__ == "__main__":
     for i in kwargs['outname']:
         if i == '_':
             count += 1
-        if count == 0:
+        elif count == 0:
             obj += i
         elif count == 1:
             field += i
         elif count == 2:
             break
 
-    write = obj + field + '_sfh_out2.pkl'
+    write = obj + '_' + field + '_sfh_out.pkl'
 
     print(kwargs)
     post_processing(out_file=outname, filename=write, **kwargs)
@@ -282,5 +282,6 @@ RUNNING WITH:
 python sfh_output.py --outname=6459_multirun_commentedcontinuum_1498501917_mcmc.h5 --ncalc=2000
 --measure_spectral_features=False --mags_nodust=False parfile=eelg_multirun_params.py
 
+NOW RUNNING WITH:
 python sfh_output.py --outname=6459_cosmos_multirun_commentedcontinuum_1498501917_mcmc.h5 --ncalc=2000
 '''

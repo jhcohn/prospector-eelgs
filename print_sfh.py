@@ -100,12 +100,14 @@ def plotter(input):
         # plt.loglog()
         # ax = plt.gca()
         # ax.invert_xaxis()
+        plt.title(field + '-' + obj)
         plt.show()
 
         fig = plt.figure()
         sfh_ax = fig.add_axes([0.15, 0.15, 0.6, 0.6], zorder=32)
         add_sfh_plot([extra_output], fig, main_color=['black'], ax_inset=sfh_ax, text_size=3, lw=3)  # lw=5
         sfh_ax.invert_xaxis()
+        plt.title(field + '-' + obj)
         plt.show()
 
 if __name__ == "__main__":
@@ -129,5 +131,5 @@ if __name__ == "__main__":
 '''
 RUNNING WITH:
 
-python print_sfh.py --obj="1824" --field="cosmos
+python print_sfh.py --obj=1824 --field=cosmos
 '''

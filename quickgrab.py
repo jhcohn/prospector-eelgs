@@ -11,10 +11,25 @@ np.errstate(invalid='ignore')
 
 def printer(out_file):
     objname = ''
+    count = 0
+    field = ''
+    for i in kwargs['outname']:
+        if i == '_':
+            count += 1
+        elif count == 0:
+            objname += i
+        elif count == 1:
+            field += i
+        elif count == 2:
+            break
+    print(field)
+    '''
+    objname = ''
     for i in out_file:
         if i == '_':
             break
         objname += i  # object id is named at the start of each out_file
+    '''
 
     res, pr, mod = bread.results_from(out_file)
     # print(res['chain'], 'chain')
@@ -39,11 +54,11 @@ def printer(out_file):
     cornerfig = bread.subtriangle(res, start=400, thin=5, show_titles=True)
     plt.show()
     # For FAST: truths = [mass, age, tau, dust2] (for 1824: [9.78, 0.25, -1., 0.00])
-    return objname, res, mod, walker, iteration
+    return objname, field, res, mod, walker, iteration
 
 # ''' #
 
-def sed(objname, res, mod, walker, iteration, param_file, **kwargs):
+def sed(objname, field, res, mod, walker, iteration, param_file, **kwargs):
     # PRINT MODEL SED FOR GALAXY
     # We need the correct sps object to generate models
     sargv = sys.argv
@@ -67,6 +82,7 @@ def sed(objname, res, mod, walker, iteration, param_file, **kwargs):
 
     plt.plot(sps.wavelengths, spec)
     plt.xlabel('Wavelength [angstroms]')
+    plt.title(str(objname) + ' spec')
     plt.show()
 
     # ''' #
@@ -85,18 +101,19 @@ def sed(objname, res, mod, walker, iteration, param_file, **kwargs):
     kl_ax.axhline(np.log10(kl_div_lim), linestyle='--', color='red', lw=2, zorder=1)
 
     kl_ax.legend(prop={'size': 5}, ncol=2, numpoints=1, markerscale=0.7)
+    plt.title(str(objname) + ' kl')
     plt.show()
     # ''' #
 
-    field = kwargs['field']
+    # field = kwargs['field']
     # CHANGING OBSERVED TO REST FRAME WAVELENGTH
     if field == 'cdfs':
         datname = '/home/jonathan/cdfs/cdfs.v1.6.11.cat'
         zname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout'
-    if field == 'cosmos':
+    elif field == 'cosmos':
         datname = '/home/jonathan/cosmos/cosmos.v1.3.8.cat'  # main catalog
         zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'  # redshift catalog
-    if field == 'uds':
+    elif field == 'uds':
         datname = '/home/jonathan/uds/uds.v1.5.10.cat'
         zname = '/home/jonathan/uds/uds.v1.5.8.zout'
 
@@ -151,7 +168,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('parfile', type=str)
     parser.add_argument('--outname')
-    parser.add_argument('--field')
+    # parser.add_argument('--field')
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -164,13 +181,14 @@ if __name__ == "__main__":
     out_file = files['out_file']  # "10246_cdfs_multirun_1498677216_mcmc.h5"
     param_file = files['param_file']  # 'eelg_multirun_params.py'
 
-    objname, res, mod, walker, iteration = printer(out_file)
+    objname, field, res, mod, walker, iteration = printer(out_file)
 
-    sed_out = sed(objname, res, mod, walker, iteration, param_file, **kwargs)
-
+    sed(objname, field, res, mod, walker, iteration, param_file, **kwargs)
 
 '''
 RUNNING WITH:
-python quickgrab.py --outname="10246_cdfs_multirun_1498677216_mcmc.h5" parfile="eelg_multirun_params.py" --field="cdfs"
+python quickgrab.py --outname=10246_cdfs_multirun_1498677216_mcmc.h5 parfile=eelg_multirun_params.py --field=cdfs
 
+NOW RUNNING WITH:
+python quickgrab.py --outname=10246_cdfs_multirun_1498677216_mcmc.h5 parfile=eelg_multirun_params.py
 '''

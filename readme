@@ -1,5 +1,7 @@
 Git readme - created 20 April 2017 (Jonathan Cohn)
 
+
+
 Files:
 eelg_5bins_params.py: same as eelg_emission_params.py, but tweak using different arrangements/numbers of SFH bins
 
@@ -8,6 +10,7 @@ eelg_all_fields_params.py: same as eelg_emission_params.py, but can use for CDFS
 eelg_emission_params.py: same as eelg_npSFH_params.py, now with nebular emission turned on
 
 eelg_multirun_params.py: same as eelg_emission_params.py, but now with field and objname as command line arguments
+-Running from terminal: mpirun -n 4 python prospector.py --param_file=eelg_multirun_params.py --outfile=1969_uds_test --niter=1200 --field=uds --objname=1969
 
 eelg_npSFH_params.py: param file for running prospector fits on EELGs, using nonparametric SFHs
 
@@ -24,6 +27,7 @@ nonparameteric_sfh_example_params.py: Joel's example of nonparametric SFH param 
 only_sfh.py: modified from Joel's extra_output.py, with lots of things cut/print statements added
 
 print_sfh.py: prints SFH from pickled file produced by sfh_output.py
+-Running with: python print_sfh.py --obj=1824 --field=cosmos
 
 prosp_dutils.py: code from Joel for plotting SFH (and other extras); I've edited this one a fair bit to figure out what's going on
 
@@ -34,7 +38,18 @@ prospector.py: prospector python file with initial guess SED plotting code added
 prospector_nest.py: new file from bd-j prospector
 
 quickgrab.py: simple code cannibalized from Prospector tutorial for plotting Prospector output
+-Running with: python quickgrab.py --outname=10246_cdfs_multirun_1498677216_mcmc.h5 parfile=eelg_multirun_params.py
 
 sfh_output.py: modified from Joel's extra_output.py for creating and pickling SFH
+-Running with: python sfh_output.py --outname=6459_cosmos_multirun_commentedcontinuum_1498501917_mcmc.h5 --ncalc=2000
 
 sfh_plot.py: copied from Joel's extra_output.py, for outputting the SFH, with minimal changes to Joel's code
+
+
+
+Note: Currently using...
+*eelg_multirun_params.py	to generate prospector output with emission lines
+*print_sfh.py			to print the SFH from the pickled file produced by sfh_output.py
+*prospector.py			to run prospector
+*quickgrab.py			to generate tracefigs, cornerfigs, spectra, kl convergence plots, SEDs, and chi^2 plots
+*sfh_output.py			to generate and pickle SFH from prospector's output sfr_fraction parameters
