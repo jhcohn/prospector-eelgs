@@ -50,6 +50,7 @@ sfh_plot.py: copied from Joel's extra_output.py, for outputting the SFH, with mi
 
 Note: Currently using...
 *eelg_multirun_params.py	to generate prospector output with emission lines
+*make_all_plots.py		to produce SFH plot, as well as SED with chi^2 plot
 *print_sfh.py			to print the SFH from the pickled file produced by sfh_output.py
 *prospector.py			to run prospector
 *quickgrab.py			to generate tracefigs, cornerfigs, spectra, kl convergence plots, SEDs, and chi^2 plots
