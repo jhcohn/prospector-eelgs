@@ -7,6 +7,7 @@ from prospect import fitting
 from prospect.likelihood import lnlike_spec, lnlike_phot, write_log
 import sys
 import argparse
+import pickle
 np.errstate(invalid='ignore')
 
 def printer(out_file):
@@ -23,13 +24,6 @@ def printer(out_file):
         elif count == 2:
             break
     print(field)
-    '''
-    objname = ''
-    for i in out_file:
-        if i == '_':
-            break
-        objname += i  # object id is named at the start of each out_file
-    '''
 
     res, pr, mod = bread.results_from(out_file)
     # print(res['chain'], 'chain')
@@ -137,10 +131,25 @@ def sed(objname, field, res, mod, walker, iteration, param_file, **kwargs):
     for i in range(len(wave)):
         wave_rest.append(wave[i]/(1 + zred))  # 1 + z = l_obs / l_emit --> l_emit = l_obs / (1 + z)
 
+    # OUTPUT SED results to files
+    write_res = objname + '_' + field + '_res_out.pkl'
+    with open(write_res, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(res, newfile, pickle.HIGHEST_PROTOCOL)  # res includes res['obs']['maggies'] and ...['maggies_unc']
+    write_sed = objname + '_' + field + '_sed_out.pkl'
+    with open(write_sed, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(phot, newfile, pickle.HIGHEST_PROTOCOL)
+    write_wave = objname + '_' + field + '_restwave_out.pkl'
+    with open(write_wave, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(wave_rest, newfile, pickle.HIGHEST_PROTOCOL)
+    write_spec = objname + '_' + field + '_spec_out.pkl'
+    with open(write_spec, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(spec, newfile, pickle.HIGHEST_PROTOCOL)
+    write_sps = objname + '_' + field + '_spswave_out.pkl'
+    with open(write_sps, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(sps.wavelengths, newfile, pickle.HIGHEST_PROTOCOL)
 
     # PLOT MODEL SED BEST FIT, INPUT PHOT
     yerr = res['obs']['maggies_unc']
-
     plt.subplot(111, xscale="log", yscale="log")
     plt.errorbar(wave_rest, res['obs']['maggies'], yerr=yerr, marker='o', linestyle='', color='b',
                  label='Observed photometry')
@@ -152,9 +161,16 @@ def sed(objname, field, res, mod, walker, iteration, param_file, **kwargs):
     plt.ylabel('Maggies')
     plt.show()
 
+    # OUTPUT CHI_SQ results to files
+    chi_sq = ((res['obs']['maggies'] - phot) / res['obs']['maggies_unc']) ** 2
+    write_chisq = objname + '_' + field + '_chisq_out.pkl'
+    with open(write_chisq, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(chi_sq, newfile, pickle.HIGHEST_PROTOCOL)
+    write_justchi = objname + '_' + field + '_justchi_out.pkl'
+    with open(write_justchi, 'wb') as newfile:
+        pickle.dump((res['obs']['maggies'] - phot) / res['obs']['maggies_unc'], newfile, pickle.HIGHEST_PROTOCOL)
 
     # PLOT CHI_SQ BESTFIT
-    chi_sq = ((res['obs']['maggies'] - phot) / res['obs']['maggies_unc']) ** 2
     plt.plot(wave_rest, chi_sq, 'o', color='b')
     plt.title(str(objname) + r' $\chi^2$')
     plt.xlabel('Rest frame wavelength [angstroms]')
@@ -166,7 +182,7 @@ def sed(objname, field, res, mod, walker, iteration, param_file, **kwargs):
 if __name__ == "__main__":
     # don't create keyword if not passed in!
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
-    parser.add_argument('parfile', type=str)
+    parser.add_argument('--parfile')
     parser.add_argument('--outname')
     # parser.add_argument('--field')
 
@@ -175,11 +191,12 @@ if __name__ == "__main__":
     for key in args.keys():
         kwargs[key] = args[key]
 
-    files = {'out_file': "10246_cdfs_multirun_1498677216_mcmc.h5", 'param_file': "eelg_multirun_params.py"}
+    files = {'outname': "10246_cdfs_multirun_1498677216_mcmc.h5", 'parfile': "eelg_multirun_params.py"}
     for key in kwargs.keys():
         files[key] = kwargs[key]
-    out_file = files['out_file']  # "10246_cdfs_multirun_1498677216_mcmc.h5"
-    param_file = files['param_file']  # 'eelg_multirun_params.py'
+    out_file = files['outname']  # "10246_cdfs_multirun_1498677216_mcmc.h5"
+    param_file = files['parfile']  # 'eelg_multirun_params.py'
+    print(param_file, out_file)
 
     objname, field, res, mod, walker, iteration = printer(out_file)
 

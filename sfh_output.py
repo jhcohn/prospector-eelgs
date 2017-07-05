@@ -220,19 +220,6 @@ def post_processing(out_file, filename, **kwargs):
     with open(filename, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(extra_output, newfile, pickle.HIGHEST_PROTOCOL)
 
-    '''
-    # NEW PLOTTING
-    fig = plt.figure()
-    sfh_ax = fig.add_axes([0.15, 0.15, 0.6, 0.6], zorder=32)
-    import boop
-    boop.add_sfh_plot([extra_output], fig, main_color=['black'], ax_inset=sfh_ax, text_size=3, lw=3)  # lw=5
-    plt.show()
-    # NEW PLOTTING
-    plt.plot(extra_output['extras']['t_sfh'], extra_output['bfit']['sfh'])
-    plt.ylabel(r'M$_\odot$ yr$^{-1}$')
-    plt.xlabel('Gyr')
-    plt.show()
-    '''
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):

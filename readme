@@ -1,7 +1,6 @@
 Git readme - created 20 April 2017 (Jonathan Cohn)
 
 
-
 Files:
 eelg_5bins_params.py: same as eelg_emission_params.py, but tweak using different arrangements/numbers of SFH bins
 
@@ -20,6 +19,9 @@ fast_mimic_params_latest.py: latest iteration of parameter file for running FAST
 
 input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq
 
+make_all_plots.py: calls print_sfh.py, then also prints SED and chi^2 on same plot from pickled files produced by quickgrab.py
+-Running with: python make_all_plots.py --obj=17423 --field=cosmos
+
 model_test.py: load model, test lnp of initial model given different values of metallicity
 
 nonparameteric_sfh_example_params.py: Joel's example of nonparametric SFH param file, off of which I'm basing eelg_npSFH_params.py
@@ -37,14 +39,13 @@ prospector.py: prospector python file with initial guess SED plotting code added
 
 prospector_nest.py: new file from bd-j prospector
 
-quickgrab.py: simple code cannibalized from Prospector tutorial for plotting Prospector output
+quickgrab.py: simple code cannibalized from Prospector tutorial for plotting Prospector output (NOW also creates pickled files to call to make SED, spec, and chi^2 plots)
 -Running with: python quickgrab.py --outname=10246_cdfs_multirun_1498677216_mcmc.h5 parfile=eelg_multirun_params.py
 
 sfh_output.py: modified from Joel's extra_output.py for creating and pickling SFH
 -Running with: python sfh_output.py --outname=6459_cosmos_multirun_commentedcontinuum_1498501917_mcmc.h5 --ncalc=2000
 
 sfh_plot.py: copied from Joel's extra_output.py, for outputting the SFH, with minimal changes to Joel's code
-
 
 
 Note: Currently using...

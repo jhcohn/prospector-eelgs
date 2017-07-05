@@ -1,7 +1,7 @@
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
-import argparse  # testing
+import argparse
 # run from command line using (in snow environment): python print_sfh.py --obj=1824
 
 '''
@@ -89,6 +89,21 @@ def add_sfh_plot(exout, fig, ax_loc=None,
 # objs = [kwargs['obj']]
 # for obj in objs:
 def plotter(input):
+
+    # MAKE SURE OBJ AND FIELD ARE DEFINED
+    obj = ''
+    count = 0
+    field = ''
+    for i in input:
+        if i == '_':
+            count += 1
+        elif count == 0:
+            obj += i
+        elif count == 1:
+            field += i
+        elif count == 2:
+            break
+
     with open(input, 'rb') as file:
         extra_output = pickle.load(file)
         plt.plot(extra_output['extras']['t_sfh'], extra_output['bfit']['sfh'], lw=2)
