@@ -3,10 +3,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import print_sfh
+import uvj
 from matplotlib import gridspec
 
 
-def all_plots(files):
+def all_plots(files, objname, field, loc='upper left'):
+    # PLOT UVJ
+    # uvj.uvj_plot(objname, field)
+
+    # PLOT SFH, SED+
     # files should be a list of output files in order: sfh, res, sed, restwave, spec, spswave, chisq, justchi
     print_sfh.plotter(files[0])
 
@@ -29,40 +34,45 @@ def all_plots(files):
     with open(files[6], 'rb') as chisq:
         chi_sq = pickle.load(chisq)
     '''
+
     with open(files[7], 'rb') as justchi:
         chi = pickle.load(justchi)
 
     # plt.subplot(111, xscale="log", yscale="log")
     fig = plt.figure()
-    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
+    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])  # prepares fig to hold two axes, one atop other, size ratio 3:1
 
-    ax1 = plt.subplot(gs[0])
-    # plt.axvline(x=5270, color='k')
+    ax1 = plt.subplot(gs[0])  # ax1 = bigger upper axis
+    # plt.axvline(x=5270, color='k')  # proving no offset in two axes
     ax1.set_yscale("log")
     ax1.set_xscale("log")
     ax1.set_title(field + '-' + obj)
     line11 = ax1.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'],
-                          marker='o', linestyle='', color='b')  # , label='Observed photometry')
-    line12 = ax1.plot(wave_rest, sed, 'o', color='r')
-    line13 = ax1.plot(sps_wave, spec, color='b', alpha=0.5)
-    ax1.set_ylabel('Maggies')
+                          marker='o', linestyle='', color='b')  # plot observations
+    line12 = ax1.plot(wave_rest, sed, 'o', color='r')  # plot best fit model
+    line13 = ax1.plot(sps_wave, spec, color='b', alpha=0.5)  # plot spectrum
+    ax1.set_ylabel(r'Maggies')
 
-    ax2 = plt.subplot(gs[1], sharex=ax1)
-    line2 = ax2.plot(wave_rest, chi, 'o', color='k')  # chi_sq
-    zero = [0] * len(sps_wave)
-    ax2.plot(sps_wave, zero, color='k')
-    plt.setp(ax1.get_xticklabels(), visible=False)
-    yticks = ax2.yaxis.get_major_ticks()
-    yticks[-1].label1.set_visible(False)
-    # ax2.set_ylabel(r'$\chi^2$')
+    ax2 = plt.subplot(gs[1], sharex=ax1)  # ax2 = smaller lower axis
+    line2 = ax2.plot(wave_rest, chi, 'o', color='k')  # plot chi
+    plt.axhline(y=0, color='k')  # plot horizontal line at y=0 on chi plot
+    plt.setp(ax1.get_xticklabels(), visible=False)  # hide xtick labels on upper axis
+    yticks = ax2.yaxis.get_major_ticks()  # show ytick labels on lower axis
+    yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
     ax2.set_ylabel(r'$\chi$')
-    ax2.set_xlabel('Rest frame wavelength')
+    ax2.set_xlabel(r'Rest frame wavelength')
 
-    ax1.legend((line11, line12, line13, line2), loc='upper right',
-               labels=['Model', 'Spectrum', 'Observed Photometry', r'$\chi$'])
+    ax1.legend((line11, line12, line13, line2), loc=loc, prop={'size': 14},
+               labels=[r'Model', r'Spectrum', r'Observed Photometry', r'$\chi$'])
 
-    # plt.axvline(x=5270, color='k')
+    # plt.axvline(x=5270, color='k')  # proving no offset in two axes
     plt.subplots_adjust(hspace=.0)
+
+    # TESTING
+    # UVJ inset on SED+ plot
+    from mpl_toolkits.axes_grid.inset_locator import inset_axes
+    inset = inset_axes(ax1, width="25%", height=2.5, loc=2)  # create inset axis: width (%), height (inches), location
+    uvj.uvj_plot(objname, field, title=False, labels=False, lims=True, size=20)  # add uvj plot to inset axis
     plt.show()
 
 if __name__ == "__main__":
@@ -92,9 +102,37 @@ if __name__ == "__main__":
 
     files = [sfh, res, sed, restwave, spec, spswave, chisq, justchi]
 
-    all_plots(files)
+    all_plots(files, obj, field, loc='upper right')
 
 '''
 Currently running with:
 python make_all_plots.py --obj=17423 --field=cosmos
+'''
+
+'''
+plt.subplot(211, xscale="log", yscale="log")
+plt.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'],
+             marker='o', linestyle='', color='b', label='Observed photometry')
+plt.plot(wave_rest, sed, 'o', color='r')
+plt.plot(sps_wave, spec, color='b', alpha=0.5)
+
+plt.subplot(212)
+plt.plot(wave_rest, chi_sq, 'o', color='b')
+
+#                            plt.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'],
+#                                         marker='o', linestyle='', color='b', label='Observed photometry')
+#                            plt.plot(wave_rest, sed, 'o', label='Model at {},{}'.format(walker, iteration), color='r')
+#                            plt.legend(loc="best", fontsize=20)
+#                            plt.title(str(objname) + ' SED')
+#                            plt.plot(sps_wave, spec, color='b', alpha=0.5)
+#                            plt.xlabel('Rest frame wavelength [angstroms]')
+#                            plt.ylabel('Maggies')
+plt.show()
+'''
+'''
+plt.plot(wave_rest, chi_sq, 'o', color='b')
+plt.title(str(objname) + r' $\chi^2$')
+plt.xlabel('Rest frame wavelength [angstroms]')
+plt.ylabel(r'$\chi^2$')
+plt.show()
 '''

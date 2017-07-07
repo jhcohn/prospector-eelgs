@@ -109,7 +109,8 @@ def calc_extra_quantities(sample_results, ncalc=3000, **kwargs):
                                   ir_priors=opts['ir_priors'], include_maxlnprob=True, nsamp=ncalc)
 
     ##### initialize output arrays for SFH + emission line posterior draws
-    half_time, sfr_10, sfr_100, ssfr_100, stellar_mass, ssfr_10 = [np.zeros(shape=(ncalc)) for i in range(6)]
+    half_time, sfr_10, sfr_100, ssfr_100, stellar_mass, ssfr_10, ssfr_full = [np.zeros(shape=(ncalc)) for i in range(7)]
+    # BUCKET ssfr_full added by me^ (range(6) --> range(7))
 
     ##### set up time vector for full SFHs
     t = set_sfh_time_vector(sample_results, ncalc)  # returns array of len=18
@@ -161,6 +162,8 @@ def calc_extra_quantities(sample_results, ncalc=3000, **kwargs):
         ssfr_10[jj] = sfr_10[jj] / stellar_mass[jj]
         ssfr_100[jj] = sfr_100[jj] / stellar_mass[jj]
 
+        ssfr_full = intsfr[:, jj] / stellar_mass[jj]  # BUCKET added by me
+
         loop += 1
         print('loop', loop)
 
@@ -176,7 +179,8 @@ def calc_extra_quantities(sample_results, ncalc=3000, **kwargs):
               'parnames': np.array(
                   ['half_time', 'sfr_10', 'sfr_100', 'ssfr_10', 'ssfr_100', 'stellar_mass']),
               'sfh': intsfr,
-              't_sfh': t}
+              't_sfh': t,
+              'ssfr': ssfr_full}
     extra_output['extras'] = extras
 
     #### BEST-FITS
@@ -258,7 +262,8 @@ if __name__ == "__main__":
         elif count == 2:
             break
 
-    write = obj + '_' + field + '_sfh_out.pkl'
+    write = obj + '_' + field + '_sfh_out.pkl'  # ORIGINAL
+    # write = obj + '_' + field + '_sfh_out2.pkl'  # TESTING
 
     print(kwargs)
     post_processing(out_file=outname, filename=write, **kwargs)
