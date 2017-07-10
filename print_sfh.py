@@ -13,7 +13,7 @@ base = '_sfh_out.pkl'  # pickled extra_output file base (file[i] = objs[i] + bas
 
 def add_sfh_plot(exout, fig, ax_loc=None,
                  main_color=None, tmin=False,  # tmin was 0.01
-                 text_size=1, ax_inset=None, lw=1, specific=False):
+                 text_size=1, ax_inset=None, lw=1):
     '''
     add a small SFH plot at ax_loc
     text_size: multiply font size by this, to accomodate larger/smaller figures
@@ -35,15 +35,7 @@ def add_sfh_plot(exout, fig, ax_loc=None,
         t = extra_output['extras']['t_sfh']
         perc = np.zeros(shape=(len(t), 3))
         for jj in xrange(len(t)):
-            if specific:  # TESTING
-                print(extra_output['extras']['ssfr'])
-                # print(len(t), len(perc), len(extra_output['extras']['ssfr']), len(extra_output['extras']['sfh']))
-                print(perc[jj, :])
-                print(extra_output['extras']['ssfr'][jj])
-                perc[jj, :] = np.percentile(extra_output['extras']['ssfr'][jj, :], [16.0, 50.0, 84.0])
-                # ^too many indices for array
-            else:  # ORIGINAL
-                perc[jj, :] = np.percentile(extra_output['extras']['sfh'][jj, :], [16.0, 50.0, 84.0])
+            perc[jj, :] = np.percentile(extra_output['extras']['sfh'][jj, :], [16.0, 50.0, 84.0])
             # 68.2% of population within 1 sigma <--> +/- 34.1%
 
         '''
@@ -116,9 +108,10 @@ def plotter(input, specific=False):
         extra_output = pickle.load(file)
         if specific:  # TESTING
             plt.plot(extra_output['extras']['t_sfh'], extra_output['extras']['ssfr'], lw=2)
+            plt.ylabel(r'Best-fit sSFR [yr$^{-1}$]')
         else:  # ORIGINAL
             plt.plot(extra_output['extras']['t_sfh'], extra_output['bfit']['sfh'], lw=2)
-        plt.ylabel(r'Best-fit SFH [M$_\odot$ yr$^{-1}$]')
+            plt.ylabel(r'Best-fit SFH [M$_\odot$ yr$^{-1}$]')
         plt.xlabel('t [Gyr]')
         plt.rc('xtick', labelsize=20)
         plt.rc('ytick', labelsize=20)
@@ -129,17 +122,19 @@ def plotter(input, specific=False):
         plt.title(field + '-' + obj)
         plt.show()
 
-        fig = plt.figure()
-        sfh_ax = fig.add_axes([0.15, 0.15, 0.6, 0.6], zorder=32)
-        add_sfh_plot([extra_output], fig, main_color=['black'], ax_inset=sfh_ax, text_size=3, lw=3, specific=specific)
-        sfh_ax.invert_xaxis()
-        plt.title(field + '-' + obj)
-        plt.show()
+        if not specific:
+            fig = plt.figure()
+            sfh_ax = fig.add_axes([0.15, 0.15, 0.6, 0.6], zorder=32)
+            add_sfh_plot([extra_output], fig, main_color=['black'], ax_inset=sfh_ax, text_size=3, lw=3)
+            sfh_ax.invert_xaxis()
+            plt.title(field + '-' + obj)
+            plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('--obj')
     parser.add_argument('--field')
+    parser.add_argument('--spec')
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -147,16 +142,21 @@ if __name__ == "__main__":
         kwargs[key] = args[key]
 
     obj = kwargs['obj']
-
     field = kwargs['field']
-    base = '_sfh_out2.pkl'  # TESTING
-    # base = '_sfh_out.pkl'  # ORIGINAL
+    specific = kwargs['spec']
+
+    if specific:
+        base = '_sfh_out2.pkl'  # TESTING
+    else:
+        base = '_sfh_out.pkl'  # ORIGINAL
     file = obj + '_' + field + base
 
-    plotter(file, specific=False)  # TESTING: specific=True; ORIGINAL: specific=False (or remove "specific" keyword)
+    plotter(file, specific=specific)  # TESTING: specific=True; ORIGINAL: specific=False (or remove "specific" keyword)
 
 '''
 RUNNING WITH:
 
 python print_sfh.py --obj=1824 --field=cosmos
+
+python print_sfh.py --obj=1824 --field=cosmos --spec=True  # TESTING
 '''

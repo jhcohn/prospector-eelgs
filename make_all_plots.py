@@ -47,6 +47,7 @@ def all_plots(files, objname, field, loc='upper left'):
     ax1.set_yscale("log")
     ax1.set_xscale("log")
     ax1.set_title(field + '-' + obj)
+    # print('astqweaufo', results['obs']['effective_width'])
     line11 = ax1.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'],
                           marker='o', linestyle='', color='b')  # plot observations
     line12 = ax1.plot(wave_rest, sed, 'o', color='r')  # plot best fit model
@@ -62,8 +63,8 @@ def all_plots(files, objname, field, loc='upper left'):
     ax2.set_ylabel(r'$\chi$')
     ax2.set_xlabel(r'Rest frame wavelength')
 
-    ax1.legend((line11, line12, line13, line2), loc=loc, prop={'size': 14},
-               labels=[r'Model', r'Spectrum', r'Observed Photometry', r'$\chi$'])
+    ax1.legend((line11, line12, line13, line2), loc=loc, prop={'size': 20},
+               labels=[r'Model', r'Spectrum', r'Observed Photometry', r'$\chi$'], numpoints=1)
 
     # plt.axvline(x=5270, color='k')  # proving no offset in two axes
     plt.subplots_adjust(hspace=.0)
@@ -71,7 +72,8 @@ def all_plots(files, objname, field, loc='upper left'):
     # TESTING
     # UVJ inset on SED+ plot
     from mpl_toolkits.axes_grid.inset_locator import inset_axes
-    inset = inset_axes(ax1, width="25%", height=2.5, loc=2)  # create inset axis: width (%), height (inches), location
+    inset = inset_axes(ax1, width="15%", height=2., loc=1)  # create inset axis: width (%), height (inches), location
+    # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left?), loc=4 (lower right?)
     uvj.uvj_plot(objname, field, title=False, labels=False, lims=True, size=20)  # add uvj plot to inset axis
     plt.show()
 
@@ -102,37 +104,9 @@ if __name__ == "__main__":
 
     files = [sfh, res, sed, restwave, spec, spswave, chisq, justchi]
 
-    all_plots(files, obj, field, loc='upper right')
+    all_plots(files, obj, field, loc='upper left')
 
 '''
 Currently running with:
 python make_all_plots.py --obj=17423 --field=cosmos
-'''
-
-'''
-plt.subplot(211, xscale="log", yscale="log")
-plt.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'],
-             marker='o', linestyle='', color='b', label='Observed photometry')
-plt.plot(wave_rest, sed, 'o', color='r')
-plt.plot(sps_wave, spec, color='b', alpha=0.5)
-
-plt.subplot(212)
-plt.plot(wave_rest, chi_sq, 'o', color='b')
-
-#                            plt.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'],
-#                                         marker='o', linestyle='', color='b', label='Observed photometry')
-#                            plt.plot(wave_rest, sed, 'o', label='Model at {},{}'.format(walker, iteration), color='r')
-#                            plt.legend(loc="best", fontsize=20)
-#                            plt.title(str(objname) + ' SED')
-#                            plt.plot(sps_wave, spec, color='b', alpha=0.5)
-#                            plt.xlabel('Rest frame wavelength [angstroms]')
-#                            plt.ylabel('Maggies')
-plt.show()
-'''
-'''
-plt.plot(wave_rest, chi_sq, 'o', color='b')
-plt.title(str(objname) + r' $\chi^2$')
-plt.xlabel('Rest frame wavelength [angstroms]')
-plt.ylabel(r'$\chi^2$')
-plt.show()
 '''

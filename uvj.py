@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
     # UVJ plotter
+    # Choose correct catalogs based on field name
     if field == 'cdfs':
         rest = '/home/jonathan/cdfs/cdfs.v1.6.9.rest.v0.9.cat'
         cat = '/home/jonathan/cdfs/cdfs.v1.6.11.cat'
@@ -25,10 +26,12 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
         cat = '/home/jonathan/uds/uds.v1.5.10.cat'
         zname = '/home/jonathan/uds/uds.v1.5.8.zout'
 
+    # load catalogs
     s = np.loadtxt(rest)  # rest frame catalog
-    main = np.loadtxt(cat)  # main cat (was cdfsmaincat [now cdfsmaincat-bug])
-    redshift = np.loadtxt(zname)
+    main = np.loadtxt(cat)  # main catalog
+    redshift = np.loadtxt(zname)  # redshift catalog
 
+    # initialize everything we'll need
     objuse = []
     zcut = []
     UV = []
@@ -39,7 +42,7 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
     y = []
     for i in range(len(main)):
         # USE FLAG AND Z_PHOT for each obj) (note: len(main[0] = 156; elements 153:155 = use, snr, use_nosnr, z_spec)
-        objuse.append(main[i][-4])  # index good for all main cats
+        objuse.append(main[i][-4])  # index good for all main cats: last 4 elements are use, snr, use_nosnr, z_spec
         if main[i][-1] >= 0:  # if z_spec exists for this galaxy
             zcut.append(main[i][-1])  # index good for all main cats
         else:
@@ -82,6 +85,6 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
         plt.ylim(-.5, 2.5)
         plt.yticks([0.0, 1., 2.])
 
-    plt.xlabel(r'Rest frame $V - J$', fontsize=size)
-    plt.ylabel(r'Rest frame $U - V$', fontsize=size)
+    plt.xlabel(r'$V - J$ (Rest)', fontsize=size)
+    plt.ylabel(r'$U - V$ (Rest)', fontsize=size)
     plt.show()

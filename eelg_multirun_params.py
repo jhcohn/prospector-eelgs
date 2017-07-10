@@ -38,13 +38,7 @@ run_params = {'verbose': True,
               'convergence_check_interval': 100,  # Fix convergence test problem
               'convergence_kl_threshold': 0.0  # Fix convergence test problem
               }
-run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']
-
-'''
-id = str(1824)
-field = 'cosmos'
-objname = run_params['objname']
-'''
+run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']  # + '_' +run_params['field']
 
 ############
 # FILTERS
@@ -152,16 +146,22 @@ def get_names(field):
     if field == 'cosmos':
         photname = '/home/jonathan/cosmos/cosmos.v1.3.8.cat'
         zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'
+        filternames = cos_filternames
+        filts = cos_filts
 
     elif field == 'cdfs':
         photname = '/home/jonathan/cdfs/cdfs.v1.6.11.cat'
         zname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout'
+        filternames = cdfs_filternames
+        filts = cdfs_filts
 
     elif field == 'uds':
         photname = '/home/jonathan/uds/uds.v1.5.10.cat'
         zname = '/home/jonathan/uds/uds.v1.5.8.awk.zout'
+        filternames = uds_filternames
+        filts = uds_filts
 
-    return photname, zname
+    return photname, zname, filternames, filts
 
 
 def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
@@ -172,18 +172,18 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     zp_err: inflate the errors by the zeropoint offsets from Skelton+14
     '''
 
-    photname, zname = get_names(field)
+    photname, zname, filternames, filts = get_names(field)
 
     # OPEN FILE, LOAD DATA
     with open(photname, 'r') as f:
         hdr = f.readline().split()
     dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
-    dat = np.loadtxt(photname, comments='#', delimiter=' ',
-                     dtype=dtype)
+    dat = np.loadtxt(photname, comments='#', delimiter=' ', dtype=dtype)
 
     # EXTRACT FILTERS, FLUXES, ERRORS FOR OBJECT
     obj_idx = (dat['id'] == objname)
     # print(dat[obj_idx]['id'], 'idx')
+    '''
     if field == 'cdfs':
         filternames = cdfs_filternames
         filts = cdfs_filts
@@ -193,6 +193,7 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     elif field == 'uds':
         filternames = uds_filternames
         filts = uds_filts
+    '''
 
     filters = np.array(filts)  # [f[2:] for f in dat.dtype.names if f[0:2] == 'f_'])
     print(filters)
@@ -215,6 +216,9 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     obs = {}
     obs['filters'] = observate.load_filters(filters)
     obs['wave_effective'] = np.array([filt.wave_effective for filt in obs['filters']])
+    obs['effective_width'] = np.array([filt.effective_width for filt in obs['filters']])  # TESTING added for widths
+    print(obs['effective_width'], 'lookatme!!')
+    print(obs['filters'])
     obs['phot_mask'] = phot_mask
     obs['maggies'] = maggies
     obs['maggies_unc'] = maggies_unc
@@ -324,12 +328,14 @@ model_params.append({'name': 'logtau', 'N': 1,
                      'prior_function': tophat,
                      'prior_args': {'mini': -1, 'maxi': 2}})
 
+'''  # DON'T NEED FOR npSFH
 model_params.append({'name': 'tage', 'N': 1,
                      'isfree': False,  # NEW turn off
                      'init': 1.0,
                      'units': 'Gyr',
                      'prior_function': tophat,
                      'prior_args': {'mini': 0.1, 'maxi': 14.0}})  # 0.01, 'maxi': 14.0}})
+'''
 
 model_params.append({'name': 'tburst', 'N': 1,
                      'isfree': False,
@@ -452,6 +458,7 @@ model_params.append({'name': 'peraa', 'N': 1,
 model_params.append({'name': 'mass_units', 'N': 1,
                      'isfree': False,
                      'init': 'mstar'})
+# TURN ON DUST EMISSION FOR LOW-z
 # mstar = stellar mass; to convert to SFH, need mass formed (requires calling fsps to convert)
 
 
@@ -485,8 +492,8 @@ class BurstyModel(sedmodel.SedModel):  # NEW, replacing below
         lnp_prior = 0
 
         # sum of SFH fractional bins <= 1.0
-        print(self.theta_index['sfr_fraction'], 'theta_index')
-        print(theta, 'theta')
+        # print(self.theta_index['sfr_fraction'], 'theta_index')
+        # print(theta, 'theta')
         # print(theta[0], 'sfr_theta_index')
         if 'sfr_fraction' in self.theta_index:
             sfr_fraction = theta[self.theta_index['sfr_fraction']]
@@ -537,7 +544,7 @@ def load_model(objname, field, agelims=[], **extras):
     # REDSHIFT
     # open file, load data
 
-    photname, zname = get_names(field)
+    photname, zname, filtername, filts = get_names(field)
 
     with open(photname, 'r') as f:
         hdr = f.readline().split()
@@ -561,18 +568,12 @@ def load_model(objname, field, agelims=[], **extras):
     print(tuniv, 'tuniv')
 
     n = [p['name'] for p in model_params]
-    model_params[n.index('tage')]['prior_args']['maxi'] = tuniv
+    # model_params[n.index('tage')]['prior_args']['maxi'] = tuniv
 
     # NONPARAMETRIC SFH  # NEW
     # agelims[-1] = np.log10(tuniv*1e9)
-    '''
     agelims = [0.0, 7.0, 8.0, (8.0 + (np.log10(tuniv*1e9)-8.0)/4), (8.0 + 2*(np.log10(tuniv*1e9)-8.0)/4),
                (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
-    '''
-    # NEWAGELIMS
-    agelims = [0.0, 8.0, (8.0 + (np.log10(tuniv*1e9)-8.0)/4), (8.0 + 2*(np.log10(tuniv*1e9)-8.0)/4),
-               (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
-    # NEWAGELIMS
     ncomp = len(agelims) - 1
     agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
 
@@ -603,3 +604,20 @@ def load_model(objname, field, agelims=[], **extras):
 
 
 model_type = BurstyModel
+
+'''
+RUNNING WITH
+mpirun -n 4 python prospector.py --param_file=eelg_multirun_params.py --outfile=1969_uds_test --niter=1200 --field=uds
+--objname=1969
+
+NOTES ON OBJECTS:
+cdfs 10246 ("weak 5007 emission? continuum" according to Oesch file)
+cdfs 12682 (no comment in Oesch file; non-EELG)
+cosmos 1824 (Sanders et al paper, BIG eelg)
+cosmos 5029 ("4861/4959/5007" comment in Oesch file)
+cosmos 6459 ("serendip; comtinuum only" according to Oesch file)
+cosmos 7730 ("gorgeous 4861/4959/5007" according to Oesch file)
+cosmos 12105 (from Vy, EELG)
+cosmos 17423 (from Vy, EELG)
+
+'''

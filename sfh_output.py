@@ -162,7 +162,7 @@ def calc_extra_quantities(sample_results, ncalc=3000, **kwargs):
         ssfr_10[jj] = sfr_10[jj] / stellar_mass[jj]
         ssfr_100[jj] = sfr_100[jj] / stellar_mass[jj]
 
-        ssfr_full = intsfr[:, jj] / stellar_mass[jj]  # BUCKET added by me
+        ssfr_full = intsfr[:, jj] / stellar_mass[jj]  # TESTING added by me
 
         loop += 1
         print('loop', loop)
@@ -180,7 +180,7 @@ def calc_extra_quantities(sample_results, ncalc=3000, **kwargs):
                   ['half_time', 'sfr_10', 'sfr_100', 'ssfr_10', 'ssfr_100', 'stellar_mass']),
               'sfh': intsfr,
               't_sfh': t,
-              'ssfr': ssfr_full}
+              'ssfr': ssfr_full}  # TESTING 'ssfr'
     extra_output['extras'] = extras
 
     #### BEST-FITS
@@ -242,6 +242,7 @@ if __name__ == "__main__":
     # parser.add_argument('--mags_nodust', type=str2bool)
     # parser.add_argument('--ir_priors', type=str2bool)
     parser.add_argument('--ncalc', type=int)
+    parser.add_argument('--test')
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -262,8 +263,10 @@ if __name__ == "__main__":
         elif count == 2:
             break
 
-    write = obj + '_' + field + '_sfh_out.pkl'  # ORIGINAL
-    # write = obj + '_' + field + '_sfh_out2.pkl'  # TESTING
+    if kwargs['test']:
+        write = obj + '_' + field + '_sfh_out2.pkl'  # TESTING
+    else:
+        write = obj + '_' + field + '_sfh_out.pkl'  # ORIGINAL
 
     print(kwargs)
     post_processing(out_file=outname, filename=write, **kwargs)
