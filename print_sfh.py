@@ -2,13 +2,6 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
-# run from command line using (in snow environment): python print_sfh.py --obj=1824
-
-'''
-objs = ['1824', '7730', '12105', '17423']  # object IDs
-# objs = ['6459']
-base = '_sfh_out.pkl'  # pickled extra_output file base (file[i] = objs[i] + base)
-'''
 
 
 def add_sfh_plot(exout, fig, ax_loc=None,
@@ -106,7 +99,7 @@ def plotter(input, specific=False):
 
     with open(input, 'rb') as file:
         extra_output = pickle.load(file)
-        if specific:  # TESTING
+        if specific:  # TESTING (print ssfr instead of regular sfr)
             plt.plot(extra_output['extras']['t_sfh'], extra_output['extras']['ssfr'], lw=2)
             plt.ylabel(r'Best-fit sSFR [yr$^{-1}$]')
         else:  # ORIGINAL
@@ -134,7 +127,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('--obj')
     parser.add_argument('--field')
-    parser.add_argument('--spec')
+    parser.add_argument('--spec')  # TESTING (including ssfr if --spec=True)
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -146,7 +139,7 @@ if __name__ == "__main__":
     specific = kwargs['spec']
 
     if specific:
-        base = '_sfh_out2.pkl'  # TESTING
+        base = '_sfh_out2.pkl'  # TESTING (includes ssfr)
     else:
         base = '_sfh_out.pkl'  # ORIGINAL
     file = obj + '_' + field + base
@@ -154,7 +147,7 @@ if __name__ == "__main__":
     plotter(file, specific=specific)  # TESTING: specific=True; ORIGINAL: specific=False (or remove "specific" keyword)
 
 '''
-RUNNING WITH:
+# run from command line using (in snow environment): python print_sfh.py --obj=1824
 
 python print_sfh.py --obj=1824 --field=cosmos
 

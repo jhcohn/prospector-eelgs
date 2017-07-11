@@ -4,12 +4,14 @@ import numpy as np
 import argparse
 import print_sfh
 import uvj
+import widths  # WIDTHS
 from matplotlib import gridspec
 
 
-def all_plots(files, objname, field, loc='upper left'):
+def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=False):
     # PLOT UVJ
-    # uvj.uvj_plot(objname, field)
+    if sep_uvj:
+        uvj.uvj_plot(objname, field)
 
     # PLOT SFH, SED+
     # files should be a list of output files in order: sfh, res, sed, restwave, spec, spswave, chisq, justchi
@@ -47,12 +49,16 @@ def all_plots(files, objname, field, loc='upper left'):
     ax1.set_yscale("log")
     ax1.set_xscale("log")
     ax1.set_title(field + '-' + obj)
-    # print('astqweaufo', results['obs']['effective_width'])
     line11 = ax1.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'],
-                          marker='o', linestyle='', color='b')  # plot observations
-    line12 = ax1.plot(wave_rest, sed, 'o', color='r')  # plot best fit model
-    line13 = ax1.plot(sps_wave, spec, color='b', alpha=0.5)  # plot spectrum
+                          marker='o', linestyle='', color='b', label=r'Observed Photometry')  # plot observations
+    line12 = ax1.plot(wave_rest, sed, 'o', color='r', label=r'Model')  # plot best fit model
+    line13 = ax1.plot(sps_wave, spec, color='b', alpha=0.5, label=r'Spectrum')  # plot spectrum
     ax1.set_ylabel(r'Maggies')
+    if curves:
+        zred = 3.077  # HACK
+        # HACK REDSHIFTS: cos1824:3.077; cdfs10246:3.49; cdfs12682:4.89; cos5029:2.14; cos6459:0.53; cos7730:2.2;
+        # cos12105:3.29; cos17423:3.55
+        widths.plot_filts(field, zred, scale=(results['obs']['maggies'].max() / 10**3), rest=True)  # WIDTHS
 
     ax2 = plt.subplot(gs[1], sharex=ax1)  # ax2 = smaller lower axis
     line2 = ax2.plot(wave_rest, chi, 'o', color='k')  # plot chi
@@ -63,18 +69,19 @@ def all_plots(files, objname, field, loc='upper left'):
     ax2.set_ylabel(r'$\chi$')
     ax2.set_xlabel(r'Rest frame wavelength')
 
-    ax1.legend((line11, line12, line13, line2), loc=loc, prop={'size': 20},
-               labels=[r'Model', r'Spectrum', r'Observed Photometry', r'$\chi$'], numpoints=1)
+    ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
+    # (line11, line12, line13), labels=[r'Model', r'Spectrum', r'Observed Photometry'],
 
     # plt.axvline(x=5270, color='k')  # proving no offset in two axes
     plt.subplots_adjust(hspace=.0)
 
-    # TESTING
-    # UVJ inset on SED+ plot
-    from mpl_toolkits.axes_grid.inset_locator import inset_axes
-    inset = inset_axes(ax1, width="15%", height=2., loc=1)  # create inset axis: width (%), height (inches), location
-    # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left?), loc=4 (lower right?)
-    uvj.uvj_plot(objname, field, title=False, labels=False, lims=True, size=20)  # add uvj plot to inset axis
+    if not sep_uvj:  # as long as not plotting a separate uvj plot
+        # UVJ inset on SED+ plot
+        from mpl_toolkits.axes_grid.inset_locator import inset_axes
+        inset_axes(ax1, width="20%", height=2., loc=1)  # create inset axis: width (%), height (inches), location
+        # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right)
+        uvj.uvj_plot(objname, field, title=False, labels=False, lims=True, size=20)  # add uvj plot to inset axis
+
     plt.show()
 
 if __name__ == "__main__":

@@ -162,7 +162,7 @@ def calc_extra_quantities(sample_results, ncalc=3000, **kwargs):
         ssfr_10[jj] = sfr_10[jj] / stellar_mass[jj]
         ssfr_100[jj] = sfr_100[jj] / stellar_mass[jj]
 
-        ssfr_full = intsfr[:, jj] / stellar_mass[jj]  # TESTING added by me
+        ssfr_full = intsfr[:, jj] / stellar_mass[jj]  # TESTING added by me (includes ssfr)
 
         loop += 1
         print('loop', loop)
@@ -242,7 +242,7 @@ if __name__ == "__main__":
     # parser.add_argument('--mags_nodust', type=str2bool)
     # parser.add_argument('--ir_priors', type=str2bool)
     parser.add_argument('--ncalc', type=int)
-    parser.add_argument('--test')
+    parser.add_argument('--test')  # TESTING (including ssfr if --test=True)
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -264,7 +264,7 @@ if __name__ == "__main__":
             break
 
     if kwargs['test']:
-        write = obj + '_' + field + '_sfh_out2.pkl'  # TESTING
+        write = obj + '_' + field + '_sfh_out2.pkl'  # TESTING (includes ssfr)
     else:
         write = obj + '_' + field + '_sfh_out.pkl'  # ORIGINAL
 

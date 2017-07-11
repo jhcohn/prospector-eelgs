@@ -183,17 +183,6 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     # EXTRACT FILTERS, FLUXES, ERRORS FOR OBJECT
     obj_idx = (dat['id'] == objname)
     # print(dat[obj_idx]['id'], 'idx')
-    '''
-    if field == 'cdfs':
-        filternames = cdfs_filternames
-        filts = cdfs_filts
-    elif field == 'cosmos':
-        filternames = cos_filternames
-        filts = cos_filts
-    elif field == 'uds':
-        filternames = uds_filternames
-        filts = uds_filts
-    '''
 
     filters = np.array(filts)  # [f[2:] for f in dat.dtype.names if f[0:2] == 'f_'])
     print(filters)
@@ -216,9 +205,6 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     obs = {}
     obs['filters'] = observate.load_filters(filters)
     obs['wave_effective'] = np.array([filt.wave_effective for filt in obs['filters']])
-    obs['effective_width'] = np.array([filt.effective_width for filt in obs['filters']])  # TESTING added for widths
-    print(obs['effective_width'], 'lookatme!!')
-    print(obs['filters'])
     obs['phot_mask'] = phot_mask
     obs['maggies'] = maggies
     obs['maggies_unc'] = maggies_unc
@@ -619,5 +605,4 @@ cosmos 6459 ("serendip; comtinuum only" according to Oesch file)
 cosmos 7730 ("gorgeous 4861/4959/5007" according to Oesch file)
 cosmos 12105 (from Vy, EELG)
 cosmos 17423 (from Vy, EELG)
-
 '''
