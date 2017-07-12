@@ -19,14 +19,19 @@ fast_mimic_params_latest.py: latest iteration of parameter file for running FAST
 
 input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq
 
-make_all_plots.py: calls uvj.py, print_sfh.py, and then also prints SED and chi^2 on same plot from pickled files produced by quickgrab.py
+make_all_plots.py: calls uvj.py, print_sfh.py, and then also prints SED and chi^2 on same plot from pickled files produced by quickgrab.py; can also call widths.py
 -Running with: python make_all_plots.py --obj=17423 --field=cosmos
 
 model_test.py: load model, test lnp of initial model given different values of metallicity
 
+noelg_multirun_params.py: eelg_multirun_params.py, but with add_dust_emission turned on (also currently using different SFH bins)
+
 nonparameteric_sfh_example_params.py: Joel's example of nonparametric SFH param file, off of which I'm basing eelg_npSFH_params.py
 
 only_sfh.py: modified from Joel's extra_output.py, with lots of things cut/print statements added
+
+output_all.py: combined quickgrab.py + sfh_output.py; creates all _out.pkl files needed for make_all_plots.py
+-Running with: python output_all.py --outname=1824_cosmos_decoupled_n1200_1495729287_mcmc.h5 --parfile=eelg_multirun_params.py --ncalc=2000
 
 print_sfh.py: prints SFH from pickled file produced by sfh_output.py; if test=True, prints sSFR
 -Running with: python print_sfh.py --obj=1824 --field=cosmos --test=True
@@ -49,11 +54,11 @@ sfh_plot.py: copied from Joel's extra_output.py, for outputting the SFH, with mi
 
 uvj.py: code to make a uvj diagram for a given object, field, with the given object highlighted as a star
 
+widths.py: plot the filter response curves for a given field, for an object at a given redshift
 
 Note: Currently using...
 *eelg_multirun_params.py	to generate prospector output with emission lines
 *make_all_plots.py		to produce SFH plot, as well as SED with chi^2 and uvj plot
-*print_sfh.py			to print the SFH from the pickled file produced by sfh_output.py
+*print_sfh.py			to print the SFH (or sSFR) from the pickled file produced by sfh_output.py (or output_all.py)
 *prospector.py			to run prospector
-*quickgrab.py			to generate tracefigs, cornerfigs, spectra, kl convergence plots, SEDs, and chi^2 plots
-*sfh_output.py			to generate and pickle SFH from prospector's output sfr_fraction parameters
+*output_all.py			to generate tracefigs, cornerfigs and kl convergence plots, and to pickle SED info, spectra, wavelengths, chi, chi^2, SFR, and sSFR

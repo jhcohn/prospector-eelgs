@@ -410,13 +410,13 @@ model_params.append({'name': 'add_neb_emission', 'N': 1,
 model_params.append({'name': 'gas_logz', 'N': 1,
                      'isfree': True,  # DECOUPLE: True (False when coupled)
                      'init': 0.0,
-                     # 'depends_on': tie_gas_logz,  # BUCKET1 emission lines --> tie_gas_logz  # DECOUPLE --> remove line
+                     # 'depends_on': tie_gas_logz,  # BUCKET1 emission lines --> tie_gas_logz  # DECOUPLE --> remove
                      'units': r'log Z/Z_\odot',
                      'prior_function': tophat,
                      'prior_args': {'mini': -2.0, 'maxi': 0.5}})
 
 model_params.append({'name': 'gas_logu', 'N': 1,
-                     'isfree': True,  # BUCKET1 emission lines --> isfree: True
+                     'isfree': False,  # BUCKET1 emission lines --> isfree: True (OR False because not important)
                      'init': -2.0,
                      'units': '',
                      'prior_function': tophat,
@@ -557,9 +557,13 @@ def load_model(objname, field, agelims=[], **extras):
     # model_params[n.index('tage')]['prior_args']['maxi'] = tuniv
 
     # NONPARAMETRIC SFH  # NEW
-    # agelims[-1] = np.log10(tuniv*1e9)
+    '''
     agelims = [0.0, 7.0, 8.0, (8.0 + (np.log10(tuniv*1e9)-8.0)/4), (8.0 + 2*(np.log10(tuniv*1e9)-8.0)/4),
                (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
+    '''
+    agelims = [0.0, 8.4, 8.7, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2*(np.log10(tuniv*1e9) - 9.0)/3),
+               np.log10(tuniv*1e9)]
+    # 0, 250Myr, 500Myr, 1Gyr, 1Gyr + (tuniv - 1Gyr)/3, 1Gyr + 2*(tuniv - 1Gyr)/3, 1Gyr + 3*(tuniv - 1Gyr)/3 = tuniv
     ncomp = len(agelims) - 1
     agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
 
@@ -601,8 +605,32 @@ cdfs 10246 ("weak 5007 emission? continuum" according to Oesch file)
 cdfs 12682 (no comment in Oesch file; non-EELG)
 cosmos 1824 (Sanders et al paper, BIG eelg)
 cosmos 5029 ("4861/4959/5007" comment in Oesch file)
-cosmos 6459 ("serendip; comtinuum only" according to Oesch file)
+cosmos 6459 ("serendip; continuum only" according to Oesch file)
 cosmos 7730 ("gorgeous 4861/4959/5007" according to Oesch file)
 cosmos 12105 (from Vy, EELG)
 cosmos 17423 (from Vy, EELG)
+'''
+
+'''
+Think about plots!
+Total mass formed vs time
+(d_M vs stellar mass?)
+(SFH vs stellar mass)
+
+What histograms to include? Mass of EELGs?
+
+Plot EELG mass determined from prospector vs mass from FAST (and show for non-EELGs to show prospector overestimates
+standard galaxy mass by 40% compared to FAST
+
+Could at least say 1824 looks more like delta-object in SFH than 6459
+--> take angle of rising SFH?
+--> make fig showing how peaky the SFR(t) is: Stack SFR(t) for subsets of galaxies (one for EELGs, one for others)
+--> potentially letter in SFH
+From Joel: galaxies above sfr main seq have rising SFH, those below have falling (Joel sample has bizarre selection, so
+pick other sample and do same thing at z~0 and compare to our sample at z~3)
+
+MAIN GOAL: make fig for peakiness in SFR(t) for EELG stack, and one for non-EELG stack
+Maybe also SFR(t) vs mass as suggested above
+
+Focus on z~2.5-4
 '''

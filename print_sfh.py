@@ -56,7 +56,7 @@ def add_sfh_plot(exout, fig, ax_loc=None,
         xmin = tmin
 
     # axlim_sfh = [xmax, xmin, ymin * .7, ymax * 1.4]
-    axlim_sfh = [13.6, 10**-3, 10**-1, 10**3]
+    axlim_sfh = [13.6, 10**-2, 10**-1, 10**3]  # xmin at 10**-2, unless using 10 Myr bin, in which cas xmin at 10**-3
     # axlim_sfh = [4, 1., 10**-1, 10**3]  # redshift
     ax_inset.axis(axlim_sfh)
     ax_inset.set_ylabel(r'SFR [M$_{\odot}$/yr]', fontsize=axfontsize * 3, labelpad=2 * text_size)
@@ -100,8 +100,10 @@ def plotter(input, specific=False):
     with open(input, 'rb') as file:
         extra_output = pickle.load(file)
         if specific:  # TESTING (print ssfr instead of regular sfr)
-            plt.plot(extra_output['extras']['t_sfh'], extra_output['extras']['ssfr'], lw=2)
+            plt.loglog(extra_output['extras']['t_sfh'], extra_output['extras']['ssfr'], lw=2, color='k')
             plt.ylabel(r'Best-fit sSFR [yr$^{-1}$]')
+            plt.xlim(10**-3, 13.6)
+            plt.ylim(10**-13, 10**-8)
         else:  # ORIGINAL
             plt.plot(extra_output['extras']['t_sfh'], extra_output['bfit']['sfh'], lw=2)
             plt.ylabel(r'Best-fit SFH [M$_\odot$ yr$^{-1}$]')

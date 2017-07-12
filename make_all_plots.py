@@ -49,10 +49,10 @@ def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=Fal
     ax1.set_yscale("log")
     ax1.set_xscale("log")
     ax1.set_title(field + '-' + obj)
-    line11 = ax1.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'],
-                          marker='o', linestyle='', color='b', label=r'Observed Photometry')  # plot observations
-    line12 = ax1.plot(wave_rest, sed, 'o', color='r', label=r'Model')  # plot best fit model
-    line13 = ax1.plot(sps_wave, spec, color='b', alpha=0.5, label=r'Spectrum')  # plot spectrum
+    ax1.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'],
+                 marker='o', linestyle='', color='r', label=r'Observed Photometry')  # plot observations
+    ax1.plot(wave_rest, sed, 'o', color='b', label=r'Model')  # plot best fit model
+    ax1.plot(sps_wave, spec, color='b', alpha=0.5, label=r'Spectrum')  # plot spectrum
     ax1.set_ylabel(r'Maggies')
     if curves:
         zred = 3.077  # HACK
@@ -98,8 +98,8 @@ if __name__ == "__main__":
 
     field = kwargs['field']
     pre = obj + '_' + field
-    base = '_out.pkl'
 
+    base = '_out.pkl'
     sfh = pre + '_sfh' + base
     res = pre + '_res' + base
     sed = pre + '_sed' + base

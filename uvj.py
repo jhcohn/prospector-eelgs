@@ -38,8 +38,8 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
     VJ = []
     Ksnr = []
     table = []
-    x = []
-    y = []
+    ax_uv = []
+    ax_vj = []
     for i in range(len(main)):
         # USE FLAG AND Z_PHOT for each obj) (note: len(main[0] = 156; elements 153:155 = use, snr, use_nosnr, z_spec)
         objuse.append(main[i][-4])  # index good for all main cats: last 4 elements are use, snr, use_nosnr, z_spec
@@ -51,30 +51,29 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
         # CREATE UVJ AXES
         UV.append(-2.5 * np.log10(s[i][11] / s[i][15]))  # indices good for all rest frame cats
         VJ.append(-2.5 * np.log10(s[i][15] / s[i][17]))  # indices good for all rest frame cats
-        if i == int(objname):
-            special_x = -2.5 * np.log10(s[i][11] / s[i][15])
-            special_y = -2.5 * np.log10(s[i][15] / s[i][17])
-            print(i, objname)
+        if i == int(objname) - 1:
+            special_uv = -2.5 * np.log10(s[i][11] / s[i][15])
+            special_vj = -2.5 * np.log10(s[i][15] / s[i][17])
+            print(main[i][0], int(objname), special_vj, special_uv)
 
         # SNR IN K BAND
         Ksnr.append(main[i][21] / main[i][22])  # f_Ksall / e_Ksall, indices good for all main cats
 
         # UVJ CORNER CUT, USE CUT, K-BAND SNR CUT, AND REDSHIFT CUT (zcut[i] < 2.369 if include F160W; else < 2.560)
         if objuse[i] == 1 and Ksnr[i] >= 10:  # >=20
-            y.append(UV[i])
-            x.append(VJ[i])
+            ax_uv.append(UV[i])
+            ax_vj.append(VJ[i])
             table.append(main[i][0])  # ID in catalog = main[i][0]
 
     # PLOT SCATTER OF REMAINING POINTS
-    plt.scatter(x, y, color='0.5', alpha=0.1, marker=".")
-    plt.scatter(special_x, special_y, color='b', marker="*", s=100)
+    plt.scatter(ax_vj, ax_uv, color='0.5', alpha=0.1, marker=".")  # x, y
+    plt.scatter(special_vj, special_uv, color='b', marker="*", s=100)
 
     if title:
         plt.title(field + '-' + objname)
     if labels:
         plt.text(-0.4, 1.35, 'Quiescent', fontsize=16)  # label quiescent region
         plt.text(-0.4, 1.1, 'Star-forming', fontsize=16)  # label star-forming region
-    # plt.text(-0.2, 1.175, 'Star-forming', fontsize=16)  # label star-forming region
     plt.plot([-0.5, 0.9], [1.3, 1.3], 'k')  # plot a line to show quiescent region ([x1,x2], [y1, y2])
     plt.plot([1.6, 1.6], [2.5, 2.0], 'k')  # plot a line to show quiescent region ([x1,x2], [y1, y2])
     plt.plot([0.9, 1.6], [1.3, 2.0], 'k')  # plot a line to show quiescent region ([x1,x2], [y1, y2])
@@ -82,8 +81,8 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
     if lims:
         plt.xlim(-1.5, 2.5)
         plt.xticks([-1, 0, 1, 2])
-        plt.ylim(-.5, 2.5)
-        plt.yticks([0.0, 1., 2.])
+        plt.ylim(-1., 2.5)
+        plt.yticks([-1., 0., 1., 2.])
 
     plt.xlabel(r'$V - J$ (Rest)', fontsize=size)
     plt.ylabel(r'$U - V$ (Rest)', fontsize=size)

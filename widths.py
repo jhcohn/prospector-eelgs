@@ -33,3 +33,7 @@ def plot_filts(field, zred, scale=1, rest=True):
                     y.append(float(line.split()[2]) * scale)  # scale the height of the curves, default normalized to 1
             plt.fill(x, y, alpha=0.25)
     # plt.show()
+
+'''
+# EDIT to select which specific filters I want to show
+'''

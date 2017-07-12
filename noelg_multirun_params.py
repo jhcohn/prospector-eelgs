@@ -387,14 +387,14 @@ model_params.append({'name': 'imf_type', 'N': 1,
                      'prior_args': None})
 
 ######## Dust Absorption ##############
-model_params.append({'name': 'dust_type', 'N': 1,  # NOELG?
+model_params.append({'name': 'dust_type', 'N': 1,
                      'isfree': False,
                      'init': 2,
                      'units': 'index',
                      'prior_function_name': None,
                      'prior_args': None})
 
-model_params.append({'name': 'dust2', 'N': 1,  # NOELG?
+model_params.append({'name': 'dust2', 'N': 1,
                      'isfree': True,
                      'init': 0.0,
                      'init_disp': 0.2,
@@ -568,9 +568,13 @@ def load_model(objname, field, agelims=[], **extras):
     # model_params[n.index('tage')]['prior_args']['maxi'] = tuniv
 
     # NONPARAMETRIC SFH  # NEW
-    # agelims[-1] = np.log10(tuniv*1e9)
+    '''
     agelims = [0.0, 7.0, 8.0, (8.0 + (np.log10(tuniv*1e9)-8.0)/4), (8.0 + 2*(np.log10(tuniv*1e9)-8.0)/4),
                (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
+    '''
+    agelims = [0.0, 8.4, 8.7, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2*(np.log10(tuniv*1e9) - 9.0)/3),
+               np.log10(tuniv*1e9)]
+    # 0, 250Myr, 500Myr, 1Gyr, 1Gyr + (tuniv - 1Gyr)/3, 1Gyr + 2*(tuniv - 1Gyr)/3, 1Gyr + 3*(tuniv - 1Gyr)/3 = tuniv
     ncomp = len(agelims) - 1
     agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
 

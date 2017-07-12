@@ -2,15 +2,21 @@ from prospect.models import model_setup
 from prospect.io import read_results
 import os, sys, time
 import prosp_dutils_orig as prosp_dutils  # original file without bunches of print statements
-# import prosp_dutils
 import numpy as np
 from copy import copy
 from astropy import constants
 import argparse
 import matplotlib.pyplot as plt
 import pickle
+import prospect.io.read_results as bread
+import matplotlib.pyplot as plt
+from prospect.io import write_results
+from prospect import fitting
+from prospect.likelihood import lnlike_spec, lnlike_phot, write_log
+np.errstate(invalid='ignore')
 
 
+# FROM sfh_output.py
 def maxprob_model(sample_results, sps):
     ### grab maximum probability, plus the thetas that gave it
     maxprob = sample_results['flatprob'].max()
@@ -110,7 +116,6 @@ def calc_extra_quantities(sample_results, ncalc=3000, **kwargs):
 
     ##### initialize output arrays for SFH + emission line posterior draws
     half_time, sfr_10, sfr_100, ssfr_100, stellar_mass, ssfr_10, ssfr_full = [np.zeros(shape=(ncalc)) for i in range(7)]
-    # BUCKET ssfr_full added by me^ (range(6) --> range(7))
 
     ##### set up time vector for full SFHs
     t = set_sfh_time_vector(sample_results, ncalc)  # returns array of len=18
@@ -161,8 +166,7 @@ def calc_extra_quantities(sample_results, ncalc=3000, **kwargs):
         stellar_mass[jj] = sfh_params['mass']
         ssfr_10[jj] = sfr_10[jj] / stellar_mass[jj]
         ssfr_100[jj] = sfr_100[jj] / stellar_mass[jj]
-
-        ssfr_full = intsfr[:, jj] / stellar_mass[jj]  # TESTING added by me (includes ssfr)
+        ssfr_full = intsfr[:, jj] / stellar_mass[jj]
 
         loop += 1
         print('loop', loop)
@@ -180,7 +184,7 @@ def calc_extra_quantities(sample_results, ncalc=3000, **kwargs):
                   ['half_time', 'sfr_10', 'sfr_100', 'ssfr_10', 'ssfr_100', 'stellar_mass']),
               'sfh': intsfr,
               't_sfh': t,
-              'ssfr': ssfr_full}  # TESTING 'ssfr'
+              'ssfr': ssfr_full}
     extra_output['extras'] = extras
 
     #### BEST-FITS
@@ -232,22 +236,161 @@ def str2bool(v):
         return False
 
 
+# FROM quickgrab.py
+def printer(out_file, corner=False, trace=False):
+    objname = ''
+    count = 0
+    field = ''
+    for i in kwargs['outname']:
+        if i == '_':
+            count += 1
+        elif count == 0:
+            objname += i
+        elif count == 1:
+            field += i
+        elif count == 2:
+            break
+    print(field)
+
+    res, pr, mod = bread.results_from(out_file)
+
+    # PRINT TRACE SHOWING HOW ITERATIONS CONVERGE FOR EACH PARAMETER
+    tracefig, prob = bread.param_evol(res)  # print tracefig, store probability
+    if trace:
+        plt.show()
+
+    # FIND WALKER, ITERATION THAT GIVE MAX (AND MIN) PROBABILITY
+    # print(prob)
+    print('max', prob.max())
+    row = prob.argmax() / len(prob[0])
+    col = prob.argmax() - row * len(prob[0])
+    walker, iteration = row, col
+    print(walker, iteration)
+
+    # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
+    if corner:
+        cornerfig = bread.subtriangle(res, start=400, thin=5, show_titles=True)
+        plt.show()
+    # For FAST: truths = [mass, age, tau, dust2] (for 1824: [9.78, 0.25, -1., 0.00])
+    return objname, field, res, mod, walker, iteration
+
+
+def sed(objname, field, res, mod, walker, iteration, param_file, base, print_it=False):
+    # PRINT MODEL SED FOR GALAXY
+    # We need the correct sps object to generate models
+    sargv = sys.argv
+    argdict = {'param_file': param_file}
+    clargs = model_setup.parse_args(sargv, argdict=argdict)
+    run_params = model_setup.get_run_params(argv=sargv, **clargs)
+    sps = model_setup.load_sps(**run_params)
+
+
+    # GET MODELED SPECTRA AND PHOTOMETRY
+    # These have the same shape as the obs['spectrum'] and obs['maggies'] arrays.
+    spec, phot, mfrac = mod.mean_model(res['chain'][walker, iteration, :], obs=res['obs'], sps=sps)
+
+    # PLOT SPECTRUM
+    wave = [f.wave_effective for f in res['obs']['filters']]
+    wave = np.asarray(wave)
+
+    # CHANGING OBSERVED TO REST FRAME WAVELENGTH
+    if field == 'cdfs':
+        datname = '/home/jonathan/cdfs/cdfs.v1.6.11.cat'
+        zname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout'
+    elif field == 'cosmos':
+        datname = '/home/jonathan/cosmos/cosmos.v1.3.8.cat'  # main catalog
+        zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'  # redshift catalog
+    elif field == 'uds':
+        datname = '/home/jonathan/uds/uds.v1.5.10.cat'
+        zname = '/home/jonathan/uds/uds.v1.5.8.zout'
+
+    with open(datname, 'r') as f:
+        hdr = f.readline().split()
+    dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
+    dat = np.loadtxt(datname, comments='#', delimiter=' ', dtype=dtype)
+
+    with open(zname, 'r') as fz:
+        hdr_z = fz.readline().split()
+    dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
+    zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
+
+    idx = dat['id'] == objname  # array filled: False when dat['id'] != objname, True when dat['id'] == objname
+    zred = zout['z_spec'][idx][0]  # z = z_spec
+    if zred == -99:
+        zred = zout['z_peak'][idx][0]  # if z_spec does not exist, z = z_phot
+    print('redshift', zred)
+
+    wave_rest = []  # REST FRAME WAVELENGTH
+    for i in range(len(wave)):
+        wave_rest.append(wave[i]/(1 + zred))  # 1 + z = l_obs / l_emit --> l_emit = l_obs / (1 + z)
+
+    # OUTPUT SED results to files
+    write_res = objname + '_' + field + '_res' + base  # results
+    with open(write_res, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(res, newfile, pickle.HIGHEST_PROTOCOL)  # res includes res['obs']['maggies'] and ...['maggies_unc']
+    write_sed = objname + '_' + field + '_sed' + base  # model sed
+    with open(write_sed, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(phot, newfile, pickle.HIGHEST_PROTOCOL)
+    write_wave = objname + '_' + field + '_restwave' + base  # rest frame wavelengths
+    with open(write_wave, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(wave_rest, newfile, pickle.HIGHEST_PROTOCOL)
+    write_spec = objname + '_' + field + '_spec' + base  # spectrum
+    with open(write_spec, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(spec, newfile, pickle.HIGHEST_PROTOCOL)
+    write_sps = objname + '_' + field + '_spswave' + base  # wavelengths that go with spectrum
+    with open(write_sps, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(sps.wavelengths, newfile, pickle.HIGHEST_PROTOCOL)
+
+    # OUTPUT CHI_SQ results to files
+    chi_sq = ((res['obs']['maggies'] - phot) / res['obs']['maggies_unc']) ** 2
+    write_chisq = objname + '_' + field + '_chisq' + base
+    with open(write_chisq, 'wb') as newfile:  # 'wb' because binary format
+        pickle.dump(chi_sq, newfile, pickle.HIGHEST_PROTOCOL)
+    write_justchi = objname + '_' + field + '_justchi' + base
+    with open(write_justchi, 'wb') as newfile:
+        pickle.dump((res['obs']['maggies'] - phot) / res['obs']['maggies_unc'], newfile, pickle.HIGHEST_PROTOCOL)
+
+    if print_it:
+        plt.plot(sps.wavelengths, spec)
+        plt.xlabel('Wavelength [angstroms]')
+        plt.title(str(objname) + ' spec')
+        plt.show()
+
+        # HOW CONVERGED IS THE CODE?? LET'S FIND OUT!
+        parnames = np.array(res['model'].theta_labels())
+        fig, kl_ax = plt.subplots(1, 1, figsize=(7, 7))
+        for i in xrange(parnames.shape[0]):
+            kl_ax.plot(res['kl_iteration'], np.log10(res['kl_divergence'][:, i]), 'o', label=parnames[i], lw=1.5,
+                       linestyle='-', alpha=0.6)
+
+        kl_ax.set_ylabel('log(KL divergence)')
+        kl_ax.set_xlabel('iteration')
+        # kl_ax.set_xlim(0, nsteps*1.1)
+
+        kl_div_lim = res['run_params'].get('convergence_kl_threshold', 0.018)
+        kl_ax.axhline(np.log10(kl_div_lim), linestyle='--', color='red', lw=2, zorder=1)
+
+        kl_ax.legend(prop={'size': 5}, ncol=2, numpoints=1, markerscale=0.7)
+        plt.title(str(objname) + ' kl')
+        plt.show()
+
+
 if __name__ == "__main__":
 
     ### don't create keyword if not passed in!
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
-    # parser.add_argument('parfile', type=str)
+    parser.add_argument('--parfile')
     parser.add_argument('--outname')
-    # parser.add_argument('--measure_spectral_features', type=str2bool)
-    # parser.add_argument('--mags_nodust', type=str2bool)
-    # parser.add_argument('--ir_priors', type=str2bool)
     parser.add_argument('--ncalc', type=int)
-    parser.add_argument('--test')  # TESTING (including ssfr if --test=True)
+
+    files = {'outname': '', 'parfile': ''}
 
     args = vars(parser.parse_args())
     kwargs = {}
     for key in args.keys():
         kwargs[key] = args[key]
+        if key == 'parfile' or key == 'outname':
+            files[key] = kwargs[key]
 
     outname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + kwargs['outname']
     obj = ''
@@ -263,20 +406,24 @@ if __name__ == "__main__":
         elif count == 2:
             break
 
-    if kwargs['test']:
-        write = obj + '_' + field + '_sfh_out2.pkl'  # TESTING (includes ssfr)
-    else:
-        write = obj + '_' + field + '_sfh_out.pkl'  # ORIGINAL
+    base = '_out.pkl'
+    write = obj + '_' + field + '_sfh' + base
+
+    out_file = files['outname']
+    param_file = files['parfile']
+    print(param_file, out_file)
+
+    objname, field, res, mod, walker, iteration = printer(out_file)
+
+    sed(objname, field, res, mod, walker, iteration, param_file, base)
 
     print(kwargs)
     post_processing(out_file=outname, filename=write, **kwargs)
 
 '''
 RUNNING WITH:
+python output_all.py --outname=1824_cosmos_decoupled_n1200_1495729287_mcmc.h5 --parfile=eelg_multirun_params.py
+--ncalc=2000
 
-python sfh_output.py --outname=6459_multirun_commentedcontinuum_1498501917_mcmc.h5 --ncalc=2000
---measure_spectral_features=False --mags_nodust=False parfile=eelg_multirun_params.py
-
-NOW RUNNING WITH:
-python sfh_output.py --outname=6459_cosmos_multirun_commentedcontinuum_1498501917_mcmc.h5 --ncalc=2000 --test=True
+# Takes ~8 mins to run
 '''
