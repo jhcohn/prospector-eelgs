@@ -8,6 +8,7 @@ Photometric redshifts from zout catalog
 
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
 
 
 def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
@@ -87,3 +88,17 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
     plt.xlabel(r'$V - J$ (Rest)', fontsize=size)
     plt.ylabel(r'$U - V$ (Rest)', fontsize=size)
     plt.show()
+
+
+if __name__ == "__main__":
+    # don't create keyword if not passed in!
+    parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
+    parser.add_argument('--obj')
+    parser.add_argument('--field')
+
+    args = vars(parser.parse_args())
+    kwargs = {}
+    for key in args.keys():
+        kwargs[key] = args[key]
+
+    uvj_plot(kwargs['obj'], kwargs['field'])

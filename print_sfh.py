@@ -7,10 +7,10 @@ import argparse
 def add_sfh_plot(exout, fig, ax_loc=None,
                  main_color=None, tmin=False,  # tmin was 0.01
                  text_size=1, ax_inset=None, lw=1):
-    '''
+    """
     add a small SFH plot at ax_loc
-    text_size: multiply font size by this, to accomodate larger/smaller figures
-    '''
+    text_size: multiply font size by this, to accommodate larger/smaller figures
+    """
 
     # set up plotting
     if ax_inset is None:
@@ -24,7 +24,7 @@ def add_sfh_plot(exout, fig, ax_loc=None,
     xmax, ymax = -np.inf, -np.inf
     for i, extra_output in enumerate(exout):
 
-        #### load SFH
+        # load SFH
         t = extra_output['extras']['t_sfh']
         perc = np.zeros(shape=(len(t), 3))
         for jj in xrange(len(t)):
@@ -38,25 +38,26 @@ def add_sfh_plot(exout, fig, ax_loc=None,
         for j in range(len(t)):
             z.append((2 / (3 * 7.22e-2 * t[j])) ** (2 / 3) - 1)
         '''
-        #### plot SFH (t-->z)
+        # plot SFH (t-->z)
         ax_inset.plot(t, perc[:, 1], '-', color=main_color[i], lw=lw)
         ax_inset.fill_between(t, perc[:, 0], perc[:, 2], color=main_color[i], alpha=0.3)
         ax_inset.plot(t, perc[:, 0], '-', color=main_color[i], alpha=0.3, lw=lw)
         ax_inset.plot(t, perc[:, 2], '-', color=main_color[i], alpha=0.3, lw=lw)
 
-        #### update plot ranges
+        # update plot ranges
         # axis lims for nonparametric SFH
         xmin = np.min([xmin, t.min()])
         xmax = np.max([xmax, t.max()])
         ymin = np.min([ymin, perc.min()])
         ymax = np.max([ymax, perc.max()])
 
-    #### labels, format, scales !
+    # labels, format, scales !
     if tmin:
         xmin = tmin
+    else:
+        xmin = 10 ** -2  # xmin at 10**-2, unless using 10 Myr bin, in which case xmin at 10**-3
 
-    # axlim_sfh = [xmax, xmin, ymin * .7, ymax * 1.4]
-    axlim_sfh = [13.6, 10**-2, 10**-1, 10**3]  # xmin at 10**-2, unless using 10 Myr bin, in which cas xmin at 10**-3
+    axlim_sfh = [13.6, xmin, 10**-1, 10**3]  # [xmax, xmin, ymin, ymax]
     # axlim_sfh = [4, 1., 10**-1, 10**3]  # redshift
     ax_inset.axis(axlim_sfh)
     ax_inset.set_ylabel(r'SFR [M$_{\odot}$/yr]', fontsize=axfontsize * 3, labelpad=2 * text_size)
@@ -81,7 +82,7 @@ def add_sfh_plot(exout, fig, ax_loc=None,
 
 # objs = [kwargs['obj']]
 # for obj in objs:
-def plotter(input, specific=False):
+def plotter(input, specific=False, simple=False):
 
     # MAKE SURE OBJ AND FIELD ARE DEFINED
     obj = ''
@@ -99,37 +100,41 @@ def plotter(input, specific=False):
 
     with open(input, 'rb') as file:
         extra_output = pickle.load(file)
+
         if specific:  # TESTING (print ssfr instead of regular sfr)
             plt.loglog(extra_output['extras']['t_sfh'], extra_output['extras']['ssfr'], lw=2, color='k')
             plt.ylabel(r'Best-fit sSFR [yr$^{-1}$]')
-            plt.xlim(10**-3, 13.6)
-            plt.ylim(10**-13, 10**-8)
-        else:  # ORIGINAL
+            plt.ylim(10**-13, 10**-7)
+
+        elif simple:  # ORIGINAL
             plt.plot(extra_output['extras']['t_sfh'], extra_output['bfit']['sfh'], lw=2)
             plt.ylabel(r'Best-fit SFH [M$_\odot$ yr$^{-1}$]')
-        plt.xlabel('t [Gyr]')
-        plt.rc('xtick', labelsize=20)
-        plt.rc('ytick', labelsize=20)
-        plt.rcParams.update({'font.size': 22})
-        # plt.loglog()
-        # ax = plt.gca()
-        # ax.invert_xaxis()
-        plt.title(field + '-' + obj)
-        plt.show()
+            plt.ylim(10**-2, 10**3)
 
-        if not specific:
+        if simple or specific:
+            plt.xlim(10**-3, 13.6)
+            plt.xlabel('t [Gyr]')
+            plt.rc('xtick', labelsize=20)
+            plt.rc('ytick', labelsize=20)
+
+        else:
             fig = plt.figure()
             sfh_ax = fig.add_axes([0.15, 0.15, 0.6, 0.6], zorder=32)
             add_sfh_plot([extra_output], fig, main_color=['black'], ax_inset=sfh_ax, text_size=3, lw=3)
             sfh_ax.invert_xaxis()
-            plt.title(field + '-' + obj)
-            plt.show()
+
+        plt.rcParams.update({'font.size': 22})
+        plt.title(field + '-' + obj)
+        plt.show()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('--obj')
     parser.add_argument('--field')
-    parser.add_argument('--spec')  # TESTING (including ssfr if --spec=True)
+    # parser.add_argument('--spec')  # TESTING (including ssfr if --spec=True) (BUG!)
+    parser.add_argument('--base')  # needs to have format --base=_newbins
+    specific = True
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -138,20 +143,15 @@ if __name__ == "__main__":
 
     obj = kwargs['obj']
     field = kwargs['field']
-    specific = kwargs['spec']
+    base = kwargs['base']
 
-    if specific:
-        base = '_sfh_out2.pkl'  # TESTING (includes ssfr)
-    else:
-        base = '_sfh_out.pkl'  # ORIGINAL
-    file = obj + '_' + field + base
+    file = obj + '_' + field + '_sfh_out' + base + '.pkl'
+    # file = kwargs['obj'] + '_' + kwargs['field'] + '_sfh_out' + kwargs['base'] + '.pkl'
+    # standardizing so all include ssfr
 
-    plotter(file, specific=specific)  # TESTING: specific=True; ORIGINAL: specific=False (or remove "specific" keyword)
+    plotter(file, specific=specific, simple=False)
 
 '''
-# run from command line using (in snow environment): python print_sfh.py --obj=1824
-
-python print_sfh.py --obj=1824 --field=cosmos
-
-python print_sfh.py --obj=1824 --field=cosmos --spec=True  # TESTING
+# run from command line using (in snow environment):
+python print_sfh.py --obj=1824 --field=cosmos --base=_newbins
 '''

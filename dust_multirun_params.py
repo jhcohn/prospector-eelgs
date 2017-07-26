@@ -22,7 +22,7 @@ run_params = {'verbose': True,
               # MCMC params
               'nwalkers': 140,
               'nburn': [50, 100],
-              'niter': 1200,
+              'niter': 500,
               'interval': 0.2,
               # Model info
               'zcontinuous': 2,
@@ -32,7 +32,7 @@ run_params = {'verbose': True,
               'agelims': [0.0, 8.0, 8.5, 9.0, 9.5, 9.8, 10.0],  # NEW (see load_model)
               # Data info
               'field': 'cosmos',
-              'objname': '1824',
+              'objname': '3921',
               'photname': '',
               'zname': '',
               'convergence_check_interval': 100,  # Fix convergence test problem
@@ -183,9 +183,20 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     # EXTRACT FILTERS, FLUXES, ERRORS FOR OBJECT
     obj_idx = (dat['id'] == objname)
     # print(dat[obj_idx]['id'], 'idx')
+    '''
+    if field == 'cdfs':
+        filternames = cdfs_filternames
+        filts = cdfs_filts
+    elif field == 'cosmos':
+        filternames = cos_filternames
+        filts = cos_filts
+    elif field == 'uds':
+        filternames = uds_filternames
+        filts = uds_filts
+    '''
 
     filters = np.array(filts)  # [f[2:] for f in dat.dtype.names if f[0:2] == 'f_'])
-    # print(filters)
+    print(filters)
     flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filternames])
     unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
@@ -392,9 +403,9 @@ model_params.append({'name': 'dust2', 'N': 1,
                      'prior_args': {'mini': 0.0, 'maxi': 4.0}})
 
 ###### Dust Emission ##############
-model_params.append({'name': 'add_dust_emission', 'N': 1,
+model_params.append({'name': 'add_dust_emission', 'N': 1,  # NOELG
                      'isfree': False,
-                     'init': 0,
+                     'init': 1,  # 0, NOELG
                      'units': None,
                      'prior_function': None,
                      'prior_args': None})
@@ -416,7 +427,7 @@ model_params.append({'name': 'gas_logz', 'N': 1,
                      'prior_args': {'mini': -2.0, 'maxi': 0.5}})
 
 model_params.append({'name': 'gas_logu', 'N': 1,
-                     'isfree': False,  # BUCKET1 emission lines --> isfree: True (OR False because not important)
+                     'isfree': False,  # BUCKET1 emission lines --> isfree: True (False because not important)
                      'init': -2.0,
                      'units': '',
                      'prior_function': tophat,
@@ -556,22 +567,9 @@ def load_model(objname, field, agelims=[], **extras):
     n = [p['name'] for p in model_params]
     # model_params[n.index('tage')]['prior_args']['maxi'] = tuniv
 
-    # NONPARAMETRIC SFH  # NEW
-    '''
-    agelims = [0.0, 7.0, 8.0, (8.0 + (np.log10(tuniv*1e9)-8.0)/4), (8.0 + 2*(np.log10(tuniv*1e9)-8.0)/4),
-               (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
-    '''
-    # NEWBINS
-    '''
-    agelims = [0.0, 8.4, 8.7, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2*(np.log10(tuniv*1e9) - 9.0)/3),
-               np.log10(tuniv*1e9)]
-    # 0, 250Myr, 500Myr, 1Gyr, 1Gyr + (tuniv - 1Gyr)/3, 1Gyr + 2*(tuniv - 1Gyr)/3, 1Gyr + 3*(tuniv - 1Gyr)/3 = tuniv
-
-    agelims = [0.0, 8.3, 8.7, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2*(np.log10(tuniv*1e9) - 9.0)/3),
-               np.log10(tuniv*1e9)]  # 0, 200 Myr, 500 Myr, 1 Gyr, ..., tuniv
-    '''
+    # NONPARAMETRIC SFH  # NEWBINS
     agelims = [0.0, 8.0, 8.6, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2*(np.log10(tuniv*1e9) - 9.0)/3),
-               np.log10(tuniv*1e9)]  # 0, 100 Myr, 400 Myr [A5 stars live 370 Myr], 1 Gyr, ..., tuniv
+               np.log10(tuniv*1e9)]  # 0, 100 Myr, 400 Myr [A5 stars live 370 Myr? no...], 1 Gyr, ..., tuniv
     ncomp = len(agelims) - 1
     agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
 
@@ -605,7 +603,7 @@ model_type = BurstyModel
 
 '''
 RUNNING WITH
-mpirun -n 4 python prospector.py --param_file=eelg_multirun_params.py --outfile=1969_uds_test --niter=1200 --field=uds
+mpirun -n 4 python prospector.py --param_file=ndust_multirun_params.py --outfile=1969_uds_noelg --niter=1200 --field=uds
 --objname=1969
 
 NOTES ON OBJECTS:
@@ -613,35 +611,8 @@ cdfs 10246 ("weak 5007 emission? continuum" according to Oesch file)
 cdfs 12682 (no comment in Oesch file; non-EELG)
 cosmos 1824 (Sanders et al paper, BIG eelg)
 cosmos 5029 ("4861/4959/5007" comment in Oesch file)
-cosmos 6459 ("serendip; continuum only" according to Oesch file)
+cosmos 6459 ("serendip; comtinuum only" according to Oesch file)
 cosmos 7730 ("gorgeous 4861/4959/5007" according to Oesch file)
 cosmos 12105 (from Vy, EELG)
 cosmos 17423 (from Vy, EELG)
-'''
-
-'''
-Think about plots!
-Total mass formed vs time
-(d_M vs stellar mass?)
-(SFH vs stellar mass)
-
-What histograms to include? Mass of EELGs?
-
-Plot EELG mass determined from prospector vs mass from FAST (also show for non-EELGs to show prospector overestimates
-standard galaxy mass by 40% compared to FAST)
-
-Could at least say 1824 looks more like delta-object in SFH than 6459
---> take angle of rising SFH?
---> make fig showing how peaky the SFR(t) is: Stack SFR(t) for subsets of galaxies (one for EELGs, one for non-EELGs)
---> potentially write letter about EELGs showing a rising SFH
-From Joel: galaxies above sfr main seq have rising SFH, those below have falling (Joel sample has bizarre selection, so
-pick other sample and do same thing at z~0 and compare to our sample at z~3)
-
-MAIN GOAL: make fig for peakiness in SFR(t) for EELG stack, and one for non-EELG stack
-Maybe also SFR(t) vs mass as suggested above
-
-Focus on z~2.5-4
-
-
-Note: 7730 corner, metallicity too low (add mass-metallicity prior or rule out low metallicities)
 '''

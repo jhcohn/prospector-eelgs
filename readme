@@ -2,6 +2,8 @@ Git readme - created 20 April 2017 (Jonathan Cohn)
 
 
 Files:
+dust_multirun_params.py: same as eelg_multirun_params.py, but with add_dust_emission turned on
+
 eelg_5bins_params.py: same as eelg_emission_params.py, but tweak using different arrangements/numbers of SFH bins
 
 eelg_all_fields_params.py: same as eelg_emission_params.py, but can use for CDFS, COSMOS, and UDS galaxies, rather than just COSMOS
@@ -20,7 +22,7 @@ fast_mimic_params_latest.py: latest iteration of parameter file for running FAST
 input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq
 
 make_all_plots.py: calls uvj.py, print_sfh.py, and then also prints SED and chi^2 on same plot from pickled files produced by quickgrab.py; can also call widths.py
--Running with: python make_all_plots.py --obj=17423 --field=cosmos
+-Running with: python make_all_plots.py --obj=7730 --field=cosmos --base=_newbins
 
 model_test.py: load model, test lnp of initial model given different values of metallicity
 
@@ -58,6 +60,7 @@ widths.py: plot the filter response curves for a given field, for an object at a
 
 Note: Currently using...
 *eelg_multirun_params.py	to generate prospector output with emission lines
+*dust_multirun_params.pt	to generate prospector output with dust emission and emission lines
 *make_all_plots.py		to produce SFH plot, as well as SED with chi^2 and uvj plot
 *print_sfh.py			to print the SFH (or sSFR) from the pickled file produced by sfh_output.py (or output_all.py)
 *prospector.py			to run prospector

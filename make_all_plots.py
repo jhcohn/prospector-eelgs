@@ -8,7 +8,7 @@ import widths  # WIDTHS
 from matplotlib import gridspec
 
 
-def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=False):
+def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=False, some_curves=False):
     # PLOT UVJ
     if sep_uvj:
         uvj.uvj_plot(objname, field)
@@ -16,6 +16,7 @@ def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=Fal
     # PLOT SFH, SED+
     # files should be a list of output files in order: sfh, res, sed, restwave, spec, spswave, chisq, justchi
     print_sfh.plotter(files[0])
+    print_sfh.plotter(files[0], specific=True)
 
     with open(files[1], 'rb') as res:
         results = pickle.load(res)
@@ -51,15 +52,19 @@ def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=Fal
     ax1.set_title(field + '-' + obj)
     ax1.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'],
                  marker='o', linestyle='', color='r', label=r'Observed Photometry')  # plot observations
-    ax1.plot(wave_rest, sed, 'o', color='b', label=r'Model')  # plot best fit model
-    ax1.plot(sps_wave, spec, color='b', alpha=0.5, label=r'Spectrum')  # plot spectrum
+    ax1.plot(wave_rest, sed, 'o', color='b', label=r'Model Photometry')  # plot best fit model
+    ax1.plot(sps_wave, spec, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
     ax1.set_ylabel(r'Maggies')
     if curves:
         zred = 3.077  # HACK
         # HACK REDSHIFTS: cos1824:3.077; cdfs10246:3.49; cdfs12682:4.89; cos5029:2.14; cos6459:0.53; cos7730:2.2;
         # cos12105:3.29; cos17423:3.55
         widths.plot_filts(field, zred, scale=(results['obs']['maggies'].max() / 10**3), rest=True)  # WIDTHS
-
+    if some_curves:
+        zred = 3.49  # HACK
+        # HACK REDSHIFTS: cos1824:3.077; cdfs10246:3.49; cdfs12682:4.89; cos5029:2.14; cos6459:0.53; cos7730:2.2;
+        # cos12105:3.29; cos17423:3.55
+        widths.some_filts(field, zred, scale=(results['obs']['maggies'].max() / 10 ** 2), rest=True)  # WIDTHS
     ax2 = plt.subplot(gs[1], sharex=ax1)  # ax2 = smaller lower axis
     line2 = ax2.plot(wave_rest, chi, 'o', color='k')  # plot chi
     plt.axhline(y=0, color='k')  # plot horizontal line at y=0 on chi plot
@@ -75,7 +80,7 @@ def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=Fal
     # plt.axvline(x=5270, color='k')  # proving no offset in two axes
     plt.subplots_adjust(hspace=.0)
 
-    if not sep_uvj:  # as long as not plotting a separate uvj plot
+    if not sep_uvj and not some_curves:  # as long as not plotting a separate uvj plot
         # UVJ inset on SED+ plot
         from mpl_toolkits.axes_grid.inset_locator import inset_axes
         inset_axes(ax1, width="20%", height=2., loc=1)  # create inset axis: width (%), height (inches), location
@@ -88,6 +93,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('--obj')
     parser.add_argument('--field')
+    parser.add_argument('--base')  # need to use format --base=_newbins
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -99,7 +105,7 @@ if __name__ == "__main__":
     field = kwargs['field']
     pre = obj + '_' + field
 
-    base = '_out.pkl'
+    base = '_out' + kwargs['base'] + '.pkl'
     sfh = pre + '_sfh' + base
     res = pre + '_res' + base
     sed = pre + '_sed' + base
@@ -111,9 +117,9 @@ if __name__ == "__main__":
 
     files = [sfh, res, sed, restwave, spec, spswave, chisq, justchi]
 
-    all_plots(files, obj, field, loc='upper left')
+    all_plots(files, obj, field, loc='upper left', some_curves=True)
 
 '''
 Currently running with:
-python make_all_plots.py --obj=17423 --field=cosmos
+python make_all_plots.py --obj=7730 --field=cosmos --base=_newbins
 '''

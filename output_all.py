@@ -85,7 +85,7 @@ def set_sfh_time_vector(sample_results, ncalc):
     return t
 
 
-def calc_extra_quantities(sample_results, ncalc=3000, **kwargs):
+def calc_extra_quantities(sample_results, ncalc=2000, **kwargs):  # ncalc=3000
     ''''
     CALCULATED QUANTITIES
     model nebular emission line strength
@@ -331,8 +331,8 @@ def sed(objname, field, res, mod, walker, iteration, param_file, base, print_it=
     write_sed = objname + '_' + field + '_sed' + base  # model sed
     with open(write_sed, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(phot, newfile, pickle.HIGHEST_PROTOCOL)
-    write_wave = objname + '_' + field + '_restwave' + base  # rest frame wavelengths
-    with open(write_wave, 'wb') as newfile:  # 'wb' because binary format
+    write_restwave = objname + '_' + field + '_restwave' + base  # rest frame wavelengths
+    with open(write_restwave, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(wave_rest, newfile, pickle.HIGHEST_PROTOCOL)
     write_spec = objname + '_' + field + '_spec' + base  # spectrum
     with open(write_spec, 'wb') as newfile:  # 'wb' because binary format
@@ -381,7 +381,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('--parfile')
     parser.add_argument('--outname')
-    parser.add_argument('--ncalc', type=int)
 
     files = {'outname': '', 'parfile': ''}
 
@@ -389,13 +388,13 @@ if __name__ == "__main__":
     kwargs = {}
     for key in args.keys():
         kwargs[key] = args[key]
-        if key == 'parfile' or key == 'outname':
-            files[key] = kwargs[key]
+        files[key] = kwargs[key]
 
     outname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + kwargs['outname']
     obj = ''
-    count = 0
     field = ''
+    base1 = ''
+    count = 0
     for i in kwargs['outname']:
         if i == '_':
             count += 1
@@ -404,9 +403,11 @@ if __name__ == "__main__":
         elif count == 1:
             field += i
         elif count == 2:
+            base1 += i
+        elif count == 3:
             break
 
-    base = '_out.pkl'
+    base = '_out_' + base1 + '.pkl'
     write = obj + '_' + field + '_sfh' + base
 
     out_file = files['outname']
@@ -423,7 +424,6 @@ if __name__ == "__main__":
 '''
 RUNNING WITH:
 python output_all.py --outname=1824_cosmos_decoupled_n1200_1495729287_mcmc.h5 --parfile=eelg_multirun_params.py
---ncalc=2000
 
 # Takes ~8 mins to run
 '''
