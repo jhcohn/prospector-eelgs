@@ -4,41 +4,43 @@ Git readme - created 20 April 2017 (Jonathan Cohn)
 Files:
 dust_multirun_params.py: same as eelg_multirun_params.py, but with add_dust_emission turned on
 
-eelg_5bins_params.py: same as eelg_emission_params.py, but tweak using different arrangements/numbers of SFH bins
+eelg_5bins_params.py: same as eelg_emission_params.py, but tweak using different arrangements/numbers of SFH bins; defunct
 
-eelg_all_fields_params.py: same as eelg_emission_params.py, but can use for CDFS, COSMOS, and UDS galaxies, rather than just COSMOS
+eelg_all_fields_params.py: same as eelg_emission_params.py, but can use for CDFS, COSMOS, and UDS galaxies, rather than just COSMOS; defunct
 
-eelg_emission_params.py: same as eelg_npSFH_params.py, now with nebular emission turned on
+eelg_emission_params.py: same as eelg_npSFH_params.py, now with nebular emission turned on; defunct
+
+eelg_fixedmet_params.py: same as eelg_multirun_params.py, but with logzsol fixed
 
 eelg_multirun_params.py: same as eelg_emission_params.py, but now with field and objname as command line arguments
--Running from terminal: mpirun -n 4 python prospector.py --param_file=eelg_multirun_params.py --outfile=1969_uds_test --niter=1200 --field=uds --objname=1969
+-Running from terminal: mpirun -n 4 python prospector.py --param_file=eelg_multirun_params.py --outfile=1969_uds_test --niter=2000 --field=uds --objname=1969
 
 eelg_npSFH_params.py: param file for running prospector fits on EELGs, using nonparametric SFHs
 
 eelg_quickstart_params.py: same as eelg_emission_params.py, but skip do_Powell process; start run by using previous best fit values as input initial parameter values
 
-fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector
+fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector; defunct
 
-input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq
+input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq; defunct
 
-make_all_plots.py: calls uvj.py, print_sfh.py, and then also prints SED and chi^2 on same plot from pickled files produced by quickgrab.py; can also call widths.py
+make_all_plots.py: calls uvj.py, print_sfh.py, and then also prints SED and chi^2 on same plot from pickled files produced by output_all.py; can also call widths.py
 -Running with: python make_all_plots.py --obj=7730 --field=cosmos --base=_newbins
 
-model_test.py: load model, test lnp of initial model given different values of metallicity
+model_test.py: load model, test lnp of initial model given different values of metallicity; defunct
 
 noelg_multirun_params.py: eelg_multirun_params.py, but with add_dust_emission turned on (also currently using different SFH bins)
 
 nonparameteric_sfh_example_params.py: Joel's example of nonparametric SFH param file, off of which I'm basing eelg_npSFH_params.py
 
-only_sfh.py: modified from Joel's extra_output.py, with lots of things cut/print statements added
+only_sfh.py: modified from Joel's extra_output.py, with lots of things cut/print statements added; defunct
 
 output_all.py: combined quickgrab.py + sfh_output.py; creates all _out.pkl files needed for make_all_plots.py
--Running with: python output_all.py --outname=1824_cosmos_decoupled_n1200_1495729287_mcmc.h5 --parfile=eelg_multirun_params.py --ncalc=2000
+-Running with: python output_all.py --outname=1824_cosmos_decoupled_n1200_1495729287_mcmc.h5 --parfile=eelg_multirun_params.py
 
-print_sfh.py: prints SFH from pickled file produced by sfh_output.py; if test=True, prints sSFR
--Running with: python print_sfh.py --obj=1824 --field=cosmos --test=True
+print_sfh.py: prints SFH from pickled file produced by output_all.py; also prints sSFR(t)
+-Running with: python print_sfh.py --obj=1824 --field=cosmos --base=_newbins
 
-prosp_dutils.py: code from Joel for plotting SFH (and other extras); I've edited this one a fair bit to figure out what's going on
+prosp_dutils.py: code from Joel for plotting SFH (and other extras); I've edited this one a fair bit to figure out what's going on; defunct
 
 prosp_dutils_orig.py: code from Joel for plotting SFH (and other extras); I've left this one untouched
 
@@ -46,22 +48,21 @@ prospector.py: prospector python file with initial guess SED plotting code added
 
 prospector_nest.py: new file from bd-j prospector
 
-quickgrab.py: simple code cannibalized from Prospector tutorial for plotting Prospector output (NOW also creates pickled files to call to make SED, spec, and chi^2 plots)
--Running with: python quickgrab.py --outname=10246_cdfs_multirun_1498677216_mcmc.h5 parfile=eelg_multirun_params.py
+quickgrab.py: simple code cannibalized from Prospector tutorial for plotting Prospector output (tracefig, cornerfig, kl divergence, SED, chisq)
+-Running with: python quickgrab.py --outname=10246_cdfs_multirun_1498677216_mcmc.h5 --parfile=eelg_multirun_params.py
 
-sfh_output.py: modified from Joel's extra_output.py for creating and pickling SFH; if test=True, also outputs ssfr
--Running with: python sfh_output.py --ncalc=2000 --test=True --outname=6459_cosmos_multirun_commentedcontinuum_1498501917_mcmc.h5
+sfh_output.py: modified from Joel's extra_output.py for creating and pickling SFH; if test=True, also outputs ssfr; defunct [functionally replaced by output_all.py]
 
-sfh_plot.py: copied from Joel's extra_output.py, for outputting the SFH, with minimal changes to Joel's code
+sfh_plot.py: copied from Joel's extra_output.py, for outputting the SFH, with minimal changes to Joel's code; defunct
 
 uvj.py: code to make a uvj diagram for a given object, field, with the given object highlighted as a star
 
 widths.py: plot the filter response curves for a given field, for an object at a given redshift
 
 Note: Currently using...
+*eelg_fixedmet_params.py	to generate prospector output with emission lines with logzsol fixed
 *eelg_multirun_params.py	to generate prospector output with emission lines
 *dust_multirun_params.pt	to generate prospector output with dust emission and emission lines
-*make_all_plots.py		to produce SFH plot, as well as SED with chi^2 and uvj plot
-*print_sfh.py			to print the SFH (or sSFR) from the pickled file produced by sfh_output.py (or output_all.py)
+*make_all_plots.py		to produce SFH and sSFR plots, as well as SED with chi and uvj plot (calling print_sfh.py, uvj.py, and, if including overlain filter curves, widths.py)
 *prospector.py			to run prospector
-*output_all.py			to generate tracefigs, cornerfigs and kl convergence plots, and to pickle SED info, spectra, wavelengths, chi, chi^2, SFR, and sSFR
+*output_all.py			to generate tracefigs, cornerfigs and kl convergence plots, and to pickle SED info, spectra, wavelengths, chi, chi^2, SFR, and sSFR (called and used in make_all_plots.py)
