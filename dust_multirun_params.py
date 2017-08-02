@@ -183,20 +183,9 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     # EXTRACT FILTERS, FLUXES, ERRORS FOR OBJECT
     obj_idx = (dat['id'] == objname)
     # print(dat[obj_idx]['id'], 'idx')
-    '''
-    if field == 'cdfs':
-        filternames = cdfs_filternames
-        filts = cdfs_filts
-    elif field == 'cosmos':
-        filternames = cos_filternames
-        filts = cos_filts
-    elif field == 'uds':
-        filternames = uds_filternames
-        filts = uds_filts
-    '''
 
     filters = np.array(filts)  # [f[2:] for f in dat.dtype.names if f[0:2] == 'f_'])
-    print(filters)
+    # print(filters)
     flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filternames])
     unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
@@ -568,8 +557,8 @@ def load_model(objname, field, agelims=[], **extras):
     # model_params[n.index('tage')]['prior_args']['maxi'] = tuniv
 
     # NONPARAMETRIC SFH  # NEWBINS
-    agelims = [0.0, 8.0, 8.6, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2*(np.log10(tuniv*1e9) - 9.0)/3),
-               np.log10(tuniv*1e9)]  # 0, 100 Myr, 400 Myr [A5 stars live 370 Myr? no...], 1 Gyr, ..., tuniv
+    agelims = [0.0, 8.0, 8.7, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2*(np.log10(tuniv*1e9) - 9.0)/3),
+               np.log10(tuniv*1e9)]  # 0, 100 Myr, 500 Myr, 1 Gyr, ..., tuniv
     ncomp = len(agelims) - 1
     agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
 

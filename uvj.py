@@ -41,6 +41,7 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
     table = []
     ax_uv = []
     ax_vj = []
+    star = False  # for use in plotting a specific object as a blue star
     for i in range(len(main)):
         # USE FLAG AND Z_PHOT for each obj) (note: len(main[0] = 156; elements 153:155 = use, snr, use_nosnr, z_spec)
         objuse.append(main[i][-4])  # index good for all main cats: last 4 elements are use, snr, use_nosnr, z_spec
@@ -53,6 +54,7 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
         UV.append(-2.5 * np.log10(s[i][11] / s[i][15]))  # indices good for all rest frame cats
         VJ.append(-2.5 * np.log10(s[i][15] / s[i][17]))  # indices good for all rest frame cats
         if i == int(objname) - 1:
+            star = True
             special_uv = -2.5 * np.log10(s[i][11] / s[i][15])
             special_vj = -2.5 * np.log10(s[i][15] / s[i][17])
             print(main[i][0], int(objname), special_vj, special_uv)
@@ -68,7 +70,8 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
 
     # PLOT SCATTER OF REMAINING POINTS
     plt.scatter(ax_vj, ax_uv, color='0.5', alpha=0.1, marker=".")  # x, y
-    plt.scatter(special_vj, special_uv, color='b', marker="*", s=100)
+    if star:
+        plt.scatter(special_vj, special_uv, color='b', marker="*", s=100)
 
     if title:
         plt.title(field + '-' + objname)
@@ -93,7 +96,7 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
 if __name__ == "__main__":
     # don't create keyword if not passed in!
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
-    parser.add_argument('--obj')
+    parser.add_argument('--obj')  # to print without blue star highlighting a given object, do --obj=-1
     parser.add_argument('--field')
 
     args = vars(parser.parse_args())
@@ -102,3 +105,8 @@ if __name__ == "__main__":
         kwargs[key] = args[key]
 
     uvj_plot(kwargs['obj'], kwargs['field'])
+
+'''
+RUN WITH:
+python uvj.py --obj=1824 --field=cosmos
+'''

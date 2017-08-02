@@ -54,8 +54,8 @@ def some_filts(field, zred, scale=1, rest=True):
             ids = [1, 2, 3, 4, 6, 7, 8, 9, 10, 11, -4, -3, -2, -1]  # BRiz, J1 J2 J3 Hs Hl Ks, IRACx4
 
     new = []
-    for id in ids:
-        new.append(filterset[id])
+    for thing in ids:
+        new.append(filterset[thing])
     new = np.array(new)
 
     for curve in new:  # for each filter in filterset
@@ -73,7 +73,3 @@ def some_filts(field, zred, scale=1, rest=True):
     plt.xlabel(r'Rest frame wavelength')
     plt.ylabel(r'Maggies')
     # plt.show()
-
-'''
-# EDIT to select which specific filters I want to show
-'''

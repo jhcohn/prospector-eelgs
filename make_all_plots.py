@@ -8,7 +8,7 @@ import widths  # WIDTHS
 from matplotlib import gridspec
 
 
-def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=False, some_curves=False):
+def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=False, some_curves=False, ujy=True):
     # PLOT UVJ
     if sep_uvj:
         uvj.uvj_plot(objname, field)
@@ -50,18 +50,39 @@ def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=Fal
     ax1.set_yscale("log")
     ax1.set_xscale("log")
     ax1.set_title(field + '-' + obj)
-    ax1.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'],
-                 marker='o', linestyle='', color='r', label=r'Observed Photometry')  # plot observations
-    ax1.plot(wave_rest, sed, 'o', color='b', label=r'Model Photometry')  # plot best fit model
-    ax1.plot(sps_wave, spec, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
-    ax1.set_ylabel(r'Maggies')
+
+    if ujy:
+        # CONVERTING TO microjansky
+        res_jan = []
+        err_jan = []
+        sed_jan = []
+        for i in range(len(wave_rest)):
+            res_jan.append(results['obs']['maggies'][i] * 3631 * 10 ** 6)
+            err_jan.append(results['obs']['maggies_unc'][i] * 3631 * 10 ** 6)
+            sed_jan.append(sed[i] * 3631 * 10 ** 6)
+        spec_jan = []
+        for i in range(len(spec)):
+            spec_jan.append(spec[i] * 3631 * 10 ** 6)
+        ax1.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='r',
+                     label=r'Observed Photometry')  # plot observations^
+        ax1.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
+        ax1.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
+        ax1.set_ylabel(r'$\mu$ Jy')
+
+    else:
+        ax1.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'], marker='o', linestyle='',
+                     color='r', label=r'Observed Photometry')  # plot observations
+        ax1.plot(wave_rest, sed, 'o', color='b', label=r'Model Photometry')  # plot best fit model
+        ax1.plot(sps_wave, spec, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
+        ax1.set_ylabel(r'Maggies')
+
     if curves:
         zred = 3.077  # HACK
         # HACK REDSHIFTS: cos1824:3.077; cdfs10246:3.49; cdfs12682:4.89; cos5029:2.14; cos6459:0.53; cos7730:2.2;
         # cos12105:3.29; cos17423:3.55
         widths.plot_filts(field, zred, scale=(results['obs']['maggies'].max() / 10**3), rest=True)  # WIDTHS
     if some_curves:
-        zred = 3.49  # HACK
+        zred = 3.077  # HACK
         # HACK REDSHIFTS: cos1824:3.077; cdfs10246:3.49; cdfs12682:4.89; cos5029:2.14; cos6459:0.53; cos7730:2.2;
         # cos12105:3.29; cos17423:3.55
         widths.some_filts(field, zred, scale=(results['obs']['maggies'].max() / 10 ** 2), rest=True)  # WIDTHS
@@ -84,7 +105,8 @@ def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=Fal
         # UVJ inset on SED+ plot
         from mpl_toolkits.axes_grid.inset_locator import inset_axes
         inset_axes(ax1, width="20%", height=2., loc=1)  # create inset axis: width (%), height (inches), location
-        # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right)
+        # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
+        # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
         uvj.uvj_plot(objname, field, title=False, labels=False, lims=True, size=20)  # add uvj plot to inset axis
 
     plt.show()
@@ -103,10 +125,11 @@ if __name__ == "__main__":
     obj = kwargs['obj']
 
     field = kwargs['field']
-    pre = obj + '_' + field
+    pre = obj + '_' + field + kwargs['base']
 
-    base = '_out' + kwargs['base'] + '.pkl'
-    sfh = pre + '_sfh' + base
+    base = '_out.pkl'
+    # sfh = pre + '_sfh' + base
+    extra = pre + '_extra' + base  # includes SFH *AND* rest of extra_output, so call it extra and not sfh
     res = pre + '_res' + base
     sed = pre + '_sed' + base
     restwave = pre + '_restwave' + base
@@ -115,9 +138,10 @@ if __name__ == "__main__":
     chisq = pre + '_chisq' + base
     justchi = pre + '_justchi' + base
 
-    files = [sfh, res, sed, restwave, spec, spswave, chisq, justchi]
+    # files = [sfh, res, sed, restwave, spec, spswave, chisq, justchi]
+    files = [extra, res, sed, restwave, spec, spswave, chisq, justchi]
 
-    all_plots(files, obj, field, loc='upper left', some_curves=True)
+    all_plots(files, obj, field, loc='upper left', some_curves=False)
 
 '''
 Currently running with:

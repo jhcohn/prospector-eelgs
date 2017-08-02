@@ -325,28 +325,28 @@ def sed(objname, field, res, mod, walker, iteration, param_file, base, print_it=
         wave_rest.append(wave[i]/(1 + zred))  # 1 + z = l_obs / l_emit --> l_emit = l_obs / (1 + z)
 
     # OUTPUT SED results to files
-    write_res = objname + '_' + field + '_res' + base  # results
+    write_res = objname + '_' + field + '_' + base + '_res_out.pkl'  # results
     with open(write_res, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(res, newfile, pickle.HIGHEST_PROTOCOL)  # res includes res['obs']['maggies'] and ...['maggies_unc']
-    write_sed = objname + '_' + field + '_sed' + base  # model sed
+    write_sed = objname + '_' + field + '_' + base + '_sed_out.pkl'  # model sed
     with open(write_sed, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(phot, newfile, pickle.HIGHEST_PROTOCOL)
-    write_restwave = objname + '_' + field + '_restwave' + base  # rest frame wavelengths
+    write_restwave = objname + '_' + field + '_' + base + '_restwave_out.pkl'  # rest frame wavelengths
     with open(write_restwave, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(wave_rest, newfile, pickle.HIGHEST_PROTOCOL)
-    write_spec = objname + '_' + field + '_spec' + base  # spectrum
+    write_spec = objname + '_' + field + '_' + base + '_spec_out.pkl'  # spectrum
     with open(write_spec, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(spec, newfile, pickle.HIGHEST_PROTOCOL)
-    write_sps = objname + '_' + field + '_spswave' + base  # wavelengths that go with spectrum
+    write_sps = objname + '_' + field + '_' + base + '_spswave_out.pkl'  # wavelengths that go with spectrum
     with open(write_sps, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(sps.wavelengths, newfile, pickle.HIGHEST_PROTOCOL)
 
     # OUTPUT CHI_SQ results to files
     chi_sq = ((res['obs']['maggies'] - phot) / res['obs']['maggies_unc']) ** 2
-    write_chisq = objname + '_' + field + '_chisq' + base
+    write_chisq = objname + '_' + field + '_' + base + '_chisq_out.pkl'
     with open(write_chisq, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(chi_sq, newfile, pickle.HIGHEST_PROTOCOL)
-    write_justchi = objname + '_' + field + '_justchi' + base
+    write_justchi = objname + '_' + field + '_' + base + '_justchi_out.pkl'
     with open(write_justchi, 'wb') as newfile:
         pickle.dump((res['obs']['maggies'] - phot) / res['obs']['maggies_unc'], newfile, pickle.HIGHEST_PROTOCOL)
 
@@ -407,8 +407,9 @@ if __name__ == "__main__":
         elif count == 3:
             break
 
-    base = '_out_' + base1 + '.pkl'
-    write = obj + '_' + field + '_sfh' + base
+    base = base1
+    # write = obj + '_' + field + '_' + base + '_sfh_out.pkl'
+    write = obj + '_' + field + '_' + base + '_extra_out.pkl'
 
     out_file = files['outname']
     param_file = files['parfile']

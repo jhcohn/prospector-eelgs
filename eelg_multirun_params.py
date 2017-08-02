@@ -287,7 +287,7 @@ model_params.append({'name': 'logzsol', 'N': 1,
                      'log_param': True,
                      'units': r'$\log (Z/Z_\odot)$',
                      'prior_function': tophat,
-                     'prior_args': {'mini': -2.0, 'maxi': 0.19}})
+                     'prior_args': {'mini': -2.0, 'maxi': 0.19}})  # 'mini': -1.5
 
 ###### SFH ########
 model_params.append({'name': 'sfh', 'N': 1,
@@ -313,15 +313,6 @@ model_params.append({'name': 'logtau', 'N': 1,
                      'units': 'Gyr',
                      'prior_function': tophat,
                      'prior_args': {'mini': -1, 'maxi': 2}})
-
-'''  # DON'T NEED FOR npSFH
-model_params.append({'name': 'tage', 'N': 1,
-                     'isfree': False,  # NEW turn off
-                     'init': 1.0,
-                     'units': 'Gyr',
-                     'prior_function': tophat,
-                     'prior_args': {'mini': 0.1, 'maxi': 14.0}})  # 0.01, 'maxi': 14.0}})
-'''
 
 model_params.append({'name': 'tburst', 'N': 1,
                      'isfree': False,
@@ -562,16 +553,13 @@ def load_model(objname, field, agelims=[], **extras):
                (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
     '''
     # NEWBINS
-    '''
-    agelims = [0.0, 8.4, 8.7, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2*(np.log10(tuniv*1e9) - 9.0)/3),
+    agelims = [0.0, 8.0, 8.7, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2 * (np.log10(tuniv*1e9) - 9.0)/3),
                np.log10(tuniv*1e9)]
-    # 0, 250Myr, 500Myr, 1Gyr, 1Gyr + (tuniv - 1Gyr)/3, 1Gyr + 2*(tuniv - 1Gyr)/3, 1Gyr + 3*(tuniv - 1Gyr)/3 = tuniv
-
-    agelims = [0.0, 8.3, 8.7, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2*(np.log10(tuniv*1e9) - 9.0)/3),
-               np.log10(tuniv*1e9)]  # 0, 200 Myr, 500 Myr, 1 Gyr, ..., tuniv
-    '''
-    agelims = [0.0, 8.0, 8.6, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2*(np.log10(tuniv*1e9) - 9.0)/3),
-               np.log10(tuniv*1e9)]  # 0, 100 Myr, 400 Myr [A5 stars live 370 Myr], 1 Gyr, ..., tuniv
+    # 0, 100 Myr, 500 Myr, 1 Gyr, ..., tuniv
+    # A star lifetimes: 1.56 Gyr - 4.3 Gyr
+    # B star lifetimes: ~1 Myr - 1.7 Gyr
+    # 1824: tuniv ~ 2.11 Gyr, first stars form ~400 Myr into age of universe --> ~1.7 Gyr of proper star-formation?
+    # 7730: tuniv ~ 3.03 Gyr -->
     ncomp = len(agelims) - 1
     agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
 
@@ -607,41 +595,4 @@ model_type = BurstyModel
 RUNNING WITH
 mpirun -n 4 python prospector.py --param_file=eelg_multirun_params.py --outfile=1969_uds_test --niter=1200 --field=uds
 --objname=1969
-
-NOTES ON OBJECTS:
-cdfs 10246 ("weak 5007 emission? continuum" according to Oesch file)
-cdfs 12682 (no comment in Oesch file; non-EELG)
-cosmos 1824 (Sanders et al paper, BIG eelg)
-cosmos 5029 ("4861/4959/5007" comment in Oesch file)
-cosmos 6459 ("serendip; continuum only" according to Oesch file)
-cosmos 7730 ("gorgeous 4861/4959/5007" according to Oesch file)
-cosmos 12105 (from Vy, EELG)
-cosmos 17423 (from Vy, EELG)
-'''
-
-'''
-Think about plots!
-Total mass formed vs time
-(d_M vs stellar mass?)
-(SFH vs stellar mass)
-
-What histograms to include? Mass of EELGs?
-
-Plot EELG mass determined from prospector vs mass from FAST (also show for non-EELGs to show prospector overestimates
-standard galaxy mass by 40% compared to FAST)
-
-Could at least say 1824 looks more like delta-object in SFH than 6459
---> take angle of rising SFH?
---> make fig showing how peaky the SFR(t) is: Stack SFR(t) for subsets of galaxies (one for EELGs, one for non-EELGs)
---> potentially write letter about EELGs showing a rising SFH
-From Joel: galaxies above sfr main seq have rising SFH, those below have falling (Joel sample has bizarre selection, so
-pick other sample and do same thing at z~0 and compare to our sample at z~3)
-
-MAIN GOAL: make fig for peakiness in SFR(t) for EELG stack, and one for non-EELG stack
-Maybe also SFR(t) vs mass as suggested above
-
-Focus on z~2.5-4
-
-
-Note: 7730 corner, metallicity too low (add mass-metallicity prior or rule out low metallicities)
 '''
