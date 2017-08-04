@@ -34,6 +34,9 @@ nonparameteric_sfh_example_params.py: Joel's example of nonparametric SFH param 
 
 only_sfh.py: modified from Joel's extra_output.py, with lots of things cut/print statements added; defunct
 
+output.py: improved output_all.py; creates all _out.pkl files needed for make_all_plots.py and also includes ways to print out tracefig, cornerfig, kl divergence, and chisq.
+-Running with: python output.py --outname=1824_cosmos_fixedmet_1501707076_mcmc.h5 --parfile=eelg_fixedmet_params.py
+
 output_all.py: combined quickgrab.py + sfh_output.py; creates all _out.pkl files needed for make_all_plots.py
 -Running with: python output_all.py --outname=1824_cosmos_decoupled_n1200_1495729287_mcmc.h5 --parfile=eelg_multirun_params.py
 
@@ -65,4 +68,4 @@ Note: Currently using...
 *dust_multirun_params.pt	to generate prospector output with dust emission and emission lines
 *make_all_plots.py		to produce SFH and sSFR plots, as well as SED with chi and uvj plot (calling print_sfh.py, uvj.py, and, if including overlain filter curves, widths.py)
 *prospector.py			to run prospector
-*output_all.py			to generate tracefigs, cornerfigs and kl convergence plots, and to pickle SED info, spectra, wavelengths, chi, chi^2, SFR, and sSFR (called and used in make_all_plots.py)
+*output.py			to generate tracefigs, cornerfigs and kl convergence plots, and to pickle SED info, spectra, wavelengths, chi, chi^2, SFR, and sSFR (called and used in make_all_plots.py)
