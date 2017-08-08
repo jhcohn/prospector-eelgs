@@ -165,12 +165,12 @@ def get_names(field):
 
 
 def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
-    '''
+    """
     photname: photometric file location
     objname: number of object in the 3D-HST COSMOS photometric catalog
     err_floor: the fractional error floor (0.05 = 5% floor)
     zp_err: inflate the errors by the zeropoint offsets from Skelton+14
-    '''
+    """
 
     photname, zname, filternames, filts = get_names(field)
 
@@ -282,7 +282,7 @@ model_params.append({'name': 'mass', 'N': 1,
 
 model_params.append({'name': 'logzsol', 'N': 1,
                      'isfree': False,  # fixedmet
-                     'init': 0.0,  # fixedmet
+                     'init': -1.0,  # fixedmet (was 0.0, now using -1.0, marking with "m1fixedmet")
                      'init_disp': 0.4,
                      'log_param': True,
                      'units': r'$\log (Z/Z_\odot)$',
@@ -385,7 +385,7 @@ model_params.append({'name': 'dust2', 'N': 1,
 ###### Dust Emission ##############
 model_params.append({'name': 'add_dust_emission', 'N': 1,
                      'isfree': False,
-                     'init': 0,
+                     'init': 0,  # init: 1 = add dust; init: 0 = no dust
                      'units': None,
                      'prior_function': None,
                      'prior_args': None})
@@ -548,18 +548,8 @@ def load_model(objname, field, agelims=[], **extras):
     # model_params[n.index('tage')]['prior_args']['maxi'] = tuniv
 
     # NONPARAMETRIC SFH  # NEW
-    '''
-    agelims = [0.0, 7.0, 8.0, (8.0 + (np.log10(tuniv*1e9)-8.0)/4), (8.0 + 2*(np.log10(tuniv*1e9)-8.0)/4),
-               (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
-    '''
-    # NEWBINS
     agelims = [0.0, 8.0, 8.7, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2 * (np.log10(tuniv*1e9) - 9.0)/3),
                np.log10(tuniv*1e9)]
-    # 0, 100 Myr, 500 Myr, 1 Gyr, ..., tuniv
-    # A star lifetimes: 1.56 Gyr - 4.3 Gyr
-    # B star lifetimes: ~1 Myr - 1.7 Gyr
-    # 1824: tuniv ~ 2.11 Gyr, first stars form ~400 Myr into age of universe --> ~1.7 Gyr of proper star-formation?
-    # 7730: tuniv ~ 3.03 Gyr -->
     ncomp = len(agelims) - 1
     agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
 
@@ -593,6 +583,6 @@ model_type = BurstyModel
 
 '''
 RUNNING WITH
-mpirun -n 4 python prospector.py --param_file=eelg_multirun_params.py --outfile=1969_uds_test --niter=1200 --field=uds
---objname=1969
+mpirun -n 4 python prospector.py --param_file=eelg_fixedmet_params.py --outfile=1824_cosmos_fixedmet --niter=2500
+--field=cosmos --objname=1824
 '''
