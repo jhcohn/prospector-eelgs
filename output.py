@@ -1,6 +1,7 @@
 from prospect.models import model_setup
-import os, sys, time
-import prosp_dutils_orig as prosp_dutils  # original file without bunches of print statements
+import os
+import sys
+import prosp_dutils
 import numpy as np
 from copy import copy
 from astropy import constants
@@ -213,44 +214,48 @@ def str2bool(v):
         return False
 
 
-def post_processing(out_file, param_file, base, filename, print_it=True, **kwargs):
+def post_processing(out_file, param_file, **kwargs):
     """
     Driver. Loads output, runs post-processing routine.
     """
 
-    print('post')
+    obj = ''
+    field = ''
+    base = ''
+    count = 0
+    for i in kwargs['outname']:
+        if i == '_':
+            count += 1
+        elif count == 0:
+            obj += i
+        elif count == 1:
+            field += i
+        elif count == 2:
+            base += i
+        elif count == 3:
+            break
+    print(field)
+    full_base = obj + '_' + field + '_' + base
+    pkl = 'out.pkl'
+
     res, pr, mod = bread.results_from(out_file)
-    print('processing')
+    print('bread')
 
     # create flatchain, run post-processing
     res['flatchain'] = prosp_dutils.chop_chain(res['chain'], **res['run_params'])
     res['flatprob'] = prosp_dutils.chop_chain(res['lnprobability'], **res['run_params'])
     extra_output = calc_extra_quantities(res, **kwargs)
-    print('extra_output calculated')
-    with open(filename, 'wb') as newfile:  # 'wb' because binary format
+    print('extra calculated')
+    extra = full_base + '_extra_' + pkl
+    with open(extra, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(extra_output, newfile, pickle.HIGHEST_PROTOCOL)
-    print('dump1')
-
-    objname = ''
-    count = 0
-    field = ''
-    for k in kwargs['outname']:
-        if k == '_':
-            count += 1
-        elif count == 0:
-            objname += i
-        elif count == 1:
-            field += i
-        elif count == 2:
-            break
-    print(field)
+    print('extra pickled')
 
     # PRINT TRACE SHOWING HOW ITERATIONS CONVERGE FOR EACH PARAMETER
     tracefig, prob = bread.param_evol(res)  # print tracefig, store probability
     plt.show()
 
-    # FIND WALKER, ITERATION THAT GIVE MAX (AND MIN) PROBABILITY
-    # print(prob)
+    # FIND WALKER, ITERATION THAT GIVE MAX PROBABILITY
     print('max', prob.max())
     row = prob.argmax() / len(prob[0])
     col = prob.argmax() - row * len(prob[0])
@@ -260,7 +265,7 @@ def post_processing(out_file, param_file, base, filename, print_it=True, **kwarg
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
     bread.subtriangle(res, start=2000, thin=5, show_titles=True)
     plt.show()
-    # For FAST: truths = [mass, age, tau, dust2] (for 1824: [9.78, 0.25, -1., 0.00])
+    # For FAST: truths=[mass, age, tau, dust2] (for 1824: [9.78, 0.25, -1., 0.00])
 
     # We need the correct sps object to generate models
     sargv = sys.argv
@@ -300,7 +305,7 @@ def post_processing(out_file, param_file, base, filename, print_it=True, **kwarg
     dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
     zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
 
-    idx = dat['id'] == objname  # array filled: False when dat['id'] != objname, True when dat['id'] == objname
+    idx = dat['id'] == obj  # array filled: False when dat['id'] != obj, True when dat['id'] == obj
     zred = zout['z_spec'][idx][0]  # z = z_spec
     if zred == -99:
         zred = zout['z_peak'][idx][0]  # if z_spec does not exist, z = z_phot
@@ -309,56 +314,63 @@ def post_processing(out_file, param_file, base, filename, print_it=True, **kwarg
     wave_rest = []  # REST FRAME WAVELENGTH
     for j in range(len(wave)):
         wave_rest.append(wave[j]/(1 + zred))  # 1 + z = l_obs / l_emit --> l_emit = l_obs / (1 + z)
+    wave_rest = np.asarray(wave_rest)
 
     # OUTPUT SED results to files
-    write_res = objname + '_' + field + '_' + base + '_res_out.pkl'  # results
+    write_res = full_base + '_res_' + pkl  # results
     with open(write_res, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(res, newfile, pickle.HIGHEST_PROTOCOL)  # res includes res['obs']['maggies'] and ...['maggies_unc']
-    write_sed = objname + '_' + field + '_' + base + '_sed_out.pkl'  # model sed
+    write_sed = full_base + '_sed_' + pkl  # model sed
     with open(write_sed, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(phot, newfile, pickle.HIGHEST_PROTOCOL)
-    write_restwave = objname + '_' + field + '_' + base + '_restwave_out.pkl'  # rest frame wavelengths
+    write_restwave = full_base + '_restwave_' + pkl  # rest frame wavelengths
     with open(write_restwave, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(wave_rest, newfile, pickle.HIGHEST_PROTOCOL)
-    write_spec = objname + '_' + field + '_' + base + '_spec_out.pkl'  # spectrum
+    write_spec = full_base + '_spec_' + pkl  # spectrum
     with open(write_spec, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(spec, newfile, pickle.HIGHEST_PROTOCOL)
-    write_sps = objname + '_' + field + '_' + base + '_spswave_out.pkl'  # wavelengths that go with spectrum
+    write_sps = full_base + '_spswave_' + pkl  # wavelengths that go with spectrum
     with open(write_sps, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(sps.wavelengths, newfile, pickle.HIGHEST_PROTOCOL)
 
     # OUTPUT CHI_SQ results to files
     chi_sq = ((res['obs']['maggies'] - phot) / res['obs']['maggies_unc']) ** 2
-    write_chisq = objname + '_' + field + '_' + base + '_chisq_out.pkl'
+    write_chisq = full_base + '_chisq_' + pkl
     with open(write_chisq, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(chi_sq, newfile, pickle.HIGHEST_PROTOCOL)
-    write_justchi = objname + '_' + field + '_' + base + '_justchi_out.pkl'
+    write_justchi = full_base + '_justchi_' + pkl
     with open(write_justchi, 'wb') as newfile:
         pickle.dump((res['obs']['maggies'] - phot) / res['obs']['maggies_unc'], newfile, pickle.HIGHEST_PROTOCOL)
 
-    if print_it:
-        # HOW CONVERGED IS THE CODE?? LET'S FIND OUT!
-        parnames = np.array(res['model'].theta_labels())
-        fig, kl_ax = plt.subplots(1, 1, figsize=(7, 7))
-        for l in xrange(parnames.shape[0]):
-            kl_ax.plot(res['kl_iteration'], np.log10(res['kl_divergence'][:, l]), 'o', label=parnames[l], lw=1.5,
-                       linestyle='-', alpha=0.6)
+    # PLOT CHISQ
+    plt.plot(wave_rest, chi_sq, 'o', color='b')
+    plt.title(str(obj) + r' $\chi^2$')
+    plt.xlabel('Rest frame wavelength [angstroms]')
+    plt.ylabel(r'$\chi^2$')
+    plt.show()
 
-        kl_ax.set_ylabel('log(KL divergence)')
-        kl_ax.set_xlabel('iteration')
-        # kl_ax.set_xlim(0, nsteps*1.1)
-        kl_div_lim = res['run_params'].get('convergence_kl_threshold', 0.018)
-        kl_ax.axhline(np.log10(kl_div_lim), linestyle='--', color='red', lw=2, zorder=1)
-        kl_ax.legend(prop={'size': 5}, ncol=2, numpoints=1, markerscale=0.7)
-        plt.title(str(objname) + ' kl')
-        plt.show()
+    # HOW CONVERGED IS THE CODE?? LET'S FIND OUT!
+    parnames = np.array(res['model'].theta_labels())
+    fig, kl_ax = plt.subplots(1, 1, figsize=(7, 7))
+    for l in xrange(parnames.shape[0]):
+        kl_ax.plot(res['kl_iteration'], np.log10(res['kl_divergence'][:, l]), 'o', label=parnames[l], lw=1.5,
+                   linestyle='-', alpha=0.6)
 
-        # PLOT CHISQ
-        plt.plot(wave_rest, chi_sq, 'o', color='b')
-        plt.title(str(objname) + r' $\chi^2$')
-        plt.xlabel('Rest frame wavelength [angstroms]')
-        plt.ylabel(r'$\chi^2$')
-        plt.show()
+    write_klit = full_base + '_klit_' + pkl
+    with open(write_klit, 'wb') as newfile:
+        pickle.dump(res['kl_iteration'], newfile, pickle.HIGHEST_PROTOCOL)
+    write_kldvg = full_base + '_kldvg_' + pkl
+    with open(write_kldvg, 'wb') as newfile:
+        pickle.dump(res['kl_divergence'], newfile, pickle.HIGHEST_PROTOCOL)
+
+    kl_ax.set_ylabel('log(KL divergence)')
+    kl_ax.set_xlabel('iteration')
+    # kl_ax.set_xlim(0, nsteps*1.1)
+    kl_div_lim = res['run_params'].get('convergence_kl_threshold', 0.018)
+    kl_ax.axhline(np.log10(kl_div_lim), linestyle='--', color='red', lw=2, zorder=1)
+    kl_ax.legend(prop={'size': 5}, ncol=2, numpoints=1, markerscale=0.7)
+    plt.title(str(obj) + ' kl')
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -367,42 +379,19 @@ if __name__ == "__main__":
     parser.add_argument('--parfile')
     parser.add_argument('--outname')
 
-    files = {'outname': '', 'parfile': ''}
-
     args = vars(parser.parse_args())
     kwargs = {}
     for key in args.keys():
         kwargs[key] = args[key]
-        files[key] = kwargs[key]
 
-    outname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + kwargs['outname']
-    obj = ''
-    field = ''
-    base = ''
-    count = 0
-    for i in kwargs['outname']:
-        if i == '_':
-            count += 1
-        elif count == 0:
-            obj += i
-        elif count == 1:
-            field += i
-        elif count == 2:
-            base += i
-        elif count == 3:
-            break
-
-    extra = obj + '_' + field + '_' + base + '_extra_out.pkl'
-
-    out_file = files['outname']
-    param_file = files['parfile']
+    out_file = kwargs['outname']
+    param_file = kwargs['parfile']
     print(out_file, param_file)
 
-    print(kwargs)
-    post_processing(out_file=out_file, param_file=param_file, base=base, filename=extra, print_it=True, **kwargs)
+    post_processing(out_file=out_file, param_file=param_file, **kwargs)
 
 '''
 RUNNING WITH:
-python output.py --outname=1824_cosmos_decoupled_n1200_1495729287_mcmc.h5 --parfile=eelg_multirun_params.py
+python output.py --outname=12105_cosmos_fixedmet_1501774978_mcmc.h5 --parfile=eelg_fixedmet_params.py
 # Takes ~8 mins to run
 '''

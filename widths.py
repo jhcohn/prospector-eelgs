@@ -70,6 +70,9 @@ def some_filts(field, zred, scale=1, rest=True):
                         x.append(float(line.split()[1]))
                     y.append(float(line.split()[2]) * scale)  # scale the height of the curves, default normalized to 1
             plt.fill(x, y, alpha=0.25)
+
+    # vertical lines to mark OIII+H-beta region
+    plt.axvspan(4800, 5050, color='k', alpha=0.3)
     plt.xlabel(r'Rest frame wavelength')
     plt.ylabel(r'Maggies')
     # plt.show()

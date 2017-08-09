@@ -8,8 +8,8 @@ import widths  # WIDTHS
 from matplotlib import gridspec
 
 
-def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=False, some_curves=False, ujy=True):
-    # PLOT UVJ
+def all_plots(files, objname, field, kwbase, loc='upper left', sep_uvj=False, curves=False, ujy=True):
+    # PLOT SEPARATE UVJ
     if sep_uvj:
         uvj.uvj_plot(objname, field)
 
@@ -41,7 +41,7 @@ def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=Fal
     with open(files[7], 'rb') as justchi:
         chi = pickle.load(justchi)
 
-    # plt.subplot(111, xscale="log", yscale="log")
+    # FIGURES
     fig = plt.figure()
     gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])  # prepares fig to hold two axes, one atop other, size ratio 3:1
 
@@ -51,41 +51,71 @@ def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=Fal
     ax1.set_xscale("log")
     ax1.set_title(field + '-' + obj)
 
+    # MASK
+    # create mask
+    mask = results['obs']['phot_mask']  # mask out -99.0 values
+    wave_rest = np.asarray(wave_rest)  # no longer need this once I use new output that creates wave_rest as an array
+    ly_mask = (1180 < wave_rest) & (wave_rest < 1260)  # mask out ly-alpha values
+    mask[ly_mask] = False  # combine the masks!
+
+    # apply mask
+    phot = results['obs']['maggies'][mask]
+    unc = results['obs']['maggies_unc'][mask]
+    sed = sed[mask]
+    wave_rest = wave_rest[mask]
+    chi = chi[mask]
+
     if ujy:
         # CONVERTING TO microjansky
+        factor = 3631 * 10 ** 6
         res_jan = []
         err_jan = []
         sed_jan = []
         for i in range(len(wave_rest)):
-            res_jan.append(results['obs']['maggies'][i] * 3631 * 10 ** 6)
-            err_jan.append(results['obs']['maggies_unc'][i] * 3631 * 10 ** 6)
-            sed_jan.append(sed[i] * 3631 * 10 ** 6)
+            res_jan.append(phot[i] * factor)
+            err_jan.append(unc[i] * factor)
+            sed_jan.append(sed[i] * factor)
         spec_jan = []
         for i in range(len(spec)):
             spec_jan.append(spec[i] * 3631 * 10 ** 6)
+
         ax1.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='r',
-                     label=r'Observed Photometry')  # plot observations^
+                     label=r'Observed Photometry')  # plot observations
         ax1.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
         ax1.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
-        ax1.set_ylabel(r'$\mu$ Jy')
-
+        ax1.set_ylabel(r'$\mu$Jy')
     else:
-        ax1.errorbar(wave_rest, results['obs']['maggies'], yerr=results['obs']['maggies_unc'], marker='o', linestyle='',
-                     color='r', label=r'Observed Photometry')  # plot observations
+        # MAGGIES
+        ax1.errorbar(wave_rest, phot, yerr=unc, marker='o', linestyle='', color='r', label=r'Observed Photometry')
+        # plot observations^
         ax1.plot(wave_rest, sed, 'o', color='b', label=r'Model Photometry')  # plot best fit model
         ax1.plot(sps_wave, spec, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
         ax1.set_ylabel(r'Maggies')
 
+    # OVERLAY SED WITH FILTER WIDTHS
     if curves:
-        zred = 3.077  # HACK
-        # HACK REDSHIFTS: cos1824:3.077; cdfs10246:3.49; cdfs12682:4.89; cos5029:2.14; cos6459:0.53; cos7730:2.2;
-        # cos12105:3.29; cos17423:3.55
-        widths.plot_filts(field, zred, scale=(results['obs']['maggies'].max() / 10**3), rest=True)  # WIDTHS
-    if some_curves:
-        zred = 3.077  # HACK
-        # HACK REDSHIFTS: cos1824:3.077; cdfs10246:3.49; cdfs12682:4.89; cos5029:2.14; cos6459:0.53; cos7730:2.2;
-        # cos12105:3.29; cos17423:3.55
-        widths.some_filts(field, zred, scale=(results['obs']['maggies'].max() / 10 ** 2), rest=True)  # WIDTHS
+        # Redshift for each obj) (note: len(main[0] = 156; elements 153:155 = use, snr, use_nosnr, z_spec)
+        zred = 0
+        if field == 'cdfs':
+            zname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout'
+        elif field == 'cosmos':
+            zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'  # redshift catalog
+        elif field == 'uds':
+            zname = '/home/jonathan/uds/uds.v1.5.8.awk.zout'
+
+        with open(zname, 'r') as fz:
+            hdr_z = fz.readline().split()
+        dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
+        zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
+        obj_idx = (zout['id'] == objname)
+
+        if zout[obj_idx][0][1] >= 0:  # if z_spec exists for this galaxy
+            zred = zout[obj_idx][0][1]  # index good for all main cats
+        elif objname > 0:
+            zred = zout[obj_idx][0][17]  # using zout catalog, z_peak = z_phot; index good for all zout cats
+
+        widths.some_filts(field, zred, scale=(phot.max() / 10 ** 2), rest=True)  # WIDTHS
+
     ax2 = plt.subplot(gs[1], sharex=ax1)  # ax2 = smaller lower axis
     line2 = ax2.plot(wave_rest, chi, 'o', color='k')  # plot chi
     plt.axhline(y=0, color='k')  # plot horizontal line at y=0 on chi plot
@@ -101,10 +131,13 @@ def all_plots(files, objname, field, loc='upper left', sep_uvj=False, curves=Fal
     # plt.axvline(x=5270, color='k')  # proving no offset in two axes
     plt.subplots_adjust(hspace=.0)
 
-    if not sep_uvj and not some_curves:  # as long as not plotting a separate uvj plot
+    if not sep_uvj and not curves:  # as long as not plotting a separate uvj plot
         # UVJ inset on SED+ plot
         from mpl_toolkits.axes_grid.inset_locator import inset_axes
-        inset_axes(ax1, width="20%", height=2., loc=1)  # create inset axis: width (%), height (inches), location
+        loc_uvj = 1
+        if kwbase == 'noelg':
+            loc_uvj = 7
+        inset_axes(ax1, width="20%", height=2., loc=loc_uvj)  # create inset axis: width (%), height (inches), location
         # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
         # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
         uvj.uvj_plot(objname, field, title=False, labels=False, lims=True, size=20)  # add uvj plot to inset axis
@@ -115,7 +148,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('--obj')
     parser.add_argument('--field')
-    parser.add_argument('--base')  # need to use format --base=_newbins
+    parser.add_argument('--base')
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -125,10 +158,9 @@ if __name__ == "__main__":
     obj = kwargs['obj']
 
     field = kwargs['field']
-    pre = obj + '_' + field + kwargs['base']
+    pre = obj + '_' + field + '_' + kwargs['base']
 
     base = '_out.pkl'
-    # sfh = pre + '_sfh' + base
     extra = pre + '_extra' + base  # includes SFH *AND* rest of extra_output, so call it extra and not sfh
     res = pre + '_res' + base
     sed = pre + '_sed' + base
@@ -138,12 +170,11 @@ if __name__ == "__main__":
     chisq = pre + '_chisq' + base
     justchi = pre + '_justchi' + base
 
-    # files = [sfh, res, sed, restwave, spec, spswave, chisq, justchi]
     files = [extra, res, sed, restwave, spec, spswave, chisq, justchi]
 
-    all_plots(files, obj, field, loc='upper left', some_curves=False)
+    all_plots(files, obj, field, kwargs['base'], loc='upper left', curves=False)
 
 '''
 Currently running with:
-python make_all_plots.py --obj=7730 --field=cosmos --base=_newbins
+python make_all_plots.py --obj=7730 --field=cosmos --base=fixedmet
 '''
