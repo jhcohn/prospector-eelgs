@@ -186,24 +186,37 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
 
     filters = np.array(filts)  # [f[2:] for f in dat.dtype.names if f[0:2] == 'f_'])
     # print(filters)
+
+    # BUILD OUTPUT DICTIONARY
+    obs = {}
+    obs['filters'] = observate.load_filters(filters)
+
+    # NEW, MASK POINTS AROUND LY-ALPHA
+    with open(zname, 'r') as f:
+        hdr = f.readline().split()
+    dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
+    zout = np.loadtxt(photname, comments='#', delimiter=' ', dtype=dtype)
+    if zout[obj_idx][0][1] >= 0:  # if z_spec exists for this galaxy
+        zred = zout[obj_idx][0][1]  # index good for all main cats
+    elif objname > 0:
+        zred = zout[obj_idx][0][17]  # using zout catalog, z_peak = z_phot; index good for all zout cats
+    wave_eff = np.array([filt.wave_effective for filt in obs['filters']])
+    wave_rest = []
+    for i in range(len(wave_eff)):
+        wave_rest.append(wave_eff[i] / (1 + zred))
+    ly_mask = (1180 < wave_rest) & (wave_rest < 1260)  # mask out ly-alpha values
     flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filternames])
     unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
     # DEFINE PHOTOMETRIC MASK< CONVERT TO MAGGIES
     phot_mask = (flux != -99.0)
+    phot_mask[ly_mask] = False  # NEW, MASK POINTS AROUND LY-ALPHA
     maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
     maggies_unc = unc * 10**-6 / 3631
-    # print(maggies, 'maggies')
-    # print(flux, 'flux')
-    # print(maggies_unc, 'maggies_unc')
-    # print(unc, 'unc')
 
     # ERROR FLOOR
     maggies_unc = np.clip(maggies_unc, maggies * err_floor, np.inf)  # for any unc < err_floor, replace with err_floor
 
-    # BUILD OUTPUT DICTIONARY
-    obs = {}
-    obs['filters'] = observate.load_filters(filters)
     obs['wave_effective'] = np.array([filt.wave_effective for filt in obs['filters']])
     obs['phot_mask'] = phot_mask
     obs['maggies'] = maggies
