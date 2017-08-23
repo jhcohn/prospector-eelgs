@@ -190,27 +190,44 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     # BUILD OUTPUT DICTIONARY
     obs = {}
     obs['filters'] = observate.load_filters(filters)
+    # try to pull out transmission curves etc. and cut all things bluewards of 1216 and remove all that touch ly-a
 
     # NEW, MASK POINTS AROUND LY-ALPHA
     with open(zname, 'r') as f:
         hdr = f.readline().split()
     dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
-    zout = np.loadtxt(photname, comments='#', delimiter=' ', dtype=dtype)
-    if zout[obj_idx][0][1] >= 0:  # if z_spec exists for this galaxy
-        zred = zout[obj_idx][0][1]  # index good for all main cats
-    elif objname > 0:
-        zred = zout[obj_idx][0][17]  # using zout catalog, z_peak = z_phot; index good for all zout cats
+    zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype)
+    zred = zout['z_spec'][obj_idx][0]  # use z_spec
+    if zred == -99:  # if z_spec doesn't exist
+        zred = zout['z_peak'][obj_idx][0]  # use z_phot
     wave_eff = np.array([filt.wave_effective for filt in obs['filters']])
-    wave_rest = []
+
+    width = np.array([filt.effective_width for filt in obs['filters']])  # get effective width of each filter
+    wave_range = [None] * len(wave_eff)
     for i in range(len(wave_eff)):
+        wave_range[i] = wave_eff[i] - width[i]/2, wave_eff[i] + width[i]/2  # store filter ranges
+
+    range_rest = [None] * len(wave_eff)  # convert filter ranges to rest frame
+    wave_rest = []  # convert normal filter effective center points to rest frame (this is not new)
+    for i in range(len(wave_eff)):
+        range_rest[i] = (wave_range[i][0] / (1 + zred)), (wave_range[i][1] / (1+zred))
         wave_rest.append(wave_eff[i] / (1 + zred))
-    ly_mask = (1180 < wave_rest) & (wave_rest < 1260)  # mask out ly-alpha values
+
+    ly_mask = []
+    for i in range(len(range_rest)):
+        ly_mask.append((range_rest[i][0] < 1216) or ((range_rest[i][0] < 1180) & (range_rest[i][1] > 1180))
+                       or ((range_rest[i][0] < 1260) & (range_rest[i][1] > 1260)))
+    # print('mask', ly_mask)  # mask out ly_alpha and all points blueward of 1216
     flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filternames])
     unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
     # DEFINE PHOTOMETRIC MASK< CONVERT TO MAGGIES
     phot_mask = (flux != -99.0)
-    phot_mask[ly_mask] = False  # NEW, MASK POINTS AROUND LY-ALPHA
+    # print(phot_mask)
+    for i in range(len(phot_mask)):
+        if ly_mask[i]:
+            phot_mask[i] = False
+    print(phot_mask)
     maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
     maggies_unc = unc * 10**-6 / 3631
 

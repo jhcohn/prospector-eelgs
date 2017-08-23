@@ -54,7 +54,7 @@ def all_plots(files, objname, field, kwbase, loc='upper left', sep_uvj=False, cu
     # MASK
     # create mask
     mask = results['obs']['phot_mask']  # mask out -99.0 values
-    wave_rest = np.asarray(wave_rest)  # no longer need this once I use new output that creates wave_rest as an array
+    # wave_rest = np.asarray(wave_rest)  # no longer need this once I use new output that creates wave_rest as an array
     ly_mask = (1180 < wave_rest) & (wave_rest < 1260)  # mask out ly-alpha values
     mask[ly_mask] = False  # combine the masks!
 
@@ -146,19 +146,35 @@ def all_plots(files, objname, field, kwbase, loc='upper left', sep_uvj=False, cu
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
-    parser.add_argument('--obj')
-    parser.add_argument('--field')
-    parser.add_argument('--base')
+    # parser.add_argument('--obj')
+    # parser.add_argument('--field')
+    # parser.add_argument('--base')
+    parser.add_argument('--outname')
 
     args = vars(parser.parse_args())
     kwargs = {}
     for key in args.keys():
         kwargs[key] = args[key]
 
-    obj = kwargs['obj']
+    obj = ''
+    field = ''
+    file = ''
+    count = 0
+    for i in kwargs['outname']:
+        if i == '_':
+            count += 1
+        elif count == 0:
+            obj += i
+        elif count == 1:
+            field += i
+        elif count == 2:
+            file += i
+        elif count == 3:
+            break
 
-    field = kwargs['field']
-    pre = obj + '_' + field + '_' + kwargs['base']
+    # obj = kwargs['obj']
+    # field = kwargs['field']
+    pre = obj + '_' + field + '_' + file
 
     base = '_out.pkl'
     extra = pre + '_extra' + base  # includes SFH *AND* rest of extra_output, so call it extra and not sfh
@@ -176,5 +192,5 @@ if __name__ == "__main__":
 
 '''
 Currently running with:
-python make_all_plots.py --obj=7730 --field=cosmos --base=fixedmet
+python make_all_plots.py --outname=29430_cdfs_fixedmet_1502826457_mcmc.h5
 '''

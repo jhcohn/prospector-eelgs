@@ -19,13 +19,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
     # plt.axvline(x=5270, color='k')  # proving no offset in two axes
     ax1.set_yscale("log")
     ax1.set_xscale("log")
-    ax1.set_title(field[0] + '-' + objname[0])
-
-    ax2 = plt.subplot(gs[1])  # ax2 = bigger upper axis (right)
-    # plt.axvline(x=5270, color='k')  # proving no offset in two axes
-    ax2.set_yscale("log")
-    ax2.set_xscale("log")
-    ax2.set_title(field[1] + '-' + objname[1])
+    # ax1.set_title(field[0] + '-' + objname[0])
 
     for j in range(len(fileset)):
         print(j)
@@ -92,7 +86,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             ax3.set_ylabel(r'$\chi$')
             ax3.set_xlabel(r'Rest frame wavelength')
             ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
-            plt.subplots_adjust(hspace=.0)
+            # plt.subplots_adjust(hspace=.0)
 
             loc_uvj = 1
             inset_axes(ax1, width="20%", height=2., loc=loc_uvj)
@@ -104,24 +98,31 @@ def all_plots(fileset, objname, field, loc='upper left'):
             # add uvj plot to inset axis
         elif j == 1:
             print(j)
+            ax2 = plt.subplot(gs[1], sharey=ax1)  # ax2 = bigger upper axis (right)
+            # plt.axvline(x=5270, color='k')  # proving no offset in two axes
+            ax2.set_yscale("log")
+            ax2.set_xscale("log")
+            # ax2.set_title(field[1] + '-' + objname[1])
             ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='r',
                          label=r'Observed Photometry')  # plot observations
             ax2.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
             ax2.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
-            ax2.set_ylabel(r'$\mu$Jy')
+            # ax2.set_ylabel(r'$\mu$Jy')
 
-            ax4 = plt.subplot(gs[3], sharex=ax2)  # ax2 = smaller lower axis
+            ax4 = plt.subplot(gs[3], sharex=ax2, sharey=ax3)
             ax4.plot(wave_rest, chi, 'o', color='k')  # plot chi
             plt.axhline(y=0, color='k')  # plot horizontal line at y=0 on chi plot
             plt.setp(ax2.get_xticklabels(), visible=False)  # hide xtick labels on upper axis
+            plt.setp(ax2.get_yticklabels(), visible=False)  # hide xtick labels on upper axis
+            plt.setp(ax4.get_yticklabels(), visible=False)  # hide xtick labels on upper axis
             yticks = ax4.yaxis.get_major_ticks()  # show ytick labels on lower axis
             yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
-            ax4.set_ylabel(r'$\chi$')
+            # ax4.set_ylabel(r'$\chi$')
             ax4.set_xlabel(r'Rest frame wavelength')
             ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
-            plt.subplots_adjust(hspace=.0)
+            # plt.subplots_adjust(hspace=.0)
 
-            loc_uvj = 7
+            loc_uvj = 1  # 7
             inset_axes(ax2, width="20%", height=2., loc=loc_uvj)
             # create inset axis: width (%), height (inches), location
             # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
@@ -129,6 +130,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             uvj.uvj_plot(objname[1], field[1], title=False, labels=False, lims=True, size=20, show=False)
             print('uvj2')
     print('show')
+    plt.subplots_adjust(wspace=.0, hspace=.0)
     plt.show()
 
 if __name__ == "__main__":
