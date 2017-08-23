@@ -2,7 +2,7 @@ Git readme - created 20 April 2017 (Jonathan Cohn)
 
 
 Files:
-dust_multirun_params.py: same as eelg_multirun_params.py, but with add_dust_emission turned on
+dust_multirun_params.py: same as eelg_multirun_params.py, but with add_dust_emission turned on and logzsol not fixed
 
 eelg_5bins_params.py: same as eelg_emission_params.py, but tweak using different arrangements/numbers of SFH bins; defunct
 
@@ -28,7 +28,7 @@ make_all_plots.py: calls uvj.py, print_sfh.py, and then also prints SED and chi^
 
 model_test.py: load model, test lnp of initial model given different values of metallicity; defunct
 
-noelg_multirun_params.py: eelg_multirun_params.py, but with add_dust_emission turned on (also currently using different SFH bins)
+noelg_multirun_params.py: eelg_multirun_params.py, but with add_dust_emission turned on (also currently using different SFH bins). NOW changed into eelg_fixedmet_params.py but with gaslogz held fixed and dust on
 
 nonparameteric_sfh_example_params.py: Joel's example of nonparametric SFH param file, off of which I'm basing eelg_npSFH_params.py
 
@@ -58,14 +58,23 @@ sfh_output.py: modified from Joel's extra_output.py for creating and pickling SF
 
 sfh_plot.py: copied from Joel's extra_output.py, for outputting the SFH, with minimal changes to Joel's code; defunct
 
+smart_stack.py: used to plot side-by-side stacked SFHs for EELGs vs LBGs
+-Running with: python smart_stack.py
+
+stack_sfh.py: use to plot stacked SFHs for lists of galaxies; defunct
+
 uvj.py: code to make a uvj diagram for a given object, field, with the given object highlighted as a star
 
 widths.py: plot the filter response curves for a given field, for an object at a given redshift
 
 Note: Currently using...
+*dust_multirun_params.py	to generate prospector output with emission lines and dust
 *eelg_fixedmet_params.py	to generate prospector output with emission lines with logzsol fixed
 *eelg_multirun_params.py	to generate prospector output with emission lines
-*dust_multirun_params.pt	to generate prospector output with dust emission and emission lines
 *make_all_plots.py		to produce SFH and sSFR plots, as well as SED with chi and uvj plot (calling print_sfh.py, uvj.py, and, if including overlain filter curves, widths.py)
+*make_fig1.py			to produce side-by-side SED+ plots
+*make_fig2.py			to produce plot of SEDs with filterwidths overlain in each field
+*noelg_multirun_params.py	to generate prospector output with dust emission, emission lines, and logzsol and gaslogz both fixed (logzsol fixed to 0)
 *prospector.py			to run prospector
 *output.py			to generate tracefigs, cornerfigs and kl convergence plots, and to pickle SED info, spectra, wavelengths, chi, chi^2, SFR, and sSFR (called and used in make_all_plots.py)
+*smart_stack.py			to generate stacked plot of SFHs
