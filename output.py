@@ -110,11 +110,12 @@ def calc_extra_quantities(sample_results, ncalc=2000, **kwargs):  # ncalc=3000
                                   ir_priors=opts['ir_priors'], include_maxlnprob=True, nsamp=ncalc)
 
     # initialize output arrays for SFH + emission line posterior draws
-    half_time, sfr_10, sfr_100, ssfr_100, stellar_mass, ssfr_10, ssfr_full = [np.zeros(shape=(ncalc)) for i in range(7)]
+    half_time, sfr_10, sfr_100, ssfr_100, stellar_mass, ssfr_10 = [np.zeros(shape=(ncalc)) for i in range(6)]
 
     # set up time vector for full SFHs
     t = set_sfh_time_vector(sample_results, ncalc)  # returns array of len=18
     intsfr = np.zeros(shape=(t.shape[0], ncalc))
+    ssfr_full = np.zeros(shape=(t.shape[0], ncalc))  # ADDED
 
     # initialize sps, calculate maxprob
     # also confirm probability calculations are consistent with fit
@@ -161,7 +162,7 @@ def calc_extra_quantities(sample_results, ncalc=2000, **kwargs):  # ncalc=3000
         stellar_mass[jj] = sfh_params['mass']
         ssfr_10[jj] = sfr_10[jj] / stellar_mass[jj]
         ssfr_100[jj] = sfr_100[jj] / stellar_mass[jj]
-        ssfr_full = intsfr[:, jj] / stellar_mass[jj]
+        ssfr_full[:, jj] = intsfr[:, jj] / stellar_mass[jj]
 
         loop += 1
         print('loop', loop)
@@ -293,7 +294,7 @@ def post_processing(out_file, param_file, **kwargs):
         zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'  # redshift catalog
     elif field == 'uds':
         datname = '/home/jonathan/uds/uds.v1.5.10.cat'
-        zname = '/home/jonathan/uds/uds.v1.5.8.zout'
+        zname = '/home/jonathan/uds/uds.v1.5.8.awk.zout'
 
     with open(datname, 'r') as f:
         hdr = f.readline().split()
