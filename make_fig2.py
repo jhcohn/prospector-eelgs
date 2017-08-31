@@ -9,15 +9,16 @@ from matplotlib import gridspec
 from mpl_toolkits.axes_grid.inset_locator import inset_axes
 
 
-def all_plots(fileset, objname, znames, field, loc='upper left'):
+def all_plots(fileset, objname, znames, field):
     # FIGURES
-    fig = plt.figure()
+    plt.figure()
     # prepares fig to hold two sets side-by-side of: two axes, one atop other, size ratio 3:1
 
     ax1 = plt.subplot(3, 1, 1)  # number cols, number rows, which fig currently on
     ax1.set_yscale("log")
     ax1.set_xscale("log")
-    ax1.set_title(field[0] + '-' + objname[0] + ', ' + field[1] + '-' + objname[1] + ', ' + field[2] + '-' + objname[2])
+    # ax1.set_title(field[0] + '-' + objname[0] + ', ' + field[1] + '-' + objname[1] + ', ' + field[2] + '-' +
+    # objname[2])
 
     ax2 = plt.subplot(3, 1, 2, sharex=ax1)
     ax2.set_yscale("log")
@@ -53,8 +54,8 @@ def all_plots(fileset, objname, znames, field, loc='upper left'):
         mask = results['obs']['phot_mask']  # mask out -99.0 values
         wave_rest = np.asarray(wave_rest)
         # no longer need this once I use new output that creates wave_rest as an array
-        ly_mask = (1180 < wave_rest) & (wave_rest < 1260)  # mask out ly-alpha values
-        mask[ly_mask] = False  # combine the masks!
+        # ly_mask = (1180 < wave_rest) & (wave_rest < 1260)  # mask out ly-alpha values
+        # mask[ly_mask] = False  # combine the masks!
 
         # apply mask
         phot = results['obs']['maggies'][mask]
@@ -97,6 +98,8 @@ def all_plots(fileset, objname, znames, field, loc='upper left'):
             ax1.set_ylabel(r'Flux [$\mu$Jy]')
             # ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax1.axvspan(4800, 5050, color='k', alpha=0.3)
+            ax1.text(800, 1, 'z ~ ' + str(zred), fontsize=20)
+            ax1.text(800, 20, str(field[j]) + '-' + str(objname[j]), fontsize=20)
             plt.subplots_adjust(hspace=.0)
 
             # Redshift for each obj) (note: len(main[0] = 156; elements 153:155 = use, snr, use_nosnr, z_spec)
@@ -110,6 +113,8 @@ def all_plots(fileset, objname, znames, field, loc='upper left'):
             ax2.set_ylabel(r'Flux [$\mu$Jy]')
             # ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax2.axvspan(4800, 5050, color='k', alpha=0.3)
+            ax2.text(800, 2, 'z ~ ' + str(zred), fontsize=20)
+            ax2.text(800, 20, str(field[j]) + '-' + str(objname[j]), fontsize=20)
             plt.subplots_adjust(hspace=.0)
 
             widths.fig2(ax2, field[1], zred, scale=(phot.max() * 10 ** 6), rest=True)  # WIDTHS
@@ -120,6 +125,8 @@ def all_plots(fileset, objname, znames, field, loc='upper left'):
             ax3.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
             ax3.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
             ax3.set_ylabel(r'Flux [$\mu$Jy]')
+            ax3.text(800, 2, 'z ~ ' + str(zred), fontsize=20)
+            ax3.text(800, 20, str(field[j]) + '-' + str(objname[j]), fontsize=20)
             # ax3.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax3.axvspan(4800, 5050, color='k', alpha=0.3)
             plt.subplots_adjust(hspace=.0)
@@ -192,9 +199,9 @@ if __name__ == "__main__":
     znames = ['/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout', '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout',
               '/home/jonathan/uds/uds.v1.5.8.awk.zout']
 
-    all_plots(fileset, objs, znames, fields, loc='upper left')
+    all_plots(fileset, objs, znames, fields)
 
 '''
 Currently running with:
-python make_all_plots.py --obj=7730 --field=cosmos --base=fixedmet
+python make_fig2.py --obj1=20752 --obj2=1824 --obj3=5206 --base1=noelg --base2=fixedmet --base3=fixedmet
 '''
