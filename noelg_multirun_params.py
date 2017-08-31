@@ -22,7 +22,7 @@ run_params = {'verbose': True,
               # MCMC params
               'nwalkers': 140,
               'nburn': [50, 100],
-              'niter': 500,
+              'niter': 1200,
               'interval': 0.2,
               # Model info
               'zcontinuous': 2,
@@ -32,7 +32,7 @@ run_params = {'verbose': True,
               'agelims': [0.0, 8.0, 8.5, 9.0, 9.5, 9.8, 10.0],  # NEW (see load_model)
               # Data info
               'field': 'cosmos',
-              'objname': '3921',
+              'objname': '1824',
               'photname': '',
               'zname': '',
               'convergence_check_interval': 100,  # Fix convergence test problem
@@ -146,33 +146,39 @@ def get_names(field):
     if field == 'cosmos':
         photname = '/home/jonathan/cosmos/cosmos.v1.3.8.cat'
         zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'
+        fname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.fout'
+        # cosmos.v1.3.6_EL_Z004.awk.fout, cosmos.v1.3.6_EL_Z02.awk.fout
         filternames = cos_filternames
         filts = cos_filts
 
     elif field == 'cdfs':
         photname = '/home/jonathan/cdfs/cdfs.v1.6.11.cat'
         zname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout'
+        fname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.fout'
+        # cdfs.v1.6.9_EL_Z004.awk.fout, cosmos.v1.6.9_EL_Z02.awk.fout
         filternames = cdfs_filternames
         filts = cdfs_filts
 
     elif field == 'uds':
         photname = '/home/jonathan/uds/uds.v1.5.10.cat'
         zname = '/home/jonathan/uds/uds.v1.5.8.awk.zout'
+        fname = '/home/jonathan/uds/uds.v1.5.8.awk.fout'
+        # uds.v1.5.8_EL_Z004.awk.fout, uds.v1.5.8_EL_Z02.awk.fout
         filternames = uds_filternames
         filts = uds_filts
 
-    return photname, zname, filternames, filts
+    return photname, zname, fname, filternames, filts
 
 
 def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
-    '''
+    """
     photname: photometric file location
     objname: number of object in the 3D-HST COSMOS photometric catalog
     err_floor: the fractional error floor (0.05 = 5% floor)
     zp_err: inflate the errors by the zeropoint offsets from Skelton+14
-    '''
+    """
 
-    photname, zname, filternames, filts = get_names(field)
+    photname, zname, fname, filternames, filts = get_names(field)
 
     # OPEN FILE, LOAD DATA
     with open(photname, 'r') as f:
@@ -183,25 +189,15 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     # EXTRACT FILTERS, FLUXES, ERRORS FOR OBJECT
     obj_idx = (dat['id'] == objname)
     # print(dat[obj_idx]['id'], 'idx')
-    '''
-    if field == 'cdfs':
-        filternames = cdfs_filternames
-        filts = cdfs_filts
-    elif field == 'cosmos':
-        filternames = cos_filternames
-        filts = cos_filts
-    elif field == 'uds':
-        filternames = uds_filternames
-        filts = uds_filts
-    '''
 
     filters = np.array(filts)  # [f[2:] for f in dat.dtype.names if f[0:2] == 'f_'])
-    print(filters)
+    # print(filters)
     flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filternames])
     unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
     # DEFINE PHOTOMETRIC MASK< CONVERT TO MAGGIES
     phot_mask = (flux != -99.0)
+    # print('mask', phot_mask)
     maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
     maggies_unc = unc * 10**-6 / 3631
     # print(maggies, 'maggies')
@@ -215,6 +211,37 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     # BUILD OUTPUT DICTIONARY
     obs = {}
     obs['filters'] = observate.load_filters(filters)
+
+    # NEW, MASK POINTS AROUND LY-ALPHA
+    with open(zname, 'r') as f:
+        hdr = f.readline().split()
+    dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
+    zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype)
+    zred = zout['z_spec'][obj_idx][0]  # use z_spec
+    if zred == -99:  # if z_spec doesn't exist
+        zred = zout['z_peak'][obj_idx][0]  # use z_phot
+    wave_eff = np.array([filt.wave_effective for filt in obs['filters']])
+
+    width = np.array([filt.effective_width for filt in obs['filters']])  # get effective width of each filter
+    wave_range = [None] * len(wave_eff)
+    for i in range(len(wave_eff)):
+        wave_range[i] = wave_eff[i] - width[i]/2, wave_eff[i] + width[i]/2  # store filter ranges
+
+    range_rest = [None] * len(wave_eff)  # convert filter ranges to rest frame
+    wave_rest = []  # convert normal filter effective center points to rest frame (this is not new)
+    for i in range(len(wave_eff)):
+        range_rest[i] = (wave_range[i][0] / (1 + zred)), (wave_range[i][1] / (1+zred))
+        wave_rest.append(wave_eff[i] / (1 + zred))
+
+    ly_mask = []
+    for i in range(len(range_rest)):
+        ly_mask.append((range_rest[i][0] < 1216) or ((range_rest[i][0] < 1180) & (range_rest[i][1] > 1180))
+                       or ((range_rest[i][0] < 1260) & (range_rest[i][1] > 1260)))
+    # print('mask', ly_mask)  # mask out ly_alpha and all points blueward of 1216
+    for i in range(len(phot_mask)):
+        if ly_mask[i]:
+            phot_mask[i] = False
+
     obs['wave_effective'] = np.array([filt.wave_effective for filt in obs['filters']])
     obs['phot_mask'] = phot_mask
     obs['maggies'] = maggies
@@ -292,13 +319,13 @@ model_params.append({'name': 'mass', 'N': 1,
                      'prior_args': {'mini': 1e1, 'maxi': 1e14}})
 
 model_params.append({'name': 'logzsol', 'N': 1,
-                     'isfree': True,  # BUCKET1 isfree: True when doing emission lines
-                     'init': 0.0,
+                     'isfree': False,  # fixedmet
+                     'init': 0.0,  # noelg, trying -0.7, was 0.0. Maybe try -0.4? -0.5? -0.3?
                      'init_disp': 0.4,
                      'log_param': True,
                      'units': r'$\log (Z/Z_\odot)$',
                      'prior_function': tophat,
-                     'prior_args': {'mini': -2.0, 'maxi': 0.19}})
+                     'prior_args': {'mini': -2.0, 'maxi': 0.19}})  # 'mini': -1.5
 
 ###### SFH ########
 model_params.append({'name': 'sfh', 'N': 1,
@@ -324,15 +351,6 @@ model_params.append({'name': 'logtau', 'N': 1,
                      'units': 'Gyr',
                      'prior_function': tophat,
                      'prior_args': {'mini': -1, 'maxi': 2}})
-
-'''  # DON'T NEED FOR npSFH
-model_params.append({'name': 'tage', 'N': 1,
-                     'isfree': False,  # NEW turn off
-                     'init': 1.0,
-                     'units': 'Gyr',
-                     'prior_function': tophat,
-                     'prior_args': {'mini': 0.1, 'maxi': 14.0}})  # 0.01, 'maxi': 14.0}})
-'''
 
 model_params.append({'name': 'tburst', 'N': 1,
                      'isfree': False,
@@ -403,9 +421,9 @@ model_params.append({'name': 'dust2', 'N': 1,
                      'prior_args': {'mini': 0.0, 'maxi': 4.0}})
 
 ###### Dust Emission ##############
-model_params.append({'name': 'add_dust_emission', 'N': 1,  # NOELG
+model_params.append({'name': 'add_dust_emission', 'N': 1,
                      'isfree': False,
-                     'init': 1,  # 0, NOELG
+                     'init': 1,  # init: 1 = add dust; init: 0 = no dust
                      'units': None,
                      'prior_function': None,
                      'prior_args': None})
@@ -419,7 +437,7 @@ model_params.append({'name': 'add_neb_emission', 'N': 1,
                      'prior_args': None})
 
 model_params.append({'name': 'gas_logz', 'N': 1,
-                     'isfree': True,  # DECOUPLE: True (False when coupled)
+                     'isfree': False,  # DECOUPLE: True (False when coupled) (False for non-EELGs)
                      'init': 0.0,
                      # 'depends_on': tie_gas_logz,  # BUCKET1 emission lines --> tie_gas_logz  # DECOUPLE --> remove
                      'units': r'log Z/Z_\odot',
@@ -427,7 +445,7 @@ model_params.append({'name': 'gas_logz', 'N': 1,
                      'prior_args': {'mini': -2.0, 'maxi': 0.5}})
 
 model_params.append({'name': 'gas_logu', 'N': 1,
-                     'isfree': True,  # BUCKET1 emission lines --> isfree: True
+                     'isfree': False,  # BUCKET1 emission lines --> isfree: True (OR False because not important)
                      'init': -2.0,
                      'units': '',
                      'prior_function': tophat,
@@ -541,7 +559,7 @@ def load_model(objname, field, agelims=[], **extras):
     # REDSHIFT
     # open file, load data
 
-    photname, zname, filtername, filts = get_names(field)
+    photname, zname, fname, filtername, filts = get_names(field)
 
     with open(photname, 'r') as f:
         hdr = f.readline().split()
@@ -553,12 +571,56 @@ def load_model(objname, field, agelims=[], **extras):
     dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
     zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
 
-    idx = dat['id'] == objname  # creates array of True/False: True when dat[id] = objname
+    idx = dat['id'] == objname  # creates T/F array: True when dat[id] = objname
     zred = zout['z_spec'][idx][0]  # use z_spec
     if zred == -99:  # if z_spec doesn't exist
         zred = zout['z_peak'][idx][0]  # use z_phot
-
     print(zred, 'zred')
+
+    # NEW FOUT (MASS-METALLICITY)
+    with open(fname, 'r') as ff:
+        hdr_f = ff.readline().split()
+    dtype_f = np.dtype([(hdr_f[1], 'S20')] + [(n, np.float) for n in hdr_f[2:]])
+    fout = np.loadtxt(fname, comments='#', delimiter=' ', dtype=dtype_f)
+    lmass = fout['lmass'][idx][0]
+    met = [-0.5, 0.2, 0.0]
+    '''
+    if lmass <= 9.5:
+        met = [-1.1, 0.0, -0.6]
+    elif 9.5 < lmass <= 9.8:
+        met = [-1.0, 0.05, -0.5]
+    elif 9.8 < lmass <= 9.95:
+        met = [-0.9, 0.1, -0.4]
+    elif 9.95 < lmass <= 10.05:
+        met = [-0.85, 0.1, -0.3]
+    elif 10.05 < lmass <= 10.2:
+        met = [-0.8, 0.15, -0.2]
+    elif 10.2 < lmass <= 10.4:
+        met = [-0.65, 0.17, -0.11]
+    elif 10.4 < lmass <= 10.91:
+        met = [-0.4, 0.25, 0.0]
+    elif 10.91 < lmass:
+        met = [-0.1, 0.3, 0.1]
+    '''
+    '''
+    if lmass <= 9.8:
+        met = [-1.1, 0.0, -0.55]
+    elif 9.8 < lmass <= 10.2:
+        met = [-0.85, 0.1, -0.3]
+    elif 10.2 < lmass <= 10.4:
+        met = [-0.65, 0.17, -0.11]
+    elif 10.4 < lmass:
+        met = [-0.3, 0.3, 0.0]
+    '''
+
+    if lmass <= 9.7:
+        met = [-1.0, 0.0, -0.6]
+    elif 9.7 < lmass <= 10.0:
+        met = [-0.9, 0.1, -0.4]
+    elif 10.0 < lmass <= 10.3:
+        met = [-0.8, 0.15, -0.2]
+    elif lmass > 10.3:
+        met = [-0.2, 0.3, 0.0]
 
     # CALCULATE AGE OF THE UNIVERSE (TUNIV) AT REDSHIFT ZRED
     tuniv = WMAP9.age(zred).value
@@ -567,14 +629,15 @@ def load_model(objname, field, agelims=[], **extras):
     n = [p['name'] for p in model_params]
     # model_params[n.index('tage')]['prior_args']['maxi'] = tuniv
 
-    # NONPARAMETRIC SFH  # NEW
-    '''
-    agelims = [0.0, 7.0, 8.0, (8.0 + (np.log10(tuniv*1e9)-8.0)/4), (8.0 + 2*(np.log10(tuniv*1e9)-8.0)/4),
-               (8.0 + 3*(np.log10(tuniv*1e9)-8.0)/4), np.log10(tuniv*1e9)]
-    '''
-    agelims = [0.0, 8.4, 8.7, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2*(np.log10(tuniv*1e9) - 9.0)/3),
+    # NEW FOUT MASS-METALLICITY
+    model_params[n.index('logzsol')]['prior_args'] = {'mini': met[0], 'maxi': met[1]}  # {'mini': -0.8, 'maxi': 0.15}
+    model_params[n.index('logzsol')]['init'] = met[2]  # -0.25
+    # 4942_cosmos_noelgmet was run with met[2] = -0.4
+    # 4942_cosmos_noelg25 was run with met[2] = -0.25
+
+    # NONPARAMETRIC SFH
+    agelims = [0.0, 8.0, 8.7, 9.0, (9.0 + (np.log10(tuniv*1e9) - 9.0)/3), (9.0 + 2 * (np.log10(tuniv*1e9) - 9.0)/3),
                np.log10(tuniv*1e9)]
-    # 0, 250Myr, 500Myr, 1Gyr, 1Gyr + (tuniv - 1Gyr)/3, 1Gyr + 2*(tuniv - 1Gyr)/3, 1Gyr + 3*(tuniv - 1Gyr)/3 = tuniv
     ncomp = len(agelims) - 1
     agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
 
@@ -608,16 +671,6 @@ model_type = BurstyModel
 
 '''
 RUNNING WITH
-mpirun -n 4 python prospector.py --param_file=noelg_multirun_params.py --outfile=1969_uds_noelg --niter=1200 --field=uds
+mpirun -n 4 python prospector.py --param_file=noelg_multirun_params.py --outfile=1969_uds_test --niter=1200 --field=uds
 --objname=1969
-
-NOTES ON OBJECTS:
-cdfs 10246 ("weak 5007 emission? continuum" according to Oesch file)
-cdfs 12682 (no comment in Oesch file; non-EELG)
-cosmos 1824 (Sanders et al paper, BIG eelg)
-cosmos 5029 ("4861/4959/5007" comment in Oesch file)
-cosmos 6459 ("serendip; comtinuum only" according to Oesch file)
-cosmos 7730 ("gorgeous 4861/4959/5007" according to Oesch file)
-cosmos 12105 (from Vy, EELG)
-cosmos 17423 (from Vy, EELG)
 '''
