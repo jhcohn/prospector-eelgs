@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import argparse
 
 
-def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
+def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20, show=True, ids=True):
     # UVJ plotter
     # Choose correct catalogs based on field name
     if field == 'cdfs':
@@ -58,6 +58,7 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
             special_uv = -2.5 * np.log10(s[i][11] / s[i][15])
             special_vj = -2.5 * np.log10(s[i][15] / s[i][17])
             print(main[i][0], int(objname), special_vj, special_uv)
+            print(zcut[i], main[i][-1], redshift[i][17])
 
         # SNR IN K BAND
         Ksnr.append(main[i][21] / main[i][22])  # f_Ksall / e_Ksall, indices good for all main cats
@@ -78,19 +79,20 @@ def uvj_plot(objname, field, title=True, labels=True, lims=False, size=20):
     if labels:
         plt.text(-0.4, 1.35, 'Quiescent', fontsize=16)  # label quiescent region
         plt.text(-0.4, 1.1, 'Star-forming', fontsize=16)  # label star-forming region
-    plt.plot([-0.5, 0.9], [1.3, 1.3], 'k')  # plot a line to show quiescent region ([x1,x2], [y1, y2])
+    plt.plot([-0.5, 0.8], [1.3, 1.3], 'k')  # plot a line to show quiescent region ([x1,x2], [y1, y2]) x2=0.9 or 0.8?
     plt.plot([1.6, 1.6], [2.5, 2.0], 'k')  # plot a line to show quiescent region ([x1,x2], [y1, y2])
-    plt.plot([0.9, 1.6], [1.3, 2.0], 'k')  # plot a line to show quiescent region ([x1,x2], [y1, y2])
+    plt.plot([0.8, 1.6], [1.3, 2.0], 'k')  # plot a line to show quiescent region ([x1,x2], [y1, y2]) x1=0.9 or 0.8
 
     if lims:
         plt.xlim(-1.5, 2.5)
         plt.xticks([-1, 0, 1, 2])
-        plt.ylim(-1., 2.5)
-        plt.yticks([-1., 0., 1., 2.])
+        plt.ylim(-1., 2.5)  # 3
+        plt.yticks([-1., 0., 1., 2.])  # , 3.])
 
     plt.xlabel(r'$V - J$ (Rest)', fontsize=size)
     plt.ylabel(r'$U - V$ (Rest)', fontsize=size)
-    plt.show()
+    if show:
+        plt.show()
 
 
 if __name__ == "__main__":

@@ -154,7 +154,7 @@ def get_names(field):
     elif field == 'cdfs':
         photname = '/home/jonathan/cdfs/cdfs.v1.6.11.cat'
         zname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout'
-        fname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.fout'
+        fname = '/home/jonathan/cdfs/cdfs.v1.6.9_EL_Z004.awk.fout'  # cdfs.v1.6.9.awk.fout'
         # cdfs.v1.6.9_EL_Z004.awk.fout, cosmos.v1.6.9_EL_Z02.awk.fout
         filternames = cdfs_filternames
         filts = cdfs_filts
@@ -582,37 +582,10 @@ def load_model(objname, field, agelims=[], **extras):
         hdr_f = ff.readline().split()
     dtype_f = np.dtype([(hdr_f[1], 'S20')] + [(n, np.float) for n in hdr_f[2:]])
     fout = np.loadtxt(fname, comments='#', delimiter=' ', dtype=dtype_f)
-    lmass = fout['lmass'][idx][0]
-    met = [-0.5, 0.2, 0.0]
-    '''
-    if lmass <= 9.5:
-        met = [-1.1, 0.0, -0.6]
-    elif 9.5 < lmass <= 9.8:
-        met = [-1.0, 0.05, -0.5]
-    elif 9.8 < lmass <= 9.95:
-        met = [-0.9, 0.1, -0.4]
-    elif 9.95 < lmass <= 10.05:
-        met = [-0.85, 0.1, -0.3]
-    elif 10.05 < lmass <= 10.2:
-        met = [-0.8, 0.15, -0.2]
-    elif 10.2 < lmass <= 10.4:
-        met = [-0.65, 0.17, -0.11]
-    elif 10.4 < lmass <= 10.91:
-        met = [-0.4, 0.25, 0.0]
-    elif 10.91 < lmass:
-        met = [-0.1, 0.3, 0.1]
-    '''
-    '''
-    if lmass <= 9.8:
-        met = [-1.1, 0.0, -0.55]
-    elif 9.8 < lmass <= 10.2:
-        met = [-0.85, 0.1, -0.3]
-    elif 10.2 < lmass <= 10.4:
-        met = [-0.65, 0.17, -0.11]
-    elif 10.4 < lmass:
-        met = [-0.3, 0.3, 0.0]
-    '''
-
+    idx_f = fout['id'] == objname  # creates T/F array: True when fout[id] = objname
+    lmass = fout['lmass'][idx_f][0]
+    print(lmass, 'lmass')
+    # met = [-1.5, 0.5, -0.3]
     if lmass <= 9.7:
         met = [-1.0, 0.0, -0.6]
     elif 9.7 < lmass <= 10.0:
