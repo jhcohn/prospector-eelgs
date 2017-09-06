@@ -36,7 +36,7 @@ run_params = {'verbose': True,
               'photname': '',
               'zname': '',
               'convergence_check_interval': 100,  # Fix convergence test problem
-              'convergence_kl_threshold': 0.0  # Fix convergence test problem
+              'convergence_kl_threshold': 0.04  # Fix convergence test problem
               }
 run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']  # + '_' +run_params['field']
 

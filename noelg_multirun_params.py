@@ -36,7 +36,7 @@ run_params = {'verbose': True,
               'photname': '',
               'zname': '',
               'convergence_check_interval': 100,  # Fix convergence test problem
-              'convergence_kl_threshold': 0.0  # Fix convergence test problem
+              'convergence_kl_threshold': 0.04  # Fix convergence test problem log10(x) = -1.4 --> x=0.04
               }
 run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']  # + '_' +run_params['field']
 
@@ -644,6 +644,6 @@ model_type = BurstyModel
 
 '''
 RUNNING WITH
-mpirun -n 4 python prospector.py --param_file=noelg_multirun_params.py --outfile=1969_uds_test --niter=1200 --field=uds
+mpirun -n 4 python prospector.py --param_file=noelg_multirun_params.py --outfile=1969_uds_noelg --niter=1200 --field=uds
 --objname=1969
 '''

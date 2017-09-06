@@ -36,7 +36,7 @@ run_params = {'verbose': True,
               'photname': '',
               'zname': '',
               'convergence_check_interval': 100,  # Fix convergence test problem
-              'convergence_kl_threshold': 0.0  # Fix convergence test problem
+              'convergence_kl_threshold': 0.04  # Fix convergence test problem
               }
 run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']  # + '_' +run_params['field']
 
@@ -227,7 +227,7 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     for i in range(len(phot_mask)):
         if ly_mask[i]:
             phot_mask[i] = False
-    print(phot_mask)
+    # print(phot_mask)
     maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
     maggies_unc = unc * 10**-6 / 3631
 
