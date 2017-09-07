@@ -13,6 +13,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
     # FIGURES
     fig = plt.figure()
     gs = gridspec.GridSpec(2, 2, height_ratios=[3, 1])
+#    gs = gridspec.GridSpec(1, 2)
     # prepares fig to hold two sets side-by-side of: two axes, one atop other, size ratio 3:1
 
     ax1 = plt.subplot(gs[0])  # ax1 = bigger upper axis (left)
@@ -47,8 +48,8 @@ def all_plots(fileset, objname, field, loc='upper left'):
         mask = results['obs']['phot_mask']  # mask out -99.0 values
         wave_rest = np.asarray(wave_rest)
         # no longer need this once I use new output that creates wave_rest as an array
-        ly_mask = (1180 < wave_rest) & (wave_rest < 1260)  # mask out ly-alpha values
-        mask[ly_mask] = False  # combine the masks!
+        # ly_mask = (1180 < wave_rest) & (wave_rest < 1260)  # mask out ly-alpha values
+        # mask[ly_mask] = False  # combine the masks!
 
         # apply mask
         phot = results['obs']['maggies'][mask]
@@ -77,6 +78,9 @@ def all_plots(fileset, objname, field, loc='upper left'):
             ax1.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
             ax1.set_ylabel(r'$\mu$Jy')
 
+            # ax1.text(1000, 50, 'EELG', fontsize=20)
+            ax1.text(700, 600, 'COSMOS-1824 (EELG)', fontsize=20)
+            # ax1.set_xlabel(r'Rest frame wavelength')
             ax3 = plt.subplot(gs[2], sharex=ax1)  # ax2 = smaller lower axis
             ax3.plot(wave_rest, chi, 'o', color='k')  # plot chi
             plt.axhline(y=0, color='k')  # plot horizontal line at y=0 on chi plot
@@ -93,7 +97,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             # create inset axis: width (%), height (inches), location
             # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
             # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
-            uvj.uvj_plot(objname[0], field[0], title=False, labels=False, lims=True, size=20, show=False)
+            uvj.uvj_plot(objname[j], field[j], title=False, labels=False, lims=True, size=20, show=False)
             print('uvj1')
             # add uvj plot to inset axis
         elif j == 1:
@@ -109,12 +113,15 @@ def all_plots(fileset, objname, field, loc='upper left'):
             ax2.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
             # ax2.set_ylabel(r'$\mu$Jy')
 
+            # ax2.text(1000, 50, 'LBG', fontsize=20)
+            ax2.text(1025, 600, 'COSMOS-5029 (LBG)', fontsize=20)
+            # ax2.set_xlabel(r'Rest frame wavelength')
             ax4 = plt.subplot(gs[3], sharex=ax2, sharey=ax3)
             ax4.plot(wave_rest, chi, 'o', color='k')  # plot chi
             plt.axhline(y=0, color='k')  # plot horizontal line at y=0 on chi plot
             plt.setp(ax2.get_xticklabels(), visible=False)  # hide xtick labels on upper axis
-            plt.setp(ax2.get_yticklabels(), visible=False)  # hide xtick labels on upper axis
-            plt.setp(ax4.get_yticklabels(), visible=False)  # hide xtick labels on upper axis
+            plt.setp(ax2.get_yticklabels(), visible=False)  # hide ytick labels on upper axis
+            plt.setp(ax4.get_yticklabels(), visible=False)  # hide ytick labels on lower axis
             yticks = ax4.yaxis.get_major_ticks()  # show ytick labels on lower axis
             yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
             # ax4.set_ylabel(r'$\chi$')
@@ -127,7 +134,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             # create inset axis: width (%), height (inches), location
             # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
             # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
-            uvj.uvj_plot(objname[1], field[1], title=False, labels=False, lims=True, size=20, show=False)
+            uvj.uvj_plot(objname[j], field[j], title=False, labels=False, lims=True, size=20, show=False)
             print('uvj2')
     print('show')
     plt.subplots_adjust(wspace=.0, hspace=.0)
@@ -185,5 +192,5 @@ if __name__ == "__main__":
 
 '''
 Currently running with:
-python make_all_plots.py --obj=7730 --field=cosmos --base=fixedmet
+python make_fig1.py --obj1=1824 --field1=cosmos --base1=fixedmet --obj2=5029 --field2=cosmos --base2=noelgduston
 '''
