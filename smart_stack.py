@@ -16,8 +16,8 @@ def randraw(infile, num=1000):
     with open(infile, 'rb') as exout:
         extra_output = pickle.load(exout)
 
-    # print(len(extra_output['extras']['ssfr']), len(extra_output['extras']['ssfr'][0]))  # 22, 2000
     draw_from_sfh = np.zeros(shape=(len(extra_output['extras']['ssfr']), num))  # shape=(22, num)
+    # print(len(extra_output['extras']['ssfr']), len(extra_output['extras']['ssfr'][0]))  # 22, 2000
     # print(len(draw_from_sfh), len(draw_from_sfh[0]))  # 22, num
 
     for i in range(len(extra_output['extras']['ssfr'])):  # at each of these 22 points
@@ -57,32 +57,32 @@ def stacker(gal_draws, sigma=1):
     """
     stacker takes input of random points drawn from a list of galaxies' SFH posteriors, concatenates them within each
     bin, and then calculates the median and 1 sigma errors in each bin
-
-    draws should be in format draws = [draw_from_sfh1, draw_from_sfh2, ...], where each draw_from_sfh has shape=(22,num)
+    gal_draws should be in format draws = [draw_from_sfh1, draw_from_sfh2, ...]
+    each draw_from_sfh has shape=(22,num)
 
     :param gal_draws: list comprised of draw_from_sfh (output from randraw) for a set of galaxies
     :param sigma: how many sigma of error we want to show in the plot
     :return: perc = stored lists of the median and +/1 1sigma SFH values calculated from the gal_draws
     """
 
-    # len(gal_draws) = number of galaxies in stack; len(gal_draws[0]) = 22, len(gal_draws[0][0]) = 1000
+    # len(gal_draws) = number of galaxies in stack; len(gal_draws[0]) = 22, len(gal_draws[0][0]) = num (1000)
     all_draws = np.zeros(shape=(len(gal_draws[0]), len(gal_draws[0][0]) * len(gal_draws)))
     for k in range(len(gal_draws)):
-        note = k * 1000  # append the 1000 values in each gal_draws[k] at each of the 22 points to all_draws
+        # append the num=1000 values in each gal_draws[k] at each of the 22 points to all_draws:
+        note = k * len(gal_draws[0][0])
         for i in range(len(gal_draws[k])):
             for j in range(len(gal_draws[k][i])):
                 all_draws[i][note+j] += gal_draws[k][i][j]
-    print(len(all_draws), len(all_draws[0]))
+    print(len(all_draws), len(all_draws[0]))  # 22, (number of galaxies in stack) * (num=1000)
 
-    # perc = np.zeros(shape=(len(gal_draws[0]), 3))  # len(gal_draws[0]) = 22 = len(t)
-    perc = np.zeros(shape=(len(gal_draws[0]), 2*sigma + 1))  # len(gal_draws[0]) = 22 = len(t)
+    perc = np.zeros(shape=(len(gal_draws[0]), 2*sigma + 1))  # len(gal_draws[0])=22=len(t); len(perc)=22, len(perc[0])=3
     for jj in xrange(len(gal_draws[0])):
         if sigma == 1:
             perc[jj, :] = np.percentile(all_draws[jj, :], [16.0, 50.0, 84.0])  # median, +/- 34% = +/- 1sigma
         elif sigma == 3:
             perc[jj, :] = np.percentile(all_draws[jj, :], [0.3, 2.4, 16.0, 50.0, 84.0, 97.6, 99.7])  # out to 3 sigma
 
-    return perc  # len(perc) = 22, len(perc[0]) = 3
+    return perc
 
 
 def plot_sfhs(percs, t, lw=1, spec=True, sigma=1):
@@ -140,17 +140,17 @@ def plot_sfhs(percs, t, lw=1, spec=True, sigma=1):
     ax1.set_yscale("log")
     ax1.set_xscale("log")
     ax1.set_ylim(ymin, ymax)
-    ax1.set_xlim(10**-2, 13.6)
+    ax1.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
     ax1.set_ylabel(label)
     # ax1.text(4, 10**2.5, 'EELGs', fontsize=30)
-    ax1.text(1, 4 * 10 ** -8, 'EELGs', fontsize=30)
+    ax1.text(1, 4*10**-8, 'EELGs', fontsize=30)
 
     ax2.set_yscale("log")
     ax2.set_xscale("log")
     ax2.set_ylim(ymin, ymax)
-    ax2.set_xlim(10 ** -2, 13.6)
+    ax2.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
     # ax2.text(4, 10**2.5, 'LBGs', fontsize=30)
-    ax2.text(1, 4 * 10 ** -8, 'LBGs', fontsize=30)
+    ax2.text(1, 4*10**-8, 'LBGs', fontsize=30)
 
     plt.setp(ax2.get_yticklabels(), visible=False)  # hide y-axis labels on right-hand subplot to prevent overlap
     plt.subplots_adjust(wspace=0.05)  # vertical whitespace (i.e. the width) between the two subplots
@@ -162,33 +162,65 @@ def plot_sfhs(percs, t, lw=1, spec=True, sigma=1):
 
 
 if __name__ == "__main__":
+    '''
+    type = ['fixedmet', 'otherbins', 'noelg', 'nother']
+
+    eelg_list = open('eelg_specz_ids', 'r')
+    eelgs = []
+    for line in eelg_list:
+        cols = line.split()
+        eelgs.append(cols[1] + '_' + cols[0] + '_' + type[0])  # for fixedmet, type[0]; for otherbins, type[1]
+    eelg_list.close()
+
+    lbg_list = open('lbg_ids', 'r')
+    lbgs = []
+    for line in lbg_list:
+        if int(line) - 200000 > 0:
+            lbgs.append(str(int(line) - 200000) + '_uds_' + type[2])  # for noelg, type[2]; for nother, type[3]
+        elif int(line) - 100000 > 0:
+            lbgs.append(str(int(line) - 100000) + '_cosmos_' + type[2])  # for noelg, type[2]; for nother, type[3]
+        else:
+            lbgs.append(str(int(line)) + '_cdfs_' + type[2])  # for noelg, type[2]; for nother, type[3]
+    '''
+
     f = ['cdfs', 'cosmos', 'uds']  # ZFOURGE fields
-    b = ['fixedmet', 'noelg', 'noelgduston', 'dust', 'fixedmetmask']  # param file bases
+    b = ['fixedmet', 'noelg', 'noelgduston', 'dust', 'fixedmetmask', 'nother', 'otherbins']  # param file bases
 
     # EELGs
     c1824 = ['1824', f[1], b[0]]
     c12105 = ['12105', f[1], b[0]]
     c16067 = ['16067', f[1], b[0]]
     c17423 = ['17423', f[1], b[0]]
-    f8941 = ['8941', f[0], b[4]]
+    f8941 = ['8941', f[0], b[0]]
     u5206 = ['5206', f[2], b[0]]
-    eelgs = [c1824, c12105, c16067, c17423, f8941, u5206]
+    f17583 = ['17583', f[0], b[0]]
+    c11063 = ['11063', f[1], b[0]]
+    f8366 = ['8366', f[0], b[0]]
+    f8941 = ['8941', f[0], b[0]]
+    f9517 = ['9517', f[0], b[0]]
+    f10092 = ['10092', f[0], b[0]]
+    f11058 = ['11058', f[0], b[0]]
+    eelgs = [c1824, c11063, c12105, c16067, c17423, f8366, f8941, f9517, f10092, f11058, f17583, u5206]
 
     # LBGs
-    # c5029 = ['5029', f[1], b[2]]  # z~2.14, emission comment --> not typical necessarily
-    # c7730 = ['7730', f[1], b[0]]  # z~2.1973, "gorgeous" emission --> not typical probably
     c5843 = ['5843', f[1], b[3]]
     f6900 = ['6900', f[0], b[0]]
     f15921 = ['15921', f[0], b[3]]
     f29430 = ['29430', f[0], b[0]]
-    f12614 = ['12614', f[0], b[1]]
-    c4942 = ['4942', f[1], b[1]]
-    lbgs = [c4942, c5843, f6900, f12614, f15921, f29430]
+    f12614 = ['12614', f[0], b[1]]  # logzsol=0
+    c4942 = ['4942', f[1], b[1]]  # logzsol=-0.7
+    f10008 = ['10008', f[0], b[1]]  # logzsol=-0.7
+    f6900_b = ['6900', f[0], 'noelg004']
+    u7065 = ['7065', f[2], b[1]]
+    c15332 = ['15332', f[1], b[1]]
+    # lbgs = [c4942, c5843, f6900, f10008, f15921, f29430]
+    lbgs = [c4942, f10008, f6900_b, u7065, c15332]
 
     # QUIESCENTS
     c13110 = ['13110', f[1], b[1]]
     f20752 = ['20752', f[0], b[1]]
     quis = [c13110, f20752]
+
 
     # START STACKING
     t1 = []
@@ -199,7 +231,7 @@ if __name__ == "__main__":
         draws.append(temp[0])
         t1.append(temp[1])
 
-    sig = 3  # what sigma error to show on plot
+    sig = 1  # what sigma error to show on plot
     perc1 = stacker(draws, sigma=sig)
 
     draws2 = []
