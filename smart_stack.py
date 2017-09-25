@@ -60,9 +60,9 @@ def stacker(gal_draws, sigma=1):
     gal_draws should be in format draws = [draw_from_sfh1, draw_from_sfh2, ...]
     each draw_from_sfh has shape=(22,num)
 
-    :param gal_draws: list comprised of draw_from_sfh (output from randraw) for a set of galaxies
+    :param gal_draws: list comprised of draw_from_sfh (i.e. comprised of the output from randraw) for a list of galaxies
     :param sigma: how many sigma of error we want to show in the plot
-    :return: perc = stored lists of the median and +/1 1sigma SFH values calculated from the gal_draws
+    :return: perc = stored lists of the median and +/- sigma SFH values calculated from the gal_draws
     """
 
     # len(gal_draws) = number of galaxies in stack; len(gal_draws[0]) = 22, len(gal_draws[0][0]) = num (1000)
@@ -163,24 +163,51 @@ def plot_sfhs(percs, t, lw=1, spec=True, sigma=1):
 
 if __name__ == "__main__":
     '''
-    type = ['fixedmet', 'otherbins', 'noelg', 'nother']
+    # NEED TO EDIT STACKER FUNCTION TO INCLUDE TIME VECTOR DIFFERENCES
+    base = ['fixedmet', 'noelg']  # use for fixedmet
+    # base = ['otherbins', 'nother']  # use for otherbins
 
     eelg_list = open('eelg_specz_ids', 'r')
     eelgs = []
     for line in eelg_list:
         cols = line.split()
-        eelgs.append(cols[1] + '_' + cols[0] + '_' + type[0])  # for fixedmet, type[0]; for otherbins, type[1]
+        eelgs.append(cols[1] + '_' + cols[0] + '_' + base[0])  # base[0] = fixedmet (or otherbins)
     eelg_list.close()
 
     lbg_list = open('lbg_ids', 'r')
     lbgs = []
     for line in lbg_list:
         if int(line) - 200000 > 0:
-            lbgs.append(str(int(line) - 200000) + '_uds_' + type[2])  # for noelg, type[2]; for nother, type[3]
+            lbgs.append(str(int(line) - 200000) + '_uds_' + base[1])  # base[1] = noelg (or nother)
         elif int(line) - 100000 > 0:
-            lbgs.append(str(int(line) - 100000) + '_cosmos_' + type[2])  # for noelg, type[2]; for nother, type[3]
+            lbgs.append(str(int(line) - 100000) + '_cosmos_' + base[1])
         else:
-            lbgs.append(str(int(line)) + '_cdfs_' + type[2])  # for noelg, type[2]; for nother, type[3]
+            lbgs.append(str(int(line)) + '_cdfs_' + base[1])
+
+    # START STACKING
+    t1 = []
+    draws = []
+    for glxy in eelgs:
+        file = glxy + '_extra_out.pkl'
+        temp = randraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
+        draws.append(temp[0])
+        t1.append(temp[1])
+
+    sig = 1  # what sigma error to show on plot
+    perc1 = stacker(draws, sigma=sig)  # add time vector to this!!!!
+
+    draws2 = []
+    t2 = []
+    for glxy in lbgs:
+        file = glxy + '_extra_out.pkl'
+        temp = randraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
+        draws2.append(temp[0])
+        t2.append(temp[1])
+
+    perc2 = stacker(draws2, sigma=sig)  # add time vector to this!!!!
+
+    smooth_percs = [smooth(perc1), smooth(perc2)]
+    plot_sfhs(smooth_percs, t1[0], sigma=sig)
     '''
 
     f = ['cdfs', 'cosmos', 'uds']  # ZFOURGE fields
@@ -227,7 +254,7 @@ if __name__ == "__main__":
     draws = []
     for glxy in eelgs:
         file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
-        temp = randraw(file)
+        temp = randraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
         draws.append(temp[0])
         t1.append(temp[1])
 

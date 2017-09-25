@@ -251,9 +251,10 @@ def post_processing(out_file, param_file, **kwargs):
     with open(extra, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(extra_output, newfile, pickle.HIGHEST_PROTOCOL)
     print('extra pickled')
-
+    
     # PRINT TRACE SHOWING HOW ITERATIONS CONVERGE FOR EACH PARAMETER
     tracefig, prob = bread.param_evol(res)  # print tracefig, store probability
+    plt.title(full_base)  # BUCKET just added
     plt.show()
 
     # FIND WALKER, ITERATION THAT GIVE MAX PROBABILITY
@@ -264,7 +265,8 @@ def post_processing(out_file, param_file, **kwargs):
     print(walker, iteration)
 
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
-    bread.subtriangle(res, start=2000, thin=5, show_titles=True)
+    bread.subtriangle(res, start=0, thin=5, show_titles=True)
+    plt.title(full_base)  # BUCKET just added
     plt.show()
     # For FAST: truths=[mass, age, tau, dust2] (for 1824: [9.78, 0.25, -1., 0.00])
 
