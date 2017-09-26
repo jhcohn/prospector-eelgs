@@ -53,6 +53,88 @@ def smooth(perc):
     return smoother
 
 
+def stacker2(gal_draws, times, sigma=1, spec=True, lw=1):
+    """
+    stacker2 takes input of random points drawn from a list of galaxies' SFH posteriors, concatenates them within each
+    bin, and then calculates the median and 1 sigma errors in each bin
+    gal_draws should be in format draws = [draw_from_sfh1, draw_from_sfh2, ...]
+    times should be in format times = [t1, t2, t3, ...]
+    each draw_from_sfh has shape=(22,num)
+
+    :param gal_draws: list comprised of draw_from_sfh (i.e. comprised of the output from randraw) for a list of galaxies
+    :param times: list comprised of extra_output['extras']['t_sfh'] that correspond respectively to entries in gal_draws
+    :param sigma: how many sigma of error we want to show in the plot
+    :return: perc = stored lists of the median and +/- sigma SFH values calculated from the gal_draws
+    """
+
+    # print(len(perc), len(perc[0]), len(perc[0][0]))  # number of galaxies (12), number of points (22), 2*sigma+1 (3)
+    # print(len(gal_draws[0][0]))  # 1000
+
+    fig = plt.figure()
+    ax1 = plt.subplot(1, 1, 1)
+
+    for k in range(len(gal_draws)):
+        perc = np.zeros(shape=(len(gal_draws[0]), 2 * sigma + 1))  # len(gal_draws[0])=22=len(t); len(perc)=22, len(perc[0])=3
+        # append the num=1000 values in each gal_draws[k] at each of the 22 points to all_draws:
+        for jj in xrange(len(times[k])):
+            print(perc[jj, :])
+            perc[jj, :] = np.percentile(gal_draws[k][jj, :], [16.0, 50.0, 84.0])
+
+        ax1.plot(times[k], perc[:, 1], '-', color='k', lw=lw)  # median
+        ax1.fill_between(times[k], perc[:, 0], perc[:, 2], color='k', alpha=0.3)  # fill region between +/- 1sigma
+        ax1.plot(times[k], perc[:, 0], '-', color='k', alpha=0.3, lw=lw)  # -1sigma
+        ax1.plot(times[k], perc[:, 2], '-', color='k', alpha=0.3, lw=lw)  # +1sigma
+
+    ax1.set_yscale("log")
+    ax1.set_xscale("log")
+    plt.show()
+
+    '''
+    ymin, ymax = 1e-2, 1e3
+    label = r'Stacked SFH [M$_\odot$ yr$^{-1}$]'
+
+    if spec:
+        ymin, ymax = 1e-11, 1e-7
+        label = r'Stacked sSFH [yr$^{-1}$]'
+
+    fig = plt.figure()
+    ax1 = plt.subplot(1, 2, 1)
+    ax2 = plt.subplot(1, 2, 2)  # , sharey=ax1, sharex=ax1)  # don't need to share axis if plot same region & never zoom
+
+    for i in range(len(perc)):
+        ax1.plot(times[i], perc[i][:, 1], '-', color='k', lw=lw)  # median
+        ax1.fill_between(times[i], perc[i][:, 0], perc[i][:, 2], color='k', alpha=0.3)  # fill region between +/- 1sigma
+        ax1.plot(times[i], perc[i][:, 0], '-', color='k', alpha=0.3, lw=lw)  # -1sigma
+        ax1.plot(times[i], perc[i][:, 2], '-', color='k', alpha=0.3, lw=lw)  # +1sigma
+
+    #ax1.set_yscale("log")
+    #ax1.set_xscale("log")
+    ax1.set_ylim(ymin, ymax)
+    ax1.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
+    ax1.set_ylabel(label)
+    # ax1.text(4, 10**2.5, 'EELGs', fontsize=30)
+    ax1.text(1, 4*10**-8, 'EELGs', fontsize=30)
+
+
+    ax2.set_yscale("log")
+    ax2.set_xscale("log")
+    ax2.set_ylim(ymin, ymax)
+    ax2.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
+    # ax2.text(4, 10**2.5, 'LBGs', fontsize=30)
+    ax2.text(1, 4*10**-8, 'LBGs', fontsize=30)
+
+    plt.setp(ax2.get_yticklabels(), visible=False)  # hide y-axis labels on right-hand subplot to prevent overlap
+    plt.subplots_adjust(wspace=0.05)  # vertical whitespace (i.e. the width) between the two subplots
+
+    plt.rc('xtick', labelsize=20)
+    plt.rc('ytick', labelsize=20)
+    plt.rcParams.update({'font.size': 22})
+    fig.text(0.5, 0.04, 'Lookback time [Gyr]', ha='center')
+    plt.show()
+    '''
+    return perc
+
+
 def stacker(gal_draws, sigma=1):
     """
     stacker takes input of random points drawn from a list of galaxies' SFH posteriors, concatenates them within each
@@ -248,7 +330,6 @@ if __name__ == "__main__":
     f20752 = ['20752', f[0], b[1]]
     quis = [c13110, f20752]
 
-
     # START STACKING
     t1 = []
     draws = []
@@ -258,6 +339,7 @@ if __name__ == "__main__":
         draws.append(temp[0])
         t1.append(temp[1])
 
+    stacker2(draws, t1)
     sig = 1  # what sigma error to show on plot
     perc1 = stacker(draws, sigma=sig)
 
@@ -271,6 +353,7 @@ if __name__ == "__main__":
 
     perc2 = stacker(draws2, sigma=sig)
 
+    # smooth_percs = perc1, perc2
     smooth_percs = [smooth(perc1), smooth(perc2)]
     plot_sfhs(smooth_percs, t1[0], sigma=sig)
 
