@@ -9,8 +9,8 @@ import argparse
 import matplotlib.pyplot as plt
 import pickle
 import prospect.io.read_results as bread
+import glob
 np.errstate(invalid='ignore')
-
 
 def maxprob_model(sample_results, sps):
     # grab maximum probability, plus the thetas that gave it
@@ -215,7 +215,7 @@ def str2bool(v):
         return False
 
 
-def post_processing(out_file, param_file, **kwargs):
+def post_processing(out_file, param_file, full_h5file=True, **kwargs):
     """
     Driver. Loads output, runs post-processing routine.
     """
@@ -224,9 +224,16 @@ def post_processing(out_file, param_file, **kwargs):
     field = ''
     base = ''
     count = 0
+    slash = 0
     for i in kwargs['outname']:
-        if i == '_':
+        if i == '/':
+            slash += 1
+        elif i == '_':
             count += 1
+
+        elif count == 0 and full_h5file:
+            if slash == 12:
+                obj += i
         elif count == 0:
             obj += i
         elif count == 1:
@@ -235,8 +242,10 @@ def post_processing(out_file, param_file, **kwargs):
             base += i
         elif count == 3:
             break
-    print(field)
+    print(obj, field)
     full_base = obj + '_' + field + '_' + base
+    img_base = 'img/' + full_base  # /home/jonathan/img' +
+    print(full_base, img_base)
     pkl = 'out.pkl'
 
     res, pr, mod = bread.results_from(out_file)
@@ -247,7 +256,18 @@ def post_processing(out_file, param_file, **kwargs):
     res['flatprob'] = prosp_dutils.chop_chain(res['lnprobability'], **res['run_params'])
     extra_output = calc_extra_quantities(res, **kwargs)
     print('extra calculated')
-    extra = full_base + '_extra_' + pkl
+    # extra = full_base + '_extra_' + pkl
+    if base == 'fixedmet':
+        folder = 'pkls/'
+    elif base == 'otherbins':
+        folder = 'opkls/'
+    elif base == 'noelg':
+        folder = 'nmpkls/'
+    elif base == 'nother/':
+        folder = 'nopkls'
+
+    extra = folder + full_base + '_extra_' + pkl
+    print(extra)
     with open(extra, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(extra_output, newfile, pickle.HIGHEST_PROTOCOL)
     print('extra pickled')
@@ -255,7 +275,8 @@ def post_processing(out_file, param_file, **kwargs):
     # PRINT TRACE SHOWING HOW ITERATIONS CONVERGE FOR EACH PARAMETER
     tracefig, prob = bread.param_evol(res)  # print tracefig, store probability
     plt.title(full_base)  # BUCKET just added
-    plt.show()
+    plt.savefig(img_base + '_tracefig.png', bbox_inches='tight')
+    # plt.show()
 
     # FIND WALKER, ITERATION THAT GIVE MAX PROBABILITY
     print('max', prob.max())
@@ -267,7 +288,8 @@ def post_processing(out_file, param_file, **kwargs):
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
     bread.subtriangle(res, start=0, thin=5, show_titles=True)
     plt.title(full_base)  # BUCKET just added
-    plt.show()
+    plt.savefig(img_base + '_cornerfig.png', bbox_inches='tight')
+    # plt.show()
     # For FAST: truths=[mass, age, tau, dust2] (for 1824: [9.78, 0.25, -1., 0.00])
 
     # We need the correct sps object to generate models
@@ -350,7 +372,8 @@ def post_processing(out_file, param_file, **kwargs):
     plt.title(str(obj) + r' $\chi^2$')
     plt.xlabel('Rest frame wavelength [angstroms]')
     plt.ylabel(r'$\chi^2$')
-    plt.show()
+    plt.savefig(img_base + '_chisq.png', bbox_inches='tight')
+    # plt.show()
 
     # HOW CONVERGED IS THE CODE?? LET'S FIND OUT!
     parnames = np.array(res['model'].theta_labels())
@@ -373,11 +396,13 @@ def post_processing(out_file, param_file, **kwargs):
     kl_ax.axhline(np.log10(kl_div_lim), linestyle='--', color='red', lw=2, zorder=1)
     kl_ax.legend(prop={'size': 5}, ncol=2, numpoints=1, markerscale=0.7)
     plt.title(str(obj) + ' kl')
-    plt.show()
+    plt.savefig(img_base + '_kl.png', bbox_inches='tight')
+    # plt.show()
 
 
 if __name__ == "__main__":
     # don't create keyword if not passed in!
+    # '''
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('--parfile')
     parser.add_argument('--outname')
@@ -390,7 +415,14 @@ if __name__ == "__main__":
     out_file = kwargs['outname']
     param_file = kwargs['parfile']
     print(out_file, param_file)
-
+    '''
+    folder = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out'
+    count = 0
+    for infile in glob.glob(os.path.join(folder, '*.h5')):
+        count += 1
+        print("current file is: " + infile)
+    print(count)
+    '''
     post_processing(out_file=out_file, param_file=param_file, **kwargs)
 
 '''

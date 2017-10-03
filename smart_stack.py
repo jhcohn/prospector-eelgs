@@ -3,9 +3,36 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import random
+import os
 
 
-def randraw(infile, num=1000):
+def bootstrap(X, n=None, X_err=None):
+    """
+    Bootstrap resample an array_like
+    Parameters
+    :param X: array-like data to resample
+    :param n: int, optional length of resampled array, equal to len(X) if n == None
+    :param X_err:
+    :return: X_resamples
+    """
+    if n is None:
+        n = len(X)
+
+    resample_i = np.floor(np.random.rand(n) * len(X)).astype(int)
+    # creates len(n) array filled with random numbers from floor([0 to 1) * len(X))
+    # i.e. it's a len(X) array filled with random integers from 0 to len(X)
+
+    # resample_i=np.random.randint(low=0, high=len(X)-1, size=len(X))
+    print(resample_i)
+    X_resample = X[resample_i]  # take X and use indices chosen randomly above
+    if X_err != None:
+        X_err_resample = X_err[resample_i]
+        return X_resample, X_err_resample
+    else:
+        return X_resample
+
+
+def randraw(infile, num=1000):  # num=1000
     """
     For a given galaxy, randraw samples the posterior for each point in extra_output['extras']['sfh'][i] num times
 
@@ -23,6 +50,30 @@ def randraw(infile, num=1000):
     for i in range(len(extra_output['extras']['ssfr'])):  # at each of these 22 points
         for j in range(num):  # randomly draw from the ssfr posterior num times
             draw_from_sfh[i][j] = extra_output['extras']['ssfr'][i][random.randint(0, num)]
+
+    return draw_from_sfh, extra_output['extras']['t_sfh']
+
+
+def bootdraw(infile):
+    """
+    Attempting to combine randraw and bootstrap intelligently in order to use Leo's bootstrapping code
+
+    :param infile: ID_field_base_extra_out.py, where extra_output is stored using output.py
+    :return: draw_from_sfh = 22 x num, lists the num random posterior samples, t_sfh = time vector associated with SFH
+    """
+    with open(infile, 'rb') as exout:
+        extra_output = pickle.load(exout)
+
+    num = len(extra_output['extras']['ssfr'][0])
+    # print(num, 'num')  # 2000
+    draw_from_sfh = np.zeros(shape=(len(extra_output['extras']['ssfr']), num))  # shape=(22, num)
+
+    for i in range(len(extra_output['extras']['ssfr'])):  # at each of these 22 points
+        n = extra_output['extras']['ssfr'][i]
+        # for j in range(len(n)):  # randomly draw from the ssfr posterior num times
+        resample_i = np.floor(np.random.rand(len(n)) * len(n)).astype(int)
+        draw_from_sfh[i] = n[resample_i]
+        # draw_from_sfh[i][j] = extra_output['extras']['ssfr'][i][random.randint(0, num)]
 
     return draw_from_sfh, extra_output['extras']['t_sfh']
 
@@ -244,20 +295,25 @@ def plot_sfhs(percs, t, lw=1, spec=True, sigma=1):
 
 
 if __name__ == "__main__":
-    '''
-    # NEED TO EDIT STACKER FUNCTION TO INCLUDE TIME VECTOR DIFFERENCES
+
+    # NEED(?) TO EDIT STACKER FUNCTION TO INCLUDE TIME VECTOR DIFFERENCES
     base = ['fixedmet', 'noelg']  # use for fixedmet
     # base = ['otherbins', 'nother']  # use for otherbins
 
     eelg_list = open('eelg_specz_ids', 'r')
+    pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/pkls/'
     eelgs = []
     for line in eelg_list:
-        cols = line.split()
-        eelgs.append(cols[1] + '_' + cols[0] + '_' + base[0])  # base[0] = fixedmet (or otherbins)
+        if line[0] == '#':
+            pass
+        else:
+            cols = line.split()
+            eelgs.append(cols[1] + '_' + cols[0] + '_' + base[0])  # base[0] = fixedmet (or otherbins)
     eelg_list.close()
 
     lbg_list = open('lbg_ids', 'r')
     lbgs = []
+    l_pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/nmpkls/'
     for line in lbg_list:
         if int(line) - 200000 > 0:
             lbgs.append(str(int(line) - 200000) + '_uds_' + base[1])  # base[1] = noelg (or nother)
@@ -265,7 +321,9 @@ if __name__ == "__main__":
             lbgs.append(str(int(line) - 100000) + '_cosmos_' + base[1])
         else:
             lbgs.append(str(int(line)) + '_cdfs_' + base[1])
+    lbg_list.close()
 
+    '''
     # START STACKING
     t1 = []
     draws = []
@@ -295,6 +353,7 @@ if __name__ == "__main__":
     f = ['cdfs', 'cosmos', 'uds']  # ZFOURGE fields
     b = ['fixedmet', 'noelg', 'noelgduston', 'dust', 'fixedmetmask', 'nother', 'otherbins']  # param file bases
 
+    '''
     # EELGs
     c1824 = ['1824', f[1], b[0]]
     c12105 = ['12105', f[1], b[0]]
@@ -324,6 +383,7 @@ if __name__ == "__main__":
     c15332 = ['15332', f[1], b[1]]
     # lbgs = [c4942, c5843, f6900, f10008, f15921, f29430]
     lbgs = [c4942, f10008, f6900_b, u7065, c15332]
+    '''
 
     # QUIESCENTS
     c13110 = ['13110', f[1], b[1]]
@@ -333,27 +393,49 @@ if __name__ == "__main__":
     # START STACKING
     t1 = []
     draws = []
+    boots = []
+    nummy = 0
+    c = 0
     for glxy in eelgs:
-        file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
-        temp = randraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
-        draws.append(temp[0])
-        t1.append(temp[1])
+        c += 1
+        # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
+        file = pkls + glxy + '_extra_out.pkl'
+        if os.path.exists(file):
+            nummy += 1
+            # temp = randraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
+            temp = bootdraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
+            draws.append(temp[0])
+            # boots.append(bootstrap(temp[0]))
+            t1.append(temp[1])
+        else:
+            print(file)
 
-    stacker2(draws, t1)
+    # stacker2(draws, t1)
     sig = 1  # what sigma error to show on plot
     perc1 = stacker(draws, sigma=sig)
 
     draws2 = []
+    numl = 0
+    cl = 0
     # t2 = []
     for glxy in lbgs:
-        file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
-        temp = randraw(file)
-        draws2.append(temp[0])
-        # t2.append(temp[1])
+        c += 1
+        # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
+        file = l_pkls + glxy + '_extra_out.pkl'
+        if os.path.exists(file):
+            numl += 1
+            # temp = randraw(file)
+            temp = bootdraw(file)
+            draws2.append(temp[0])
+            # t2.append(temp[1])
+        else:
+            print(file)
 
     perc2 = stacker(draws2, sigma=sig)
 
     # smooth_percs = perc1, perc2
+    print(nummy, c, 'numc')
+    print(numl, cl, 'numl')
     smooth_percs = [smooth(perc1), smooth(perc2)]
     plot_sfhs(smooth_percs, t1[0], sigma=sig)
 
