@@ -263,8 +263,8 @@ def post_processing(out_file, param_file, full_h5file=True, **kwargs):
         folder = 'opkls/'
     elif base == 'noelg':
         folder = 'nmpkls/'
-    elif base == 'nother/':
-        folder = 'nopkls'
+    elif base == 'nother':
+        folder = 'nopkls/'
 
     extra = folder + full_base + '_extra_' + pkl
     print(extra)
@@ -415,6 +415,11 @@ if __name__ == "__main__":
     out_file = kwargs['outname']
     param_file = kwargs['parfile']
     print(out_file, param_file)
+
+    full = False
+    if out_file[-1] == '5':
+        full = True
+
     '''
     folder = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out'
     count = 0
@@ -423,7 +428,7 @@ if __name__ == "__main__":
         print("current file is: " + infile)
     print(count)
     '''
-    post_processing(out_file=out_file, param_file=param_file, **kwargs)
+    post_processing(out_file=out_file, param_file=param_file, full_h5file=full, **kwargs)
 
 '''
 RUNNING WITH:

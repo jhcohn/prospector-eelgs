@@ -296,12 +296,17 @@ def plot_sfhs(percs, t, lw=1, spec=True, sigma=1):
 
 if __name__ == "__main__":
 
-    # NEED(?) TO EDIT STACKER FUNCTION TO INCLUDE TIME VECTOR DIFFERENCES
-    base = ['fixedmet', 'noelg']  # use for fixedmet
-    # base = ['otherbins', 'nother']  # use for otherbins
+    boot = True
+    others = False
+    if others:
+        base = ['otherbins', 'nother']  # use for otherbins
+        folders = ['opkls/', 'nopkls/']
+    else:
+        base = ['fixedmet', 'noelg']  # use for fixedmet
+        folders = ['pkls/', 'nmpkls/']
 
     eelg_list = open('eelg_specz_ids', 'r')
-    pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/pkls/'
+    pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
     eelgs = []
     for line in eelg_list:
         if line[0] == '#':
@@ -312,83 +317,37 @@ if __name__ == "__main__":
     eelg_list.close()
 
     lbg_list = open('lbg_ids', 'r')
+    flist = {}
     lbgs = []
-    l_pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/nmpkls/'
+    l_pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[1]
     for line in lbg_list:
         if int(line) - 200000 > 0:
+            flist[str(int(line) - 200000)] = 'uds'
             lbgs.append(str(int(line) - 200000) + '_uds_' + base[1])  # base[1] = noelg (or nother)
         elif int(line) - 100000 > 0:
+            flist[str(int(line) - 100000)] = 'cosmos'
             lbgs.append(str(int(line) - 100000) + '_cosmos_' + base[1])
         else:
+            flist[str(int(line))] = 'cdfs'
             lbgs.append(str(int(line)) + '_cdfs_' + base[1])
     lbg_list.close()
 
+    if boot:
+        eelgs = bootstrap(np.asarray(eelgs))
+        lbgs = bootstrap(np.asarray(lbgs))
+
+        eelgs = eelgs[:3]
+        lbgs = lbgs[:3]
+
     '''
-    # START STACKING
-    t1 = []
-    draws = []
-    for glxy in eelgs:
-        file = glxy + '_extra_out.pkl'
-        temp = randraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
-        draws.append(temp[0])
-        t1.append(temp[1])
-
-    sig = 1  # what sigma error to show on plot
-    perc1 = stacker(draws, sigma=sig)  # add time vector to this!!!!
-
-    draws2 = []
-    t2 = []
-    for glxy in lbgs:
-        file = glxy + '_extra_out.pkl'
-        temp = randraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
-        draws2.append(temp[0])
-        t2.append(temp[1])
-
-    perc2 = stacker(draws2, sigma=sig)  # add time vector to this!!!!
-
-    smooth_percs = [smooth(perc1), smooth(perc2)]
-    plot_sfhs(smooth_percs, t1[0], sigma=sig)
-    '''
-
     f = ['cdfs', 'cosmos', 'uds']  # ZFOURGE fields
     b = ['fixedmet', 'noelg', 'noelgduston', 'dust', 'fixedmetmask', 'nother', 'otherbins']  # param file bases
-
-    '''
-    # EELGs
-    c1824 = ['1824', f[1], b[0]]
-    c12105 = ['12105', f[1], b[0]]
-    c16067 = ['16067', f[1], b[0]]
-    c17423 = ['17423', f[1], b[0]]
-    f8941 = ['8941', f[0], b[0]]
-    u5206 = ['5206', f[2], b[0]]
-    f17583 = ['17583', f[0], b[0]]
-    c11063 = ['11063', f[1], b[0]]
-    f8366 = ['8366', f[0], b[0]]
-    f8941 = ['8941', f[0], b[0]]
-    f9517 = ['9517', f[0], b[0]]
-    f10092 = ['10092', f[0], b[0]]
-    f11058 = ['11058', f[0], b[0]]
-    eelgs = [c1824, c11063, c12105, c16067, c17423, f8366, f8941, f9517, f10092, f11058, f17583, u5206]
-
-    # LBGs
-    c5843 = ['5843', f[1], b[3]]
-    f6900 = ['6900', f[0], b[0]]
-    f15921 = ['15921', f[0], b[3]]
-    f29430 = ['29430', f[0], b[0]]
-    f12614 = ['12614', f[0], b[1]]  # logzsol=0
-    c4942 = ['4942', f[1], b[1]]  # logzsol=-0.7
-    f10008 = ['10008', f[0], b[1]]  # logzsol=-0.7
-    f6900_b = ['6900', f[0], 'noelg004']
-    u7065 = ['7065', f[2], b[1]]
-    c15332 = ['15332', f[1], b[1]]
-    # lbgs = [c4942, c5843, f6900, f10008, f15921, f29430]
-    lbgs = [c4942, f10008, f6900_b, u7065, c15332]
-    '''
 
     # QUIESCENTS
     c13110 = ['13110', f[1], b[1]]
     f20752 = ['20752', f[0], b[1]]
     quis = [c13110, f20752]
+    '''
 
     # START STACKING
     t1 = []
@@ -402,8 +361,8 @@ if __name__ == "__main__":
         file = pkls + glxy + '_extra_out.pkl'
         if os.path.exists(file):
             nummy += 1
-            # temp = randraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
-            temp = bootdraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
+            temp = randraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
+            # temp = bootdraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
             draws.append(temp[0])
             # boots.append(bootstrap(temp[0]))
             t1.append(temp[1])
@@ -419,13 +378,36 @@ if __name__ == "__main__":
     cl = 0
     # t2 = []
     for glxy in lbgs:
-        c += 1
+        cl += 1
         # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
         file = l_pkls + glxy + '_extra_out.pkl'
+
+        '''
+        # separate lbgs by mass
+        us = 0
+        obj = ''
+        for i in range(len(glxy)):
+            if glxy[i] == '_':
+                us += 1
+            elif us == 0:
+                obj += glxy[i]
+            else:
+                pass
+        print(obj)
+        print(flist[obj])
+        if flist[obj] == 'cdfs':
+            fout = np.loadtxt('/home/jonathan/cdfs/cdfs.v1.6.9.awk.fout')
+        elif flist[obj] == 'cosmos':
+            fout = np.loadtxt('/home/jonathan/cosmos/cosmos.v1.3.6.awk.fout')
+        elif flist[obj] == 'uds':
+            fout = np.loadtxt('/home/jonathan/uds/uds.v1.5.8.awk.fout')
+
+        if os.path.exists(file) and fout[int(obj) - 1][6] > 10.:
+        '''
         if os.path.exists(file):
             numl += 1
-            # temp = randraw(file)
-            temp = bootdraw(file)
+            temp = randraw(file)
+            # temp = bootdraw(file)
             draws2.append(temp[0])
             # t2.append(temp[1])
         else:
@@ -434,7 +416,7 @@ if __name__ == "__main__":
     perc2 = stacker(draws2, sigma=sig)
 
     # smooth_percs = perc1, perc2
-    print(nummy, c, 'numc')
+    print(nummy, c, 'nume')
     print(numl, cl, 'numl')
     smooth_percs = [smooth(perc1), smooth(perc2)]
     plot_sfhs(smooth_percs, t1[0], sigma=sig)
