@@ -4,6 +4,8 @@ import numpy as np
 import argparse
 import random
 import os
+from mpl_toolkits.axes_grid.inset_locator import inset_axes
+import uvj
 
 
 def bootstrap(X, n=None, X_err=None):
@@ -175,7 +177,7 @@ def stacker(gal_draws, sigma=1):
     return perc
 
 
-def plot_sfhs(percs, t, lw=1, spec=True, sigma=1, save=False, title=None):
+def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, sigma=1, save=False, title=None):
     """
     Plots SFH stacks for two different galaxy samples side-by-side
 
@@ -196,6 +198,15 @@ def plot_sfhs(percs, t, lw=1, spec=True, sigma=1, save=False, title=None):
     fig = plt.figure()
     ax1 = plt.subplot(1, 2, 1)
     ax2 = plt.subplot(1, 2, 2)  # , sharey=ax1, sharex=ax1)  # don't need to share axis if plot same region & never zoom
+
+    if uvj_in:  # also requires elist, llist to be not None; this insets uvj plots onto the top right of plot!
+        inset_axes(ax1, width="20%", height=2., loc=1)
+        uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False)
+        # create inset axis: width (%), height (inches), location
+        # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
+        # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
+        inset_axes(ax2, width="20%", height=2., loc=1)
+        uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False)
 
     if sigma == 1:
         ax1.plot(t, percs[0][:, 1], '-', color='k', lw=lw)  # median
@@ -231,23 +242,25 @@ def plot_sfhs(percs, t, lw=1, spec=True, sigma=1, save=False, title=None):
     ax1.set_xscale("log")
     ax1.set_ylim(ymin, ymax)
     ax1.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
-    ax1.set_ylabel(label)
+    ax1.set_ylabel(label, fontsize=20)  # 30
     # ax1.text(4, 10**2.5, 'EELGs', fontsize=30)
-    ax1.text(1, 4*10**-8, 'EELGs', fontsize=30)
+    # ax1.text(1, 4*10**-8, 'EELGs', fontsize=30)  # use if not uvj_in
+    ax1.text(2*10**-2, 4*10**-8, 'EELGs', fontsize=30)  # use if uvj_in
 
     ax2.set_yscale("log")
     ax2.set_xscale("log")
     ax2.set_ylim(ymin, ymax)
     ax2.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
     # ax2.text(4, 10**2.5, 'LBGs', fontsize=30)
-    ax2.text(1, 4*10**-8, 'LBGs', fontsize=30)
+    # ax2.text(1, 4*10**-8, 'LBGs', fontsize=30)  # use if not uvj_in
+    ax2.text(2*10**-2, 4*10**-8, 'LBGs', fontsize=30)  # use if uvj_in
 
     plt.setp(ax2.get_yticklabels(), visible=False)  # hide y-axis labels on right-hand subplot to prevent overlap
     plt.subplots_adjust(wspace=0.05)  # vertical whitespace (i.e. the width) between the two subplots
     plt.rc('xtick', labelsize=20)
     plt.rc('ytick', labelsize=20)
     plt.rcParams.update({'font.size': 22})
-    fig.text(0.5, 0.04, 'Lookback time [Gyr]', ha='center')
+    fig.text(0.5, 0.04, 'Lookback time [Gyr]', ha='center', fontsize=20)  # 30
     plt.tight_layout()
     if save:
         plt.savefig(title + '.png', bbox_inches='tight')
@@ -404,7 +417,8 @@ if __name__ == "__main__":
         print(nummy, c, 'nume')
         print(numl, cl, 'numl')
         smooth_percs = [smooth(perc1), smooth(perc2)]
-        plot_sfhs(smooth_percs, t1[0], sigma=sig)
+        # plot_sfhs(smooth_percs, t1[0], sigma=sig)
+        plot_sfhs(smooth_percs, t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig)
 
 
 
