@@ -95,7 +95,7 @@ def all_plots(fileset, objname, znames, field):
                          label=r'Observed Photometry')  # plot observations
             ax1.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
             ax1.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
-            ax1.set_ylabel(r'Flux [$\mu$Jy]')
+            # ax1.set_ylabel(r'Flux [$\mu$Jy]')
             # ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax1.axvspan(4800, 5050, color='k', alpha=0.3)
             ax1.text(700, 3, 'z ~ ' + str(zred) + ', EELG', fontsize=20)
@@ -110,7 +110,7 @@ def all_plots(fileset, objname, znames, field):
                          label=r'Observed Photometry')  # plot observations
             ax2.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
             ax2.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
-            ax2.set_ylabel(r'Flux [$\mu$Jy]')
+            ax2.set_ylabel(r'Flux [$\mu$Jy]', fontsize=30)
             # ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax2.axvspan(4800, 5050, color='k', alpha=0.3)
             ax2.text(700, 3, 'z ~ ' + str(zred) + ', LBG', fontsize=20)
@@ -124,7 +124,7 @@ def all_plots(fileset, objname, znames, field):
                          label=r'Observed Photometry')  # plot observations
             ax3.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
             ax3.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
-            ax3.set_ylabel(r'Flux [$\mu$Jy]')
+            # ax3.set_ylabel(r'Flux [$\mu$Jy]')
             ax3.text(700, 1, 'z ~ ' + str(zred) + ', Qui', fontsize=20)
             ax3.text(700, 20, str(field[j]) + '-' + str(objname[j]), fontsize=20)
             # ax3.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
@@ -133,7 +133,7 @@ def all_plots(fileset, objname, znames, field):
 
             widths.fig2(ax3, field[j], zred, scale=(phot.max() * 10 ** 6), rest=True)  # WIDTHS
     print('show')
-    plt.xlabel(r'Rest frame wavelength [$\AA$]')
+    plt.xlabel(r'Rest frame wavelength [$\AA$]', fontsize=30)
     plt.show()
 
 if __name__ == "__main__":
@@ -157,9 +157,9 @@ if __name__ == "__main__":
     field1 = 'cdfs'
     field2 = 'cosmos'
     field3 = 'uds'
-    pre1 = obj1 + '_' + field1 + '_' + kwargs['base1']
-    pre2 = obj2 + '_' + field2 + '_' + kwargs['base2']
-    pre3 = obj3 + '_' + field3 + '_' + kwargs['base3']
+    pre1 = 'nmpkls/' + obj1 + '_' + field1 + '_' + kwargs['base1']
+    pre2 = 'pkls/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    pre3 = 'nmpkls/' + obj3 + '_' + field3 + '_' + kwargs['base3']
 
     base = '_out.pkl'
     extra1 = pre1 + '_extra' + base  # includes SFH *AND* rest of extra_output, so call it extra and not sfh
@@ -204,4 +204,5 @@ if __name__ == "__main__":
 '''
 Currently running with:
 python make_fig2.py --obj1=20752 --obj2=1824 --obj3=5206 --base1=noelg --base2=fixedmet --base3=fixedmet
+# try uds 5957 for second obj, since 5206 is an EELG
 '''

@@ -76,7 +76,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
                          label=r'Observed Photometry')  # plot observations
             ax1.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
             ax1.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
-            ax1.set_ylabel(r'$\mu$Jy')
+            ax1.set_ylabel(r'$\mu$Jy', fontsize=30)  # 30
 
             # ax1.text(1000, 50, 'EELG', fontsize=20)
             ax1.text(700, 600, 'COSMOS-1824 (EELG)', fontsize=20)
@@ -87,8 +87,8 @@ def all_plots(fileset, objname, field, loc='upper left'):
             plt.setp(ax1.get_xticklabels(), visible=False)  # hide xtick labels on upper axis
             yticks = ax3.yaxis.get_major_ticks()  # show ytick labels on lower axis
             yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
-            ax3.set_ylabel(r'$\chi$')
-            ax3.set_xlabel(r'Rest frame wavelength')
+            ax3.set_ylabel(r'$\chi$', fontsize=30)
+            ax3.set_xlabel(r'Rest frame wavelength', fontsize=30)  # 30
             ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             # plt.subplots_adjust(hspace=.0)
 
@@ -114,7 +114,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             # ax2.set_ylabel(r'$\mu$Jy')
 
             # ax2.text(1000, 50, 'LBG', fontsize=20)
-            ax2.text(1025, 600, 'COSMOS-5029 (LBG)', fontsize=20)
+            ax2.text(1025, 600, 'COSMOS-4708 (LBG)', fontsize=20)
             # ax2.set_xlabel(r'Rest frame wavelength')
             ax4 = plt.subplot(gs[3], sharex=ax2, sharey=ax3)
             ax4.plot(wave_rest, chi, 'o', color='k')  # plot chi
@@ -125,7 +125,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             yticks = ax4.yaxis.get_major_ticks()  # show ytick labels on lower axis
             yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
             # ax4.set_ylabel(r'$\chi$')
-            ax4.set_xlabel(r'Rest frame wavelength')
+            ax4.set_xlabel(r'Rest frame wavelength', fontsize=30)  # 30
             ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             # plt.subplots_adjust(hspace=.0)
 
@@ -159,8 +159,8 @@ if __name__ == "__main__":
 
     field1 = kwargs['field1']
     field2 = kwargs['field2']
-    pre1 = obj1 + '_' + field1 + '_' + kwargs['base1']
-    pre2 = obj2 + '_' + field2 + '_' + kwargs['base2']
+    pre1 = 'pkls/' + obj1 + '_' + field1 + '_' + kwargs['base1']
+    pre2 = 'nmpkls/' + obj2 + '_' + field2 + '_' + kwargs['base2']
 
     base1 = '_out.pkl'
     extra1 = pre1 + '_extra' + base1  # includes SFH *AND* rest of extra_output, so call it extra and not sfh
