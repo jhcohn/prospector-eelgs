@@ -36,7 +36,7 @@ def bootstrap(X, n=None, X_err=None):
 
 def randraw(infile, num=1000):  # num=1000
     """
-    For a given galaxy, randraw samples the posterior for each point in extra_output['extras']['sfh'][i] num times
+    For a given galaxy, randraw samples the posterior num times for each point in extra_output['extras']['sfh'][i]
 
     :param infile: ID_field_base_extra_out.py, where extra_output is stored using output.py
     :param num: number of times to sample the galaxy posterior at each point in the SFH
@@ -56,6 +56,8 @@ def randraw(infile, num=1000):  # num=1000
     return draw_from_sfh, extra_output['extras']['t_sfh']
 
 
+'''
+# Fine check, but not actual goal
 def bootdraw(infile):
     """
     Attempting to combine randraw and bootstrap intelligently in order to use Leo's bootstrapping code
@@ -78,6 +80,7 @@ def bootdraw(infile):
         # draw_from_sfh[i][j] = extra_output['extras']['ssfr'][i][random.randint(0, num)]
 
     return draw_from_sfh, extra_output['extras']['t_sfh']
+'''
 
 
 def smooth(perc):
@@ -105,7 +108,8 @@ def smooth(perc):
     # print(smoother)
     return smoother
 
-
+'''
+# Also plots it
 def stacker2(gal_draws, times, sigma=1, spec=True, lw=1):
     """
     stacker2 takes input of random points drawn from a list of galaxies' SFH posteriors, concatenates them within each
@@ -143,6 +147,7 @@ def stacker2(gal_draws, times, sigma=1, spec=True, lw=1):
     plt.show()
 
     return perc
+'''
 
 
 def stacker(gal_draws, sigma=1):
@@ -192,7 +197,7 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     label = r'Stacked SFH [M$_\odot$ yr$^{-1}$]'
 
     if spec:
-        ymin, ymax = 1e-11, 1e-7
+        ymin, ymax = 1e-11, 1e-6
         label = r'Stacked sSFH [yr$^{-1}$]'
 
     fig = plt.figure()
@@ -200,12 +205,12 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     ax2 = plt.subplot(1, 2, 2)  # , sharey=ax1, sharex=ax1)  # don't need to share axis if plot same region & never zoom
 
     if uvj_in:  # also requires elist, llist to be not None; this insets uvj plots onto the top right of plot!
-        inset_axes(ax1, width="20%", height=2., loc=1)
+        inset_axes(ax1, width="35%", height=2., loc=1)  # 20%
         uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False)
         # create inset axis: width (%), height (inches), location
         # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
         # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
-        inset_axes(ax2, width="20%", height=2., loc=1)
+        inset_axes(ax2, width="35%", height=2., loc=1)  # 20%
         uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False)
 
     if sigma == 1:
@@ -240,16 +245,16 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
 
     ax1.set_yscale("log")
     ax1.set_xscale("log")
-    ax1.set_ylim(ymin, ymax)
+    ax1.set_ylim(ymin, 10**-7)  # , ymax
     ax1.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
-    ax1.set_ylabel(label, fontsize=20)  # 30
+    ax1.set_ylabel(label, fontsize=30)  # 30
     # ax1.text(4, 10**2.5, 'EELGs', fontsize=30)
     # ax1.text(1, 4*10**-8, 'EELGs', fontsize=30)  # use if not uvj_in
     ax1.text(2*10**-2, 4*10**-8, 'EELGs', fontsize=30)  # use if uvj_in
 
     ax2.set_yscale("log")
     ax2.set_xscale("log")
-    ax2.set_ylim(ymin, ymax)
+    ax2.set_ylim(ymin, 10**-7)  # , ymax
     ax2.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
     # ax2.text(4, 10**2.5, 'LBGs', fontsize=30)
     # ax2.text(1, 4*10**-8, 'LBGs', fontsize=30)  # use if not uvj_in
@@ -260,7 +265,7 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     plt.rc('xtick', labelsize=20)
     plt.rc('ytick', labelsize=20)
     plt.rcParams.update({'font.size': 22})
-    fig.text(0.5, 0.04, 'Lookback time [Gyr]', ha='center', fontsize=20)  # 30
+    fig.text(0.5, 0.04, 'Lookback time [Gyr]', ha='center', fontsize=30)  # 30
     plt.tight_layout()
     if save:
         plt.savefig(title + '.png', bbox_inches='tight')
