@@ -2,6 +2,8 @@ Git readme - created 20 April 2017 (Jonathan Cohn)
 
 
 Files:
+bootstack.py: use for bootstrapping and plotting sSFHs (built from smart_stack.py)
+
 dust_multirun_params.py: same as eelg_fixedmet_params.py, but with add_dust_emission turned on and logzsol not fixed
 
 eelg_5bins_params.py: same as eelg_emission_params.py, but tweak using different arrangements/numbers of SFH bins; defunct
