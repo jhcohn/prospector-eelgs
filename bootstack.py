@@ -50,78 +50,171 @@ def b_stacker(gal_draws, sigma=1):
     return perc
 
 
-def plot_boots(draw_lists, t, n, lw=1, spec=True, sigma=1):
+def plot_boots(draw_lists, t, n, visualize=True, lw=1, spec=True, sigma=1):
     """
     Plots SFH stacks for two different galaxy samples side-by-side
 
-    :param percs: list of two smoothed percs, for two different galaxy samples, each output by smooth(perc)
-    :param draw_lists: list comprised of two lists of gal_draws
+    :param draw_lists: list comprised of two lists of gal_draws, which have been repeated n times on each sample and
+    appended together
     :param t: time vector output by randraw
+    :param n: number of times we're repeating the bootstrap process
     :param lw: line width
     :param spec: if stacking specific SFR instead of plain SFR, spec=True
     :param sigma: how many sigma of error we want to show in the plot
     :return: plot
     """
 
-    ymin, ymax = 1e-11, 1e-6
-    label = r'Stacked sSFH [yr$^{-1}$]'
-
+    # INITIALIZE FIGURE
     fig = plt.figure()
     ax1 = plt.subplot(1, 2, 1)
     ax2 = plt.subplot(1, 2, 2)  # , sharey=ax1, sharex=ax1)  # don't need to share axis if plot same region & never zoom
 
-    #    boot_array[num, 1] = perc2
-    # print(len(draws[0][0]), len(draws[0]), len(draws), 'draw')  # 1000, 22, N*len(eelgs)
-    # print(len(draws2[0][0]), len(draws2[0]), len(draws2), 'draw2')  # 1000, 22, N*len(lbgs)
-    # percs = [smooth_percs1, smooth_percs2]
-    # len(gal_draws[0])=22=len(perc)=22, len(perc[0])=3
+    # INITIALIZE MATRICES FOR STORAGE OF SSFH MEDIANS & 1SIGMAS (INITIAL AND SMOOTHED)
     perc = np.zeros(shape=(n, len(draw_lists[0][0]), 2 * sig + 1))
     # len(perc)=N=number of bootstacks, len(perc[0])=len(draws[0])=22, len(perc[0][0])=2*sig+1=3
     perc2 = np.zeros(shape=(n, len(draw_lists[1][0]), 2 * sig + 1))
     smooth_perc = np.zeros(shape=(len(perc), len(perc[0]), len(perc[0][0])))  # shape=(N, 22, 3)
     smooth_perc2 = np.zeros(shape=(len(perc2), len(perc2[0]), len(perc2[0][0])))  # shape=(N, 22, 3)
 
-    # perc = np.zeros(shape=(len(gal_draws[0]), 2*sigma + 1))
-    # len(gal_draws[0])=22=len(t); len(perc)=22, len(perc[0])=3
+    # CUT EACH DRAWS LIST EVERY 133 (OR 87) GALAXIES
+    # THEN FOR EACH OF THOSE SETS OF 133 (OR 87) GALAXIES, STACK SSFRs IN EACH BIN (using b_stacker), THEN SMOOTH
     init = 0
-    init2 = 0
+    init2 = 0  # inits (and cuts, below) used to select correct slice (set) of 133 (or 87) galaxies from draw lists
     for i in range(n):  # len(draws) = len(draw_lists[0 or 1]) = N*len(eelgs or lbgs)
         cut = (i+1) * len(draw_lists[0]) / n  # 133 or 87, depending on eelgs or lbgs
         cut2 = (i+1) * len(draw_lists[1]) / n  # 133 or 87, depending on eelgs or lbgs
-        # print(len(draws[i]), len(draws[i][0]))  # 22, 1000
+
+        # hopefully unnecessary safety cut
         if cut >= len(draw_lists[0]):
-            cut = len(draw_lists[0])  # hopefully unnecessary safety cut
+            cut = len(draw_lists[0])
         if cut2 >= len(draw_lists[1]):
-            cut2 = len(draw_lists[1])  # hopefully unnecessary safety cut
+            cut2 = len(draw_lists[1])
         print(init, cut, 'init, cut')
         print(init2, cut2, 'init2, cut2')
-        perc[i, :, :] = b_stacker(draw_lists[0][init:cut], sigma=sig)  # stack.stacker --> b_stacker (for doing 1 galaxy)
+
+        # CALCULATE PERCS FOR BOOTSTRAPPED STACK
+        perc[i, :, :] = b_stacker(draw_lists[0][init:cut], sigma=sig)  # stack.stacker --> b_stacker
         perc2[i, :, :] = b_stacker(draw_lists[1][init2:cut2], sigma=sig)
-        # doing 3 loops, then breaking!
-        # stacker prints (22, 1000*(number of galaxies=N*len(eelgs or lbgs)))
+        # stacker function prints (22, 1000*(number of galaxies=N*len(eelgs or lbgs)))
+
+        # SMOOTH PERCS
         smooth_perc[i, :, :] = stack.smooth(perc[i])
         smooth_perc2[i, :, :] = stack.smooth(perc2[i])
-        # len(gal_draws[0])=22=len(perc)=22, len(perc[0])=3
+
         init = cut
         init2 = cut2
 
-    percs_list = [smooth_perc, smooth_perc2]
-    # len(percs_list)=2, len(percs_list[i])=len(draws)=N*len(galaxies), len(percs_list[i][j])=len(draws[j])=22
-    # len(percs_list[i][j][k])=3
-    # for percs in percs_list:  # 0, 1  i.e. for smooth_perc:
-    # print(len(percs), len(percs[0]), len(percs[0][0]))
-    alpha = 0.02
+    # INIT NEW LIST OF SMOOTHED PERCS FOR ALL BOOTSTRAPS IN BOTH SAMPLES
+    percs_list = [smooth_perc, smooth_perc2] # len(percs_list)=2, len(percs_list[i])=len(draws)=N*len(galaxies)
+    # len(percs_list[i][j][k])=3, len(percs_list[i][j])=len(draws[j])=22
+    alpha = 0.03  # use for alpha while plotting individual bootstraps as errorbars in each bin
     if sigma == 1:
-        for i in range(len(percs_list[0])):  # range(N)
-            ax1.plot(t, percs_list[0][i][:, 1], '-', color='k', lw=lw)  # median
-            ax1.fill_between(t, percs_list[0][i][:, 0], percs_list[0][i][:, 2], color='k', alpha=alpha)  # fill between +/- 1sigma
-            ax1.plot(t, percs_list[0][i][:, 0], '-', color='k', alpha=alpha, lw=lw)  # -1sigma
-            ax1.plot(t, percs_list[0][i][:, 2], '-', color='k', alpha=alpha, lw=lw)  # +1sigma
-        for i in range(len(percs_list[1])):
-            ax2.plot(t, percs_list[1][i][:, 1], '-', color='k', lw=lw)  # median
-            ax2.fill_between(t, percs_list[1][i][:, 0], percs_list[1][i][:, 2], color='k', alpha=alpha)  # fill between +/- 1sigma
-            ax2.plot(t, percs_list[1][i][:, 0], '-', color='k', alpha=alpha, lw=lw)  # -1sigma
-            ax2.plot(t, percs_list[1][i][:, 2], '-', color='k', alpha=alpha, lw=lw)  # +1sigma
+        if visualize:
+            # INSERT VERTICAL DOTTED LINES SHOWING BIN EDGES ON EACH AXIS
+            ax1.axvline(10**-1, ls='--')
+            ax1.axvline(3*10**-1, ls='--')
+            ax1.axvline(1, ls='--')
+            ax1.axvline(1.3, ls='--')
+            ax1.axvline(1.5, ls='--')
+            ax2.axvline(10**-1, ls='--')
+            ax2.axvline(3*10**-1, ls='--')
+            ax2.axvline(1, ls='--')
+            ax2.axvline(1.3, ls='--')
+            ax2.axvline(1.5, ls='--')
+
+            # initialize bootstrap net median & upper/lower (+/-)1 sigma
+            usig1 = np.zeros(shape=(N, 6))
+            usig2 = np.zeros(shape=(N, 6))
+            lsig1 = np.zeros(shape=(N, 6))
+            lsig2 = np.zeros(shape=(N, 6))
+            med1 = np.zeros(shape=(N, 6))
+            med2 = np.zeros(shape=(N, 6))
+            glx = 0
+
+            # for each perc'd stack (i.e. for each bootstrap that has been stacked):
+            for i in range(len(percs_list[0])):  # range(N) (FOR EELGs)
+                glx += 1  # index of stack; max index = n = num of stacks
+                # CREATE new_t: ONLY WANT ONE POINT IN EACH BIN, SO DON'T NEED ORIGINAL FULL t VECTOR
+                new_t = [10**-2, 10**-1, 3*10**-1, 1, 1.3, 1.5]  # left sides of bins
+                delta = [0.02, 0.015, 0.01, 0.001, 0.001, 0.001]  # OFFSET EACH POINT IN new_t WITH EACH ITERATION
+                idx = 0  # index indicating which bin (6 bins --> idx runs 0 to 5)
+                # Num of points in each bin (22 total): bin1: 4, bin2: 4, bin3: 4: bin4: 4, bin5: 4, bin6: 2
+                for j in (0, 4, 8, 12, 16, 20):  # at 1 point in each bin (formerly each of the 22 points)
+                    new_t[idx] += new_t[idx] * delta[idx] * glx  # create offset in x-axis (add ~1% * index)
+                    print(new_t[idx], 't')
+                    '''
+                    # print(glx/len(percs_list[0]), len(percs_list[0]), glx/2, 'hi', glx, i)  # python printing (1/2)=0?
+                    # print(new_t[idx], i, (1 + i * (1 / len(percs_list[0]))))  # python what the fuck
+                    '''
+                    yerr = [[percs_list[0][i][j, 0]], [percs_list[0][i][j, 2]]]  # -1sigma, +1 sigma
+                    lsig1[i, idx] = percs_list[0][i][j, 0]  # -1sigma
+                    usig1[i, idx] = percs_list[0][i][j, 2]  # +1sigma
+                    med1[i, idx] = percs_list[0][i][j, 1]  # median
+                    # PRINT MEDIAN, (+/-)1sigma as point with errorbars
+                    ax1.errorbar(new_t[idx], percs_list[0][i][j, 1], yerr, color='gray', alpha=0.5, fmt='o', lw=lw)
+                    # 1 pt at a time
+                    idx += 1
+
+            # REPEAT FOR LBGs
+            glx2 = 0
+            for i in range(len(percs_list[1])):
+                glx2 += 1
+                new_t2 = [10**-2, 10**-1, 3*10**-1, 1, 1.3, 1.5]  # left sides of bins
+                delta2 = [0.02, 0.015, 0.01, 0.001, 0.001, 0.001]  # 0.05
+                idx2 = 0
+                for j in (0, 4, 8, 12, 16, 20):
+                    new_t2[idx2] += new_t2[idx2] * delta2[idx2] * glx2  # create offset in x-axis (add ~1% * index)
+                    yerr2 = [[percs_list[1][i][j, 0]], [percs_list[1][i][j, 2]]]  # -1sigma, +1 sigma
+                    lsig2[i, idx2] = percs_list[1][i][j, 0]  # -1sigma
+                    usig2[i, idx2] = percs_list[1][i][j, 2]  # +1sigma
+                    med2[i, idx2] = percs_list[1][i][j, 1]  # median
+                    # PRINT MEDIAN, (+/-)1sigma as point with errorbars
+                    ax2.errorbar(new_t2[idx2], percs_list[1][i][j, 1], yerr2, color='gray', alpha=0.5, fmt='o', lw=lw)
+                    idx2 += 1
+
+            # CALCULATE AND PLOT PERCS OF ALL BOOTSTRAPS IN EACH BIN
+            new_t_med = [0.09, 0.25, 0.9, 1.2, 1.4, 2.10]  # right sides of bins
+
+            # initializing new set of percs, comprised from bootstraps
+            things1 = np.zeros(shape=(6, 3))
+            things2 = np.zeros(shape=(6, 3))
+            uthings1 = np.zeros(shape=(6, 3))
+            uthings2 = np.zeros(shape=(6, 3))
+            lthings1 = np.zeros(shape=(6, 3))
+            lthings2 = np.zeros(shape=(6, 3))
+
+            # FILL THINGS WITH PERCS FROM BOOTSTRAPS
+            for i in range(len(new_t_med)):  # for each bin:
+                # perc for median for EELG, LBG bootstrapped stacks
+                things1[i, :] = np.percentile(med1[:, i], [16.0, 50.0, 84.0])
+                things2[i, :] = np.percentile(med2[:, i], [16.0, 50.0, 84.0])
+                # perc for +1sigma for EELG, LBG bootstrapped stacks
+                uthings1[i, :] = np.percentile(usig1[:, i], [16.0, 50.0, 84.0])
+                uthings2[i, :] = np.percentile(usig2[:, i], [16.0, 50.0, 84.0])
+                # perc for -1sigma for EELG, LBG bootstrapped stacks
+                lthings1[i, :] = np.percentile(lsig1[:, i], [16.0, 50.0, 84.0])
+                lthings2[i, :] = np.percentile(lsig2[:, i], [16.0, 50.0, 84.0])
+
+            # PLOT PERCS BUILT FROM ALL BOOTSTRAP STACKS IN EACH BIN
+            for i in range(len(things1)):  # for each bin:
+                print(i)
+                # in each bin, plot median of medians, then plot medians of (+/-)1sigmas as errorbars
+                ax1.errorbar(new_t_med[i], things1[i, 1], yerr=[[lthings1[i, 1]], [uthings1[i, 1]]], color='k', fmt='o',
+                             lw=lw)
+                ax2.errorbar(new_t_med[i], things2[i, 1], yerr=[[lthings2[i, 1]], [uthings2[i, 1]]], color='k', fmt='o',
+                             lw=lw)
+
+        else:
+            for i in range(len(percs_list[0])):  # range(N)
+                ax1.plot(t, percs_list[0][i][:, 1], '-', color='k', lw=lw)  # median
+                ax1.fill_between(t, percs_list[0][i][:, 0], percs_list[0][i][:, 2], color='k', alpha=alpha)  # fill between +/- 1sigma
+                ax1.plot(t, percs_list[0][i][:, 0], '-', color='k', alpha=alpha, lw=lw)  # -1sigma
+                ax1.plot(t, percs_list[0][i][:, 2], '-', color='k', alpha=alpha, lw=lw)  # +1sigma
+            for i in range(len(percs_list[1])):
+                ax2.plot(t, percs_list[1][i][:, 1], '-', color='k', lw=lw)  # median
+                ax2.fill_between(t, percs_list[1][i][:, 0], percs_list[1][i][:, 2], color='k', alpha=alpha)  # fill between +/- 1sigma
+                ax2.plot(t, percs_list[1][i][:, 0], '-', color='k', alpha=alpha, lw=lw)  # -1sigma
+                ax2.plot(t, percs_list[1][i][:, 2], '-', color='k', alpha=alpha, lw=lw)  # +1sigma
 
     elif sigma == 3:
         if spec:
@@ -142,6 +235,10 @@ def plot_boots(draw_lists, t, n, lw=1, spec=True, sigma=1):
             ax2.fill_between(t, percs_list[1][i][:, 0], percs_list[1][i][:, 6], color='k', alpha=0.3)  # fill between +/- 3sigma
             ax2.plot(t, percs_list[1][i][:, 0], '-', color='k', alpha=0.3, lw=lw)  # -3sigma
             ax2.plot(t, percs_list[1][i][:, 6], '-', color='k', alpha=0.3, lw=lw)  # +3sigma
+
+    # TECHNICAL FIG STUFF
+    ymin, ymax = 1e-11, 1e-6
+    label = r'Stacked sSFH [yr$^{-1}$]'
 
     ax1.set_yscale("log")
     ax1.set_xscale("log")
@@ -213,7 +310,7 @@ for line in lbg_list:
 lbg_list.close()
 
 # cut = 'thirty_full_max'  # 'thirty_30'
-N = 100  # 200
+N = 500  # 200
 # newfile = open('booties/bootlists-' + str(cut) + '.txt', 'w+')
 boot_array = np.zeros(shape=(N, 2))  # len(gal_draws[0])=22=len(t); len(perc)=22, len(perc[0])=3
 sig = 1
@@ -285,6 +382,8 @@ print(len(draws2[0][0]), len(draws2[0]), len(draws2), 'draw2')  # 1000, 22, N*le
 plot_boots([draws, draws2], t1[0], n=N)
 
 '''
+# For N~100, loops take ~13 mins; rest takes ~8 mins
+
 # Note: for ~100 loops, the stacker step takes a minute or two
 perc1 = stack.stacker(draws, sigma=sig)  # stacker also prints (22, 1000*(number of galaxies=N*len(eelgs)))
 perc2 = stack.stacker(draws2, sigma=sig)  # stacker also prints (22, 1000*(number of galaxies=N*len(lbgs)))
