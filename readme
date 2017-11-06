@@ -2,6 +2,10 @@ Git readme - created 20 April 2017 (Jonathan Cohn)
 
 
 Files:
+age_plots.py: take output of assembly_time.py and plot lookback time (with errors) vs mass fraction formed
+
+assembly_time.py: calculate mass-weighted ages (and save to .txt files) for galaxies that have been run in prospector
+
 bootstack.py: use for bootstrapping and plotting sSFHs (built from smart_stack.py)
 
 dust_multirun_params.py: same as eelg_fixedmet_params.py, but with add_dust_emission turned on and logzsol not fixed
