@@ -29,6 +29,8 @@ eelg_quickstart_params.py: same as eelg_emission_params.py, but skip do_Powell p
 
 fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector; defunct
 
+half_times.py: compare half-mass assembly times (calculated in output.py and stored in extra_output pickles) for EELG and LBG samples; plot as histograms
+
 input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq; defunct
 
 make_all_plots.py: calls uvj.py, print_sfh.py, and then also prints SED and chi^2 on same plot from pickled files produced by output_all.py; can also call widths.py
