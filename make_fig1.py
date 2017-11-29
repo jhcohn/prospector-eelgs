@@ -17,11 +17,13 @@ def all_plots(fileset, objname, field, loc='upper left'):
     # prepares fig to hold two sets side-by-side of: two axes, one atop other, size ratio 3:1
 
     ax1 = plt.subplot(gs[0])  # ax1 = bigger upper axis (left)
+    # ax1.set_title(field[0] + '-' + objname[0])
     # plt.axvline(x=5270, color='k')  # proving no offset in two axes
     ax1.set_yscale("log")
     ax1.set_xscale("log")
-    fs = 30
-    # ax1.set_title(field[0] + '-' + objname[0])
+    fs = 20  # 30
+    textx = 1100
+    texty = 300  # 500
 
     for j in range(len(fileset)):
         print(j)
@@ -80,7 +82,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             ax1.set_ylabel(r'$\mu$Jy', fontsize=fs)  # 30
 
             # ax1.text(1000, 50, 'EELG', fontsize=20)
-            ax1.text(700, 600, 'COSMOS-1824 (EELG)', fontsize=20)
+            ax1.text(textx, texty, 'COSMOS-1824 (EELG)', fontsize=20)  # 700, 600
             # ax1.set_xlabel(r'Rest frame wavelength')
             ax3 = plt.subplot(gs[2], sharex=ax1)  # ax2 = smaller lower axis
             ax3.plot(wave_rest, chi, 'o', color='k')  # plot chi
@@ -89,12 +91,13 @@ def all_plots(fileset, objname, field, loc='upper left'):
             yticks = ax3.yaxis.get_major_ticks()  # show ytick labels on lower axis
             yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
             ax3.set_ylabel(r'$\chi$', fontsize=fs)
-            ax3.set_xlabel(r'Rest frame wavelength', fontsize=fs)  # 30
+            # ax3.set_xlabel(r'Rest frame wavelength', fontsize=fs)  # 30
             ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             # plt.subplots_adjust(hspace=.0)
 
             loc_uvj = 1
-            inset_axes(ax1, width="20%", height=2., loc=loc_uvj)
+            inset_axes(ax1, width="32%", height="28%", loc=loc_uvj)
+            # NOTE: height = 0.875 width (3.5 units vs 4 units) 20%/0.875=0.22857 --> if height 20%, set width to 23%
             # create inset axis: width (%), height (inches), location
             # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
             # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
@@ -107,6 +110,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             # plt.axvline(x=5270, color='k')  # proving no offset in two axes
             ax2.set_yscale("log")
             ax2.set_xscale("log")
+            # ax2.set_ylim(ymin, ymax)
             # ax2.set_title(field[1] + '-' + objname[1])
             ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='r',
                          label=r'Observed Photometry')  # plot observations
@@ -115,7 +119,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             # ax2.set_ylabel(r'$\mu$Jy')
 
             # ax2.text(1000, 50, 'LBG', fontsize=20)
-            ax2.text(1025, 600, 'COSMOS-4708 (LBG)', fontsize=20)
+            ax2.text(textx, texty, 'COSMOS-4708 (LBG)', fontsize=20)  # 1025, 600
             # ax2.set_xlabel(r'Rest frame wavelength')
             ax4 = plt.subplot(gs[3], sharex=ax2, sharey=ax3)
             ax4.plot(wave_rest, chi, 'o', color='k')  # plot chi
@@ -123,15 +127,16 @@ def all_plots(fileset, objname, field, loc='upper left'):
             plt.setp(ax2.get_xticklabels(), visible=False)  # hide xtick labels on upper axis
             plt.setp(ax2.get_yticklabels(), visible=False)  # hide ytick labels on upper axis
             plt.setp(ax4.get_yticklabels(), visible=False)  # hide ytick labels on lower axis
-            yticks = ax4.yaxis.get_major_ticks()  # show ytick labels on lower axis
-            yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
+            plt.setp(ax4, yticks=[-8, -4, 0, 4, 8], yticklabels=['-8', '-4', '0', '4', '8'])
+            # ax4.yaxis.get_major_ticks(numticks=5)  # show ytick labels on lower axis
+            # yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
             # ax4.set_ylabel(r'$\chi$')
-            ax4.set_xlabel(r'Rest frame wavelength', fontsize=fs)  # 30
+            # ax4.set_xlabel(r'Rest frame wavelength', fontsize=fs)  # 30
             ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             # plt.subplots_adjust(hspace=.0)
 
             loc_uvj = 1  # 7
-            inset_axes(ax2, width="20%", height=2., loc=loc_uvj)
+            inset_axes(ax2, width="32%", height="28%", loc=loc_uvj)
             # create inset axis: width (%), height (inches), location
             # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
             # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
@@ -139,6 +144,27 @@ def all_plots(fileset, objname, field, loc='upper left'):
             print('uvj2')
     print('show')
     plt.subplots_adjust(wspace=.0, hspace=.0)
+
+    xmin = 10**3
+    xmax = 2.5*10**4
+    ymin = 10**-1  # 6*10**-2
+    ymax = 4*10**3  # 10**4
+    ax1.set_xlim(xmin, xmax)  # 700, xmax
+    ax1.set_ylim(ymin, ymax)
+    ax2.set_xlim(xmin, xmax)  # 10**3, xmax
+
+    # xlabel!
+    fig.text(0.5, 0.04, r'Rest frame wavelength', ha='center', va='bottom', fontsize=fs)  # 30
+
+    # TICK PARAMS
+    ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)
+    ax1.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
+    ax2.tick_params('x', length=3, width=1, which='both', labelsize=fs)
+    ax2.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
+    ax3.tick_params('x', length=3, width=1, which='both', labelsize=fs)
+    ax3.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
+    ax4.tick_params('x', length=3, width=1, which='both', labelsize=fs)
+    ax4.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
     plt.show()
 
 if __name__ == "__main__":
