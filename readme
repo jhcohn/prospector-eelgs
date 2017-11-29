@@ -44,6 +44,8 @@ noelg_otherbins_params.py: noelg_multirun_params.py, but with the same agebins a
 
 nonparameteric_sfh_example_params.py: Joel's example of nonparametric SFH param file, off of which I'm basing eelg_npSFH_params.py
 
+one_stack.py: same as smart_stack.py, but for just one sample (rather than side-by-side subplots)
+
 only_sfh.py: modified from Joel's extra_output.py, with lots of things cut/print statements added; defunct
 
 output.py: improved output_all.py; creates all _out.pkl files needed for make_all_plots.py and also includes ways to print out tracefig, cornerfig, kl divergence, and chisq.
