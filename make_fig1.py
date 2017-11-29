@@ -20,6 +20,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
     # plt.axvline(x=5270, color='k')  # proving no offset in two axes
     ax1.set_yscale("log")
     ax1.set_xscale("log")
+    fs = 30
     # ax1.set_title(field[0] + '-' + objname[0])
 
     for j in range(len(fileset)):
@@ -76,7 +77,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
                          label=r'Observed Photometry')  # plot observations
             ax1.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
             ax1.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
-            ax1.set_ylabel(r'$\mu$Jy', fontsize=30)  # 30
+            ax1.set_ylabel(r'$\mu$Jy', fontsize=fs)  # 30
 
             # ax1.text(1000, 50, 'EELG', fontsize=20)
             ax1.text(700, 600, 'COSMOS-1824 (EELG)', fontsize=20)
@@ -87,8 +88,8 @@ def all_plots(fileset, objname, field, loc='upper left'):
             plt.setp(ax1.get_xticklabels(), visible=False)  # hide xtick labels on upper axis
             yticks = ax3.yaxis.get_major_ticks()  # show ytick labels on lower axis
             yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
-            ax3.set_ylabel(r'$\chi$', fontsize=30)
-            ax3.set_xlabel(r'Rest frame wavelength', fontsize=30)  # 30
+            ax3.set_ylabel(r'$\chi$', fontsize=fs)
+            ax3.set_xlabel(r'Rest frame wavelength', fontsize=fs)  # 30
             ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             # plt.subplots_adjust(hspace=.0)
 
@@ -125,7 +126,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             yticks = ax4.yaxis.get_major_ticks()  # show ytick labels on lower axis
             yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
             # ax4.set_ylabel(r'$\chi$')
-            ax4.set_xlabel(r'Rest frame wavelength', fontsize=30)  # 30
+            ax4.set_xlabel(r'Rest frame wavelength', fontsize=fs)  # 30
             ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             # plt.subplots_adjust(hspace=.0)
 
@@ -192,5 +193,5 @@ if __name__ == "__main__":
 
 '''
 Currently running with:
-python make_fig1.py --obj1=1824 --field1=cosmos --base1=fixedmet --obj2=5029 --field2=cosmos --base2=noelgduston
+python make_fig1.py --obj1=1824 --field1=cosmos --base1=fixedmet --obj2=4708 --field2=cosmos --base2=noelg
 '''
