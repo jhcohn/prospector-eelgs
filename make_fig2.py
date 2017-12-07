@@ -116,15 +116,15 @@ def all_plots(fileset, objname, znames, field):
 
         print(zred)
         if j == 1:
-            ax1.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='r',
-                         label=r'Observed Photometry')  # plot observations
-            ax1.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model')  # plot bfit model label=r'Model Photometry')
+            ax1.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model')  # plot bfit model
+            ax1.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', markerfacecolor='None', linestyle='', color='r',
+                         label=r'Observations', markeredgecolor='r', markeredgewidth=0.75)  # plot observations
             ax1.plot(sps_wave, spec_jan, color='b', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
             # ax1.set_ylabel(r'Flux [$\mu$Jy]')
             ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax1.axvspan(4800, 5050, color='k', alpha=0.3)
             # ax1.text(700, 3, 'z ~ ' + str(zred) + ', EELG', fontsize=20)
-            ax1.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z ~ ' + str(zred) + ', EELG',
+            ax1.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', EELG',
                      fontsize=20)
             plt.subplots_adjust(hspace=.0)
 
@@ -132,28 +132,28 @@ def all_plots(fileset, objname, znames, field):
             widths.fig2(ax1, field[j], zred, scale=(phot.max() * filt_factor), rest=True)  # WIDTHS
 
         elif j == 2:
-            ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='r',
-                         label=r'Observed Photometry')  # plot observations
             ax2.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model')  # plot best fit model
+            ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', markerfacecolor='None', linestyle='', color='r',
+                         label=r'Observations', markeredgecolor='r', markeredgewidth=0.75)  # plot observations
             ax2.plot(sps_wave, spec_jan, color='b', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
             ax2.set_ylabel(r'Flux [$\mu$Jy]', fontsize=20)  # 30
             ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax2.axvspan(4800, 5050, color='k', alpha=0.3)
             # ax2.text(700, 3, 'z ~ ' + str(zred) + ', LBG', fontsize=20)
-            ax2.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z ~ ' + str(zred) + ', LBG',
+            ax2.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', LBG',
                      fontsize=20)
             plt.subplots_adjust(hspace=.0)
 
             widths.fig2(ax2, field[j], zred, scale=(phot.max() * filt_factor), rest=True)  # WIDTHS
 
         elif j == 0:
-            ax3.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='r',
-                         label=r'Observed Photometry')  # plot observations
             ax3.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model')  # plot best fit model
+            ax3.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', markerfacecolor='None', linestyle='', color='r',
+                         label=r'Observations', markeredgecolor='r', markeredgewidth=0.75)  # plot observations
             ax3.plot(sps_wave, spec_jan, color='b', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
             # ax3.set_ylabel(r'Flux [$\mu$Jy]')
             # ax3.text(700, 1, 'z ~ ' + str(zred) + ', Qui', fontsize=20)
-            ax3.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z ~ ' + str(zred) + ', Qui',
+            ax3.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', Qui',
                      fontsize=20)
             ax3.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax3.axvspan(4800, 5050, color='k', alpha=0.3)
@@ -185,9 +185,12 @@ if __name__ == "__main__":
     field1 = 'cdfs'
     field2 = 'cosmos'
     field3 = 'uds'
+
     pre1 = 'nmpkls/' + obj1 + '_' + field1 + '_' + kwargs['base1']
-    pre2 = 'pkls/' + obj2 + '_' + field2 + '_' + kwargs['base2']
-    pre3 = 'nmpkls/' + obj3 + '_' + field3 + '_' + kwargs['base3']
+    pre2 = 'pkl_evar/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    pre3 = 'pkl_nvar/' + obj3 + '_' + field3 + '_' + kwargs['base3']
+    # pre2 = 'pkls/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    # pre3 = 'nmpkls/' + obj3 + '_' + field3 + '_' + kwargs['base3']
 
     base = '_out.pkl'
     extra1 = pre1 + '_extra' + base  # includes SFH *AND* rest of extra_output, so call it extra and not sfh
@@ -232,5 +235,6 @@ if __name__ == "__main__":
 '''
 Currently running with:
 python make_fig2.py --obj1=20752 --obj2=1824 --obj3=5957 --base1=noelg --base2=fixedmet --base3=noelg
+python make_fig2.py --obj1=20752 --obj2=1824 --obj3=5957 --base1=noelg --base2=vary --base3=vary
 # try uds 5957 for second obj, since 5206 is an EELG
 '''

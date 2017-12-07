@@ -96,8 +96,8 @@ def all_plots(fileset, objname, field, loc='upper left'):
             # plt.subplots_adjust(hspace=.0)
 
             loc_uvj = 1
-            inset_axes(ax1, width="32%", height="28%", loc=loc_uvj)
-            # NOTE: height = 0.875 width (3.5 units vs 4 units) 20%/0.875=0.22857 --> if height 20%, set width to 23%
+            inset_axes(ax1, width=8*0.32, height=8*0.28, loc=loc_uvj)
+            # NOTE: height = 0.875 width (3.5 units vs 4 units) 20%/0.875=0.22857 --> if height 28%, set width to 32%
             # create inset axis: width (%), height (inches), location
             # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
             # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
@@ -127,7 +127,8 @@ def all_plots(fileset, objname, field, loc='upper left'):
             plt.setp(ax2.get_xticklabels(), visible=False)  # hide xtick labels on upper axis
             plt.setp(ax2.get_yticklabels(), visible=False)  # hide ytick labels on upper axis
             plt.setp(ax4.get_yticklabels(), visible=False)  # hide ytick labels on lower axis
-            plt.setp(ax4, yticks=[-8, -4, 0, 4, 8], yticklabels=['-8', '-4', '0', '4', '8'])
+            plt.setp(ax4, yticks=[-2, 0, 2, 4, 6], yticklabels=['-2', '0', '2', '4', '6'])
+            # plt.setp(ax4, yticks=[-8, -4, 0, 4, 8], yticklabels=['-8', '-4', '0', '4', '8'])
             # ax4.yaxis.get_major_ticks(numticks=5)  # show ytick labels on lower axis
             # yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
             # ax4.set_ylabel(r'$\chi$')
@@ -136,7 +137,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             # plt.subplots_adjust(hspace=.0)
 
             loc_uvj = 1  # 7
-            inset_axes(ax2, width="32%", height="28%", loc=loc_uvj)
+            inset_axes(ax2, width=8*0.32, height=8*0.28, loc=loc_uvj)
             # create inset axis: width (%), height (inches), location
             # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
             # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
@@ -186,8 +187,10 @@ if __name__ == "__main__":
 
     field1 = kwargs['field1']
     field2 = kwargs['field2']
-    pre1 = 'pkls/' + obj1 + '_' + field1 + '_' + kwargs['base1']
-    pre2 = 'nmpkls/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    pre1 = 'pkl_evar/' + obj1 + '_' + field1 + '_' + kwargs['base1']
+    pre2 = 'pkl_nvar/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    # pre1 = 'pkls/' + obj1 + '_' + field1 + '_' + kwargs['base1']
+    # pre2 = 'nmpkls/' + obj2 + '_' + field2 + '_' + kwargs['base2']
 
     base1 = '_out.pkl'
     extra1 = pre1 + '_extra' + base1  # includes SFH *AND* rest of extra_output, so call it extra and not sfh
@@ -220,4 +223,5 @@ if __name__ == "__main__":
 '''
 Currently running with:
 python make_fig1.py --obj1=1824 --field1=cosmos --base1=fixedmet --obj2=4708 --field2=cosmos --base2=noelg
+python make_fig1.py --obj1=1824 --field1=cosmos --base1=vary --obj2=4708 --field2=cosmos --base2=vary
 '''

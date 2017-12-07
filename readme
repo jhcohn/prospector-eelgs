@@ -8,7 +8,7 @@ assembly_time.py: calculate mass-weighted ages (and save to .txt files) for gala
 
 bootstack.py: use for bootstrapping and plotting sSFHs (built from smart_stack.py)
 
-dust_multirun_params.py: same as eelg_fixedmet_params.py, but with add_dust_emission turned on and logzsol not fixed
+dust_multirun_params.py: same as eelg_fixedmet_params.py, but with add_dust_emission turned on and logzsol not fixed; defunct
 
 eelg_5bins_params.py: same as eelg_emission_params.py, but tweak using different arrangements/numbers of SFH bins; defunct
 
@@ -21,20 +21,30 @@ eelg_fixedmet_params.py: same as eelg_multirun_params.py, but with logzsol fixed
 eelg_multirun_params.py: same as eelg_emission_params.py, but now with field and objname as command line arguments
 -Running from terminal: mpirun -n 4 python prospector.py --param_file=eelg_multirun_params.py --outfile=1969_uds_test --niter=2000 --field=uds --objname=1969
 
-eelg_npSFH_params.py: param file for running prospector fits on EELGs, using nonparametric SFHs
+eelg_newmask_params.py: eelg_varymet_params.py, but with [OIII]+Hbeta masked, and dust emission on
+
+eelg_npSFH_params.py: param file for running prospector fits on EELGs, using nonparametric SFHs; defunct
 
 eelg_otherbins_params.py: eelg_fixedmet_params.py, but with different agebins
 
 eelg_quickstart_params.py: same as eelg_emission_params.py, but skip do_Powell process; start run by using previous best fit values as input initial parameter values
 
+eelg_varymet_params.py: eelg_fixedmet_params.py, but with metallicity allowed to vary
+
 fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector; defunct
 
-half_times.py: compare half-mass assembly times (calculated in output.py and stored in extra_output pickles) for EELG and LBG samples; plot as histograms
+get_mass_dust.py: print out median and +/- 1sigma values for the varying parameters (stellar mass, dust, gaslogz, logzsol if applicable) for each population (EELGs and LBGs) as a whole
+
+half_times.py: compare half-mass assembly times (calculated in output.py and stored in extra_output pickles) for EELG and LBG samples; plot as histograms; can also bootstrap and plot results of bootstrapped ages
 
 input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq; defunct
 
 make_all_plots.py: calls uvj.py, print_sfh.py, and then also prints SED and chi^2 on same plot from pickled files produced by output_all.py; can also call widths.py
 -Running with: python make_all_plots.py --obj=7730 --field=cosmos --base=_newbins
+
+make_fig1.py: using to make Figure 2 for the paper. Shh. I know.
+
+make_fig2.py: using to make Figure 1 for the paper. Shhhhh.
 
 model_test.py: load model, test lnp of initial model given different values of metallicity; defunct
 
@@ -51,7 +61,7 @@ only_sfh.py: modified from Joel's extra_output.py, with lots of things cut/print
 output.py: improved output_all.py; creates all _out.pkl files needed for make_all_plots.py and also includes ways to print out tracefig, cornerfig, kl divergence, and chisq.
 -Running with: python output.py --outname=1824_cosmos_fixedmet_1501707076_mcmc.h5 --parfile=eelg_fixedmet_params.py
 
-output_all.py: combined quickgrab.py + sfh_output.py; creates all _out.pkl files needed for make_all_plots.py
+output_all.py: combined quickgrab.py + sfh_output.py; creates all _out.pkl files needed for make_all_plots.py; defunct [functionally replaced by output.py]
 -Running with: python output_all.py --outname=1824_cosmos_decoupled_n1200_1495729287_mcmc.h5 --parfile=eelg_multirun_params.py
 
 print_sfh.py: prints SFH from pickled file produced by output_all.py; also prints sSFR(t)
@@ -68,7 +78,7 @@ prospector_nest.py: new file from bd-j prospector
 quickgrab.py: simple code cannibalized from Prospector tutorial for plotting Prospector output (tracefig, cornerfig, kl divergence, SED, chisq)
 -Running with: python quickgrab.py --outname=10246_cdfs_multirun_1498677216_mcmc.h5 --parfile=eelg_multirun_params.py
 
-runs.sh: bash script to run multiple subsequent Prospector runs on my laptop
+runs.sh: bash script to run multiple subsequent Prospector runs on my laptop; defunct
 -Running with: bash runs.sh
 
 sfh_output.py: modified from Joel's extra_output.py for creating and pickling SFH; if test=True, also outputs ssfr; defunct [functionally replaced by output_all.py]
@@ -83,6 +93,9 @@ stack_sfh.py: use to plot stacked SFHs for lists of galaxies; defunct
 uvj.py: code to make a uvj diagram for a given object, field, with the given object highlighted as a star
 
 widths.py: plot the filter response curves for a given field, for an object at a given redshift
+
+write_runs.py: using to write .lsf files for running prospector on computing cluster
+-Running with: python write_runs.py
 
 Note: Currently using...
 *eelg_fixedmet_params.py	to generate prospector output with emission lines with logzsol fixed
