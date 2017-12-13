@@ -6,34 +6,111 @@ import random
 import os
 from mpl_toolkits.axes_grid.inset_locator import inset_axes
 import uvj
-'''
-# preparing for printing priors  # MAYBE don't need; see if name=main
-import eelg_fixedmet_params as ef_params
-import eelg_thirty_params as et_params
-import noelg_multirun_params as nm_params
-import noelg_thirty_params as nt_params
-'''
+from astropy.cosmology import WMAP9
 
 
-def draw_ssfr_from_prior(obj, fld, fig=None, axes=None, ndraw=1e4, alpha_sfh=1.0, pfile=None, show=True):
+def draw_sfrs(objs, flds, new_logmass=None, ndraw=1e4, alpha_sfh=1.0, pfile=None, show=True):
+    # pfile=e_params or n_params
+
+    # let's do it
+    ndraw = int(ndraw)
+    zred = np.array([3.5])
+    logmass = np.array([10.])
+    smass_factor = 0.8  # add in a not-unreasonable stellar mass <--> total mass conversion
+    minssfr, maxssfr = 1e-14, 1e-5
+
+    # new redshift, new model
+    if new_logmass is None:
+        new_logmass = 10.17
+    new_SFRs = []
+    for i in range(len(objs)):
+        new_model = pfile.load_model(objname=objs[i], field=flds[i])
+        new_zred = new_model.params['zred']
+        tuniv = WMAP9.age(new_zred).value
+        new_SFRs.append(new_logmass / tuniv)
+
+    return new_SFRs
+
+
+def draw_ssfr_from_prior2(obj, fld, gals=None, ndraw=1e4, pfile=None):
+    # let's do it
+    ndraw = int(ndraw)
+    if gals == 'eelgs':
+        logmass = np.array([10.17])
+    elif gals == 'lbgs':
+        logmass = np.array([10.5])
+    else:
+        logmass = np.array([10.])
+    # minssfr, maxssfr = 1e-14, 1e-5
+
+    # new redshift, new model
+    model = pfile.load_model(objname=obj, field=fld)  # load_model prints zred, tuniv
+    agebins = model.params['agebins']
+
+    # create prior & draw from prior
+    prior = model._config_dict['sfr_fraction']['prior']
+    print(prior, 'prior')
+
+    mass = np.zeros(shape=(agebins.shape[0], ndraw))
+    # create a prior and sample from it. what you want from this calculation is an array of masses in each bin drawn
+    # directly from the prior. the two lines below will create a series of sfr_fractions drawn directly from the prior.
+    # what you have to do is convert these sfr_fractions in 'flatchain' into masses in each bin, in an array with the
+    # same shape as the 'mass' vector above. these calculations are done in lines 525-533 here:
+    # https://github.com/jhcohn/prospector-eelgs/blob/master/eelg_fixedmet_params.py, where each line in 'flatchain'
+    # below is a set of 'sfr_fractions'. Here you can assume the total log(M) = 10, as stated above.
+    flatchain = np.random.dirichlet(tuple(1.0 for x in xrange(6)), ndraw)
+    # flatchain = (array([0.stuff, ..., 0.stuff]), ndraw)
+    flatchain = flatchain[:, :-1]  # array is ndraw arrays of 6 different 0.stuffs
+
+    for n in range(ndraw):
+        mass[:, n] = pfile.sfrac_to_masses(logmass=logmass, agebins=agebins, sfrac=flatchain[n])
+
+    # convert to sSFR
+    # print(mass.shape)  # (6, ndraw)
+    # sprint(mass[0, :].sum(axis=0))  # consistently ~5.4e12
+    # print(agebins)  # [[0, 8], [8, 8.7],...]
+    time_per_bin = np.diff(10**agebins, axis=-1)[:, 0]
+    # print(np.diff(10**agebins, axis=-1))  # [[10^8 - 10^0],[10^8.7 - 10^8],...]
+    # print(time_per_bin)  # [1e8, 4.01e8, 4.99e8, 2.84e8, 3.65e8, 4.685e8]
+    # print(time_per_bin[0].sum)  # "<built-in method sum of numpy.float64 object at 0x7f99da4993d8>"
+    # print(mass[0, :].sum(axis=0) / time_per_bin[0].sum() / 10**logmass)  # 5.3e-6 to 5.4e-6 > 1e-7 --> clipped
+    # print(np.clip(mass[0, :].sum(axis=0) / time_per_bin[0].sum() / 10**logmass, minssfr, maxssfr))  ~ 5e-6 or 1e-7
+
+    # NOTE: time_per_bin[0] corresponds to 0-100 Myr time bin = most recent time bin
+    ssfr = np.zeros(shape=(len(mass), len(mass[0])))  # 6, ndraw
+    mass_cml = np.zeros(shape=(len(mass), len(mass[0])))
+
+    for i in range(len(mass)):  # 6
+        n = 0
+        while n <= i:
+            mass_cml[i, :] += mass[n, :]
+            n += 1
+
+    for i in range(len(mass)):
+        ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / mass_cml[-(i+1), :]) # mass_cml defined in reverse order
+        # = (fractional mass formed in bin) / (time per bin) / (cumulative mass formed up to this point)
+        # ssfr[i, :] = np.log10(np.clip(mass[i, :].sum(axis=0) / time_per_bin[i].sum() / 10**logmass, minssfr, maxssfr))
+
+    perc = np.zeros(shape=(len(mass), 3))  # 6, 3
+    for i in range(len(perc)):
+        perc[i, :] = np.percentile(ssfr[i, :], [16., 50., 84.])
+    # print('perc', np.percentile(ssfr[0], [16, 50, 84]))
+    print(perc, 'perc')
+
+    return perc, time_per_bin
+
+
+def draw_ssfr_from_prior(objs, flds, fig=None, axes=None, ndraw=1e4, alpha_sfh=1.0, pfile=None, show=True):
     # pfile=e_params or n_params
 
     # let's do it
     ndraw = int(ndraw)
     # zred = np.array([0.0, 0.5, 1.5, 2.5])  # where do we measure?
     zred = np.array([3.5])
-    # want t_lookback in each bin I assume? Rather than these 4 zreds?
     logmass = np.array([10.])
     smass_factor = 0.8  # add in a not-unreasonable stellar mass <--> total mass conversion
     minssfr, maxssfr = 1e-14, 1e-5
 
-    # figure stuff
-    # if fig is None and axes is None:
-    #    fig, axes = plt.subplots(2, 2, figsize=(7, 7))
-    # fig = plt.figure()
-    # axes = plt.subplot(1, 1, 1)
-    # fig.subplots_adjust(hspace=0.0, wspace=0.0)
-    # axes = np.ravel(axes)
     fs = 20
 
     # for i, z in enumerate(zred):
@@ -41,12 +118,13 @@ def draw_ssfr_from_prior(obj, fld, fig=None, axes=None, ndraw=1e4, alpha_sfh=1.0
 
     # new redshift, new model
     # model = pfile.load_model(zred=z, alpha_sfh=alpha_sfh, **pfile.run_params)  # load_model(objname, field):
-    model = pfile.load_model(objname=obj, field=fld)
+    model = pfile.load_model(objname=objs[0], field=flds[0])
     agebins = model.params['agebins']
 
     # create prior & draw from prior
     prior = model._config_dict['sfr_fraction']['prior']
     print(prior)
+
     mass = np.zeros(shape=(agebins.shape[0], ndraw))
     '''
     for n in range(ndraw):
@@ -85,7 +163,7 @@ def draw_ssfr_from_prior(obj, fld, fig=None, axes=None, ndraw=1e4, alpha_sfh=1.0
         '''
     # convert to sSFR
     # print(mass.shape)  # (6, ndraw)
-    print(mass)
+    # print(mass)
     # sprint(mass[0, :].sum(axis=0))  # consistently ~5.4e12
     # print(agebins)  # [[0, 8], [8, 8.7],...]
     time_per_bin = np.diff(10**agebins, axis=-1)[:, 0]
@@ -96,13 +174,13 @@ def draw_ssfr_from_prior(obj, fld, fig=None, axes=None, ndraw=1e4, alpha_sfh=1.0
     # print(np.clip(mass[0, :].sum(axis=0) / time_per_bin[0].sum() / 10**logmass, minssfr, maxssfr))  ~ 5e-6 or 1e-7
 
     ssfr = np.zeros(shape=(len(mass), len(mass[0])))  # 6, ndraw
-    print(len(ssfr[0]))
-    print(mass[0, :].sum(axis=0))
+    # print(len(ssfr[0]))
+    # print(mass[0, :].sum(axis=0))
     for i in range(len(mass)):  # 6
         ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / 10**logmass)
         # ssfr[i, :] = np.log10(np.clip(mass[i, :].sum(axis=0) / time_per_bin[i].sum() / 10**logmass, minssfr, maxssfr))
 
-    print(ssfr)
+    # print(ssfr)
     print('perc', np.percentile(ssfr[0], [16, 50, 84]))
     # median of each bin should have ssfr of 1/tuniv at that redshift (i.e. continuous SFH)
     # print(ssfr)  always [-7.]
@@ -331,7 +409,7 @@ def stacker(gal_draws, sigma=1):
 
 
 def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, sigma=1, save=False, title=None,
-              priors=None, show=False):
+              priors=None, show=False, tpbs=None):
     """
     Plots SFH stacks for two different galaxy samples side-by-side
 
@@ -346,7 +424,7 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     label = r'Stacked SFH [M$_\odot$ yr$^{-1}$]'
 
     if spec:
-        ymin, ymax = 1e-11, 1e-6
+        ymin, ymax = 3e-11, 3e-8  # 1e-11, 1e-6
         label = r'Stacked sSFH [yr$^{-1}$]'
 
     fig = plt.figure()
@@ -354,12 +432,12 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     ax2 = plt.subplot(1, 2, 2)  # , sharey=ax1, sharex=ax1)  # don't need to share axis if plot same region & never zoom
 
     if uvj_in:  # also requires elist, llist to be not None; this insets uvj plots onto the top right of plot!
-        inset_axes(ax1, width="35%", height=2., loc=1)  # 20%
+        inset_axes(ax1, width=8*0.32, height=8*0.28, loc=9)  # 20%
         uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False)
         # create inset axis: width (%), height (inches), location
         # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
         # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
-        inset_axes(ax2, width="35%", height=2., loc=1)  # 20%
+        inset_axes(ax2, width=8*0.32, height=8*0.28, loc=9)  # 20%
         uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False)
 
     if sigma == 1:
@@ -367,11 +445,13 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
         ax1.fill_between(t, percs[0][:, 0], percs[0][:, 2], color='k', alpha=0.3)  # fill region between +/- 1sigma
         ax1.plot(t, percs[0][:, 0], '-', color='k', alpha=0.3, lw=lw)  # -1sigma
         ax1.plot(t, percs[0][:, 2], '-', color='k', alpha=0.3, lw=lw)  # +1sigma
+        print('yo', percs[0][0, 1], percs[0][0, 2], percs[0][0, 0])  # EELGs: current median, +/- 1sigma ssfr
 
         ax2.plot(t, percs[1][:, 1], '-', color='k', lw=lw)  # median
         ax2.fill_between(t, percs[1][:, 0], percs[1][:, 2], color='k', alpha=0.3)  # fill region between +/- 1sigma
         ax2.plot(t, percs[1][:, 0], '-', color='k', alpha=0.3, lw=lw)  # -1sigma
         ax2.plot(t, percs[1][:, 2], '-', color='k', alpha=0.3, lw=lw)  # +1sigma
+        print('yo', percs[1][0, 1], percs[1][0, 2], percs[1][0, 0])  # LBGs: current median, +/- 1sigma ssfr
 
     elif sigma == 3:
         if spec:
@@ -397,19 +477,37 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     ax1.set_ylim(ymin, 10**-7)  # , ymax
     ax1.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
     ax1.set_ylabel(label, fontsize=30)  # 30
-    # ax1.text(4, 10**2.5, 'EELGs', fontsize=30)
-    # ax1.text(1, 4*10**-8, 'EELGs', fontsize=30)  # use if not uvj_in
-    ax1.text(2*10**-2, 4*10**-8, 'EELGs', fontsize=30)  # use if uvj_in
+    # ax1.text(2*10**-2, 4*10**-8, 'EELGs', fontsize=30)  # use if uvj_in
+    ax1.text(0.5, 5*10**-8, 'EELGs', fontsize=30)  # use if uvj_in
 
     ax2.set_yscale("log")
     ax2.set_xscale("log")
     ax2.set_ylim(ymin, 10**-7)  # , ymax
     ax2.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
-    # ax2.text(4, 10**2.5, 'LBGs', fontsize=30)
-    # ax2.text(1, 4*10**-8, 'LBGs', fontsize=30)  # use if not uvj_in
-    ax2.text(2*10**-2, 4*10**-8, 'LBGs', fontsize=30)  # use if uvj_in
+    # ax2.text(2*10**-2, 4*10**-8, 'LBGs', fontsize=30)  # use if uvj_in
+    ax2.text(0.5, 5*10**-8, 'LBGs', fontsize=30)  # use if uvj_in
 
     if priors is not None:
+        # NEW: use for draw_from_ssfr_prior2()
+        xs = [[0, 0.1], [0.1, 0.5], [0.5, 1.], [1., 1.28], [1.28, 1.645], [1.645, 2.11]]  # Gyr
+        for i in range(len(priors[0])):  # for each of the 6 bins in the eelg ssfr prior perc
+            for j in range(len(priors[0][i])):  # for median and +/- 1sigma
+                y = [10**priors[0][i][j], 10**priors[0][i][j]]
+                print(y, 'y')
+                ax1.plot(xs[i], y, color='r')
+            ax1.fill_between(xs[i], 10**priors[0][i][0], 10**priors[0][i][2], hatch='/', color='r', facecolor='none')
+
+        for i in range(len(priors[1])):  # for each of the 6 bins in the lbg ssfr prior perc
+            for j in range(len(priors[1][i])):  # for median and +/- 1sigma
+                y = [10**priors[1][i][j], 10**priors[1][i][j]]
+                print(y, 'y')
+                ax2.plot(xs[i], y, color='r')
+            ax2.fill_between(xs[i], 10**priors[1][i][0], 10**priors[1][i][2], hatch='/', color='r', facecolor='none')
+            # ax2.axvline(x=2.11)
+        # END NEW
+
+        '''
+        # OLD, use for wrong draw_from_ssfr_prior()
         ssfr_pri = np.zeros(shape=(len(priors[0]), 3))
         ssfr_l_pri = np.zeros(shape=(len(priors[0]), 3))
         for i in range(len(priors[0])):  # 6
@@ -431,8 +529,10 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
         ax2.axhline(y=10 ** ssfr_pri[1][0], color='r')
         ax2.axhline(y=10 ** ssfr_pri[1][2], color='r')
         ax2.fill_between(fill_t, yl1, yl2, color='r', hatch='/', facecolor='none')  # , alpha=0.3)
+        '''
 
         '''
+        # OLD, already commented
         for l in range(len(ssfr_pri)):
             ax1.errorbar(new_t[l], 10**ssfr_pri[l][1], yerr=[[10**ssfr_pri[l][0]], [10**ssfr_pri[l][2]]], fmt='o',
                          color='r')
@@ -442,6 +542,7 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
 
     plt.setp(ax2.get_yticklabels(), visible=False)  # hide y-axis labels on right-hand subplot to prevent overlap
     plt.subplots_adjust(wspace=0.05)  # vertical whitespace (i.e. the width) between the two subplots
+    plt.tight_layout()
     plt.rc('xtick', labelsize=20)
     plt.rc('ytick', labelsize=20)
     plt.rcParams.update({'font.size': 22})
@@ -456,8 +557,20 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
 if __name__ == "__main__":
 
     boot = False
+    vary = False
+    mask = True
     others = False
-    if others:
+    if vary:
+        base = ['vary', 'vary']
+        folders = ['pkl_evar/', 'pkl_nvar/']
+        import eelg_varymet_params as e_params
+        import eelg_varymet_params as n_params
+    elif mask:
+        base = ['newmask', 'newmask']
+        folders = ['pkl_emask/', 'pkl_nmask/']
+        import eelg_newmask_params as e_params
+        import eelg_newmask_params as n_params
+    elif others:
         base = ['thirty', 'nth']  # base = ['otherbins', 'nother']  # use for otherbins
         folders = ['etpkls/', 'ntpkls/']  # ['opkls/', 'nopkls/']
         import eelg_thirty_params as e_params
@@ -468,8 +581,11 @@ if __name__ == "__main__":
         import eelg_fixedmet_params as e_params
         import noelg_multirun_params as n_params
 
-    pri = draw_ssfr_from_prior('1824', 'cosmos', ndraw=1e4, alpha_sfh=1.0, pfile=e_params, show=False)
-    pri_l = draw_ssfr_from_prior('5957', 'uds', ndraw=1e4, alpha_sfh=1.0, pfile=n_params, show=False)
+    pri, t_perbin = draw_ssfr_from_prior2('1824', 'cosmos', ndraw=1e4, gals='eelgs', pfile=e_params)
+    pri_l, t_perbin_l = draw_ssfr_from_prior2('5957', 'uds', ndraw=1e4, gals='lbgs', pfile=n_params)
+    print(t_perbin, t_perbin_l)
+    # pri = draw_ssfr_from_prior('1824', 'cosmos', ndraw=1e4, alpha_sfh=1.0, pfile=e_params, show=False)
+    # pri_l = draw_ssfr_from_prior('5957', 'uds', ndraw=1e4, alpha_sfh=1.0, pfile=n_params, show=False)
 
     eelg_list = open('eelg_specz_ids', 'r')
     pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
@@ -610,7 +726,8 @@ if __name__ == "__main__":
         print(numl, cl, 'numl')
         smooth_percs = [smooth(perc1), smooth(perc2)]
         # plot_sfhs(smooth_percs, t1[0], sigma=sig)
-        plot_sfhs(smooth_percs, t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l])
+        plot_sfhs(smooth_percs, t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l],
+                  tpbs=[t_perbin, t_perbin_l])
 
 
 '''
