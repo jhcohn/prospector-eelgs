@@ -2,6 +2,8 @@ Git readme - created 20 April 2017 (Jonathan Cohn)
 
 
 Files:
+all_seds.py: use to quickly plot all SFHs or SEDs for all individual galaxies
+
 age_plots.py: take output of assembly_time.py and plot lookback time (with errors) vs mass fraction formed
 
 assembly_time.py: calculate mass-weighted ages (and save to .txt files) for galaxies that have been run in prospector
