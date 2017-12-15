@@ -504,12 +504,15 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
 
     if priors is not None:
         if tuniv:
+            ax1.axhline(y=priors[0][1], color='r')  # median, +/- 1sigma for EELG prior
+            ax2.axhline(y=priors[1][1], color='r')  # median, +/- 1sigma for LBG prior
+            '''
             for i in range(len(priors[0])):  # for median, +/- 1sigma in the EELG prior
                 ax1.axhline(y=priors[0][i], color='r')  # median, +/- 1sigma for EELG prior
                 ax2.axhline(y=priors[1][i], color='r')  # median, +/- 1sigma for LBG prior
             ax1.fill_between(t, priors[0][0], priors[0][2], hatch='/', color='r', facecolor='none')
             ax2.fill_between(t, priors[1][0], priors[1][2], hatch='/', color='r', facecolor='none')
-
+            '''
         else:
             # NEW: use for draw_from_ssfr_prior2()
             xs = [[0, 0.1], [0.1, 0.5], [0.5, 1.], [1., 1.28], [1.28, 1.645], [1.645, 2.11]]  # Gyr
@@ -571,6 +574,23 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     plt.rcParams.update({'font.size': 22})
     fig.text(0.5, 0.04, 'Lookback time [Gyr]', ha='center', fontsize=30)  # 30
     plt.tight_layout()
+
+    '''
+    diff = []
+    diff2 = []
+    for i in range(len(percs[0])):
+        print(percs[0][i, 1] - priors[0][1])
+        diff.append(percs[0][i, 1] - priors[0][1])
+    for i in range(len(percs[1])):
+        print(percs[1][i, 1] - priors[1][1])
+        diff2.append(percs[1][i, 1] - priors[1][1])
+    diff = [diff[1], diff[4], diff[8], diff[13], diff[17], diff[21]]
+    diff2 = [diff2[1], diff2[4], diff2[8], diff2[13], diff2[17], diff2[21]]
+    tpb = [1e8, 4.01e8, 4.99e8, 2.84e8, 3.65e8, 4.685e8]
+    print(np.dot(diff, tpb))
+    print(np.dot(diff2, tpb))
+    '''
+
     if save:
         plt.savefig(title + '.png', bbox_inches='tight')
     else:

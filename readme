@@ -92,6 +92,8 @@ smart_stack.py: used to plot side-by-side stacked sSFHs for EELGs vs LBGs
 
 stack_sfh.py: use to plot stacked SFHs for lists of galaxies; defunct
 
+stellar_ages.py: use for calculating typical stellar ages in the galaxy samples, rather than half-mass assembly times -- essentially SUM((SFR in each bin) * (time in each bin) * (average age of bin)) / SUM(SFR in each bin * time in each bin)
+
 uvj.py: code to make a uvj diagram for a given object, field, with the given object highlighted as a star
 
 widths.py: plot the filter response curves for a given field, for an object at a given redshift
