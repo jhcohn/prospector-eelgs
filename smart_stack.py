@@ -100,6 +100,20 @@ def draw_ssfr_from_prior2(obj, fld, gals=None, ndraw=1e4, pfile=None):
     return perc, time_per_bin
 
 
+def tuniv_ssfr_prior(objs, flds, pfile=None):
+    # NEW TUNIV PRIOR
+    ssfrs = []
+    for i in range(len(objs)):
+        model = pfile.load_model(objname=objs[i], field=flds[i])  # load_model prints zred, tuniv
+        tuniv = WMAP9.age(model.params['zred']).value
+        ssfrs.append(1 / tuniv)
+        print(i)
+    perc = np.percentile(ssfrs, [16., 50., 84.])
+    print(perc)
+
+    return perc
+
+
 def draw_ssfr_from_prior(objs, flds, fig=None, axes=None, ndraw=1e4, alpha_sfh=1.0, pfile=None, show=True):
     # pfile=e_params or n_params
 
@@ -409,7 +423,7 @@ def stacker(gal_draws, sigma=1):
 
 
 def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, sigma=1, save=False, title=None,
-              priors=None, show=False, tpbs=None):
+              priors=None, show=False, tpbs=None, tuniv=False):
     """
     Plots SFH stacks for two different galaxy samples side-by-side
 
@@ -425,7 +439,8 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
 
     if spec:
         ymin, ymax = 3e-11, 3e-8  # 1e-11, 1e-6
-        label = r'Stacked sSFH [yr$^{-1}$]'
+        # label = r'Stacked sSFH [yr$^{-1}$]'
+        label = r'Stacked SFR$_{bin}$ / M$_{tot}$ [yr$^{-1}$]'
 
     fig = plt.figure()
     ax1 = plt.subplot(1, 2, 1)
@@ -488,23 +503,31 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     ax2.text(0.5, 5*10**-8, 'LBGs', fontsize=30)  # use if uvj_in
 
     if priors is not None:
-        # NEW: use for draw_from_ssfr_prior2()
-        xs = [[0, 0.1], [0.1, 0.5], [0.5, 1.], [1., 1.28], [1.28, 1.645], [1.645, 2.11]]  # Gyr
-        for i in range(len(priors[0])):  # for each of the 6 bins in the eelg ssfr prior perc
-            for j in range(len(priors[0][i])):  # for median and +/- 1sigma
-                y = [10**priors[0][i][j], 10**priors[0][i][j]]
-                print(y, 'y')
-                ax1.plot(xs[i], y, color='r')
-            ax1.fill_between(xs[i], 10**priors[0][i][0], 10**priors[0][i][2], hatch='/', color='r', facecolor='none')
+        if tuniv:
+            for i in range(len(priors[0])):  # for median, +/- 1sigma in the EELG prior
+                ax1.axhline(y=priors[0][i], color='r')  # median, +/- 1sigma for EELG prior
+                ax2.axhline(y=priors[1][i], color='r')  # median, +/- 1sigma for LBG prior
+            ax1.fill_between(t, priors[0][0], priors[0][2], hatch='/', color='r', facecolor='none')
+            ax2.fill_between(t, priors[1][0], priors[1][2], hatch='/', color='r', facecolor='none')
 
-        for i in range(len(priors[1])):  # for each of the 6 bins in the lbg ssfr prior perc
-            for j in range(len(priors[1][i])):  # for median and +/- 1sigma
-                y = [10**priors[1][i][j], 10**priors[1][i][j]]
-                print(y, 'y')
-                ax2.plot(xs[i], y, color='r')
-            ax2.fill_between(xs[i], 10**priors[1][i][0], 10**priors[1][i][2], hatch='/', color='r', facecolor='none')
-            # ax2.axvline(x=2.11)
-        # END NEW
+        else:
+            # NEW: use for draw_from_ssfr_prior2()
+            xs = [[0, 0.1], [0.1, 0.5], [0.5, 1.], [1., 1.28], [1.28, 1.645], [1.645, 2.11]]  # Gyr
+            for i in range(len(priors[0])):  # for each of the 6 bins in the eelg ssfr prior perc
+                for j in range(len(priors[0][i])):  # for median and +/- 1sigma
+                    y = [10**priors[0][i][j], 10**priors[0][i][j]]
+                    print(y, 'y')
+                    ax1.plot(xs[i], y, color='r')
+                ax1.fill_between(xs[i], 10**priors[0][i][0], 10**priors[0][i][2], hatch='/', color='r', facecolor='none')
+
+            for i in range(len(priors[1])):  # for each of the 6 bins in the lbg ssfr prior perc
+                for j in range(len(priors[1][i])):  # for median and +/- 1sigma
+                    y = [10**priors[1][i][j], 10**priors[1][i][j]]
+                    print(y, 'y')
+                    ax2.plot(xs[i], y, color='r')
+                ax2.fill_between(xs[i], 10**priors[1][i][0], 10**priors[1][i][2], hatch='/', color='r', facecolor='none')
+                # ax2.axvline(x=2.11)
+            # END NEW
 
         '''
         # OLD, use for wrong draw_from_ssfr_prior()
@@ -557,9 +580,10 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
 if __name__ == "__main__":
 
     boot = False
-    vary = False
-    mask = True
+    vary = True
+    mask = False
     others = False
+    short = False
     if vary:
         base = ['vary', 'vary']
         folders = ['pkl_evar/', 'pkl_nvar/']
@@ -575,44 +599,85 @@ if __name__ == "__main__":
         folders = ['etpkls/', 'ntpkls/']  # ['opkls/', 'nopkls/']
         import eelg_thirty_params as e_params
         import noelg_thirty_params as n_params
+    elif short:
+        base = ['short', 'short']
+        folders = ['pkl_eshort/', 'pkl_nshort/']
+        import eelg_short_params as e_params
+        import eelg_short_params as n_params
     else:
         base = ['fixedmet', 'noelg']  # use for fixedmet
         folders = ['pkls/', 'nmpkls/']
         import eelg_fixedmet_params as e_params
         import noelg_multirun_params as n_params
 
+    '''
     pri, t_perbin = draw_ssfr_from_prior2('1824', 'cosmos', ndraw=1e4, gals='eelgs', pfile=e_params)
     pri_l, t_perbin_l = draw_ssfr_from_prior2('5957', 'uds', ndraw=1e4, gals='lbgs', pfile=n_params)
     print(t_perbin, t_perbin_l)
+    '''
     # pri = draw_ssfr_from_prior('1824', 'cosmos', ndraw=1e4, alpha_sfh=1.0, pfile=e_params, show=False)
     # pri_l = draw_ssfr_from_prior('5957', 'uds', ndraw=1e4, alpha_sfh=1.0, pfile=n_params, show=False)
 
     eelg_list = open('eelg_specz_ids', 'r')
     pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
     eelgs = []
+    e_objs = []
+    e_fields = []
     for line in eelg_list:
         if line[0] == '#':
             pass
         else:
             cols = line.split()
+            e_objs.append(cols[1])
+            e_fields.append(cols[0])
             eelgs.append(cols[1] + '_' + cols[0] + '_' + base[0])  # base[0] = fixedmet (or otherbins)
     eelg_list.close()
 
     lbg_list = open('lbg_ids', 'r')
     flist = {}
     lbgs = []
+    l_objs = []
+    l_fields = []
     l_pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[1]
     for line in lbg_list:
         if int(line) - 200000 > 0:
             flist[str(int(line) - 200000)] = 'uds'
             lbgs.append(str(int(line) - 200000) + '_uds_' + base[1])  # base[1] = noelg (or nother)
+            l_objs.append(int(line) - 200000)
+            l_fields.append('uds')
         elif int(line) - 100000 > 0:
             flist[str(int(line) - 100000)] = 'cosmos'
             lbgs.append(str(int(line) - 100000) + '_cosmos_' + base[1])
+            l_objs.append(int(line) - 100000)
+            l_fields.append('cosmos')
         else:
             flist[str(int(line))] = 'cdfs'
             lbgs.append(str(int(line)) + '_cdfs_' + base[1])
+            l_objs.append(int(line))
+            l_fields.append('cdfs')
     lbg_list.close()
+
+    pri = [0.41772065*1e-9,  0.50135904*1e-9,  0.55399038*1e-9]
+    # ^ from: tuniv_ssfr_prior(e_objs, e_fields, pfile=e_params)
+    # pri_l = tuniv_ssfr_prior(l_objs, l_fields, pfile=n_params)
+    '''
+    ssfrs_l = []
+    for i in range(len(l_fields)):
+        photname, zname, filtername, filts = n_params.get_names(l_fields[i])
+        with open(zname, 'r') as fz:
+            hdr_z = fz.readline().split()
+        dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
+        zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
+        z = zout[l_objs[i] - 1][1]
+        if z < 0:
+            z = zout[l_objs[i] - 1][-3]
+        tuniv = WMAP9.age(z).value
+        ssfrs_l.append(1 / tuniv)
+        print(i)
+    pri_l = np.percentile(ssfrs_l, [16., 50., 84.])
+    print(pri_l)
+    '''
+    pri_l = [0.40128419*1e-9, 0.44860297*1e-9, 0.56183993*1e-9]  # from ^ commented out thing
 
     if boot:
         cut = 'thirty_full_max'  # 'thirty_30'
@@ -726,8 +791,9 @@ if __name__ == "__main__":
         print(numl, cl, 'numl')
         smooth_percs = [smooth(perc1), smooth(perc2)]
         # plot_sfhs(smooth_percs, t1[0], sigma=sig)
-        plot_sfhs(smooth_percs, t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l],
-                  tpbs=[t_perbin, t_perbin_l])
+        # plot_sfhs(smooth_percs, t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l],
+        #           tpbs=[t_perbin, t_perbin_l])
+        plot_sfhs(smooth_percs, t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l], tuniv=True)
 
 
 '''
