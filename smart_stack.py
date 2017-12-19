@@ -87,7 +87,7 @@ def draw_ssfr_from_prior2(obj, fld, gals=None, ndraw=1e4, pfile=None):
             n += 1
 
     for i in range(len(mass)):
-        ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / mass_cml[-(i+1), :]) # mass_cml defined in reverse order
+        ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / mass_cml[-(i+1), :])  # mass_cml defined in reverse order
         # = (fractional mass formed in bin) / (time per bin) / (cumulative mass formed up to this point)
         # ssfr[i, :] = np.log10(np.clip(mass[i, :].sum(axis=0) / time_per_bin[i].sum() / 10**logmass, minssfr, maxssfr))
 
@@ -114,7 +114,7 @@ def tuniv_ssfr_prior(objs, flds, pfile=None):
     return perc
 
 
-def draw_ssfr_from_prior(objs, flds, fig=None, axes=None, ndraw=1e4, alpha_sfh=1.0, pfile=None, show=True):
+def draw_ssfr_from_prior(objs, flds, fig=None, axes=None, ndraw=1e4, alpha_sfh=1.0, pfile=None, show=True, t=None):
     # pfile=e_params or n_params
 
     # let's do it
@@ -123,6 +123,7 @@ def draw_ssfr_from_prior(objs, flds, fig=None, axes=None, ndraw=1e4, alpha_sfh=1
     zred = np.array([3.5])
     logmass = np.array([10.])
     smass_factor = 0.8  # add in a not-unreasonable stellar mass <--> total mass conversion
+    # logmass *= 1.01  # note (10^(x*y) = 10^y / 0.8, for y in [9, 11] --> x ~= 1.01)
     minssfr, maxssfr = 1e-14, 1e-5
 
     fs = 20
@@ -191,8 +192,10 @@ def draw_ssfr_from_prior(objs, flds, fig=None, axes=None, ndraw=1e4, alpha_sfh=1
     # print(len(ssfr[0]))
     # print(mass[0, :].sum(axis=0))
     for i in range(len(mass)):  # 6
-        ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / 10**logmass)
+        # ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / 10**logmass)
         # ssfr[i, :] = np.log10(np.clip(mass[i, :].sum(axis=0) / time_per_bin[i].sum() / 10**logmass, minssfr, maxssfr))
+        # ssfr[i, :] = np.log10(mass[i, :].sum(axis=0) / time_per_bin[i].sum() / (10**logmass / smass_factor))  # smass
+        ssfr[i, :] = np.log10(mass[i, :].sum(axis=0) / t / (10**logmass / smass_factor))  # smass
 
     # print(ssfr)
     print('perc', np.percentile(ssfr[0], [16, 50, 84]))
@@ -630,14 +633,6 @@ if __name__ == "__main__":
         import eelg_fixedmet_params as e_params
         import noelg_multirun_params as n_params
 
-    '''
-    pri, t_perbin = draw_ssfr_from_prior2('1824', 'cosmos', ndraw=1e4, gals='eelgs', pfile=e_params)
-    pri_l, t_perbin_l = draw_ssfr_from_prior2('5957', 'uds', ndraw=1e4, gals='lbgs', pfile=n_params)
-    print(t_perbin, t_perbin_l)
-    '''
-    # pri = draw_ssfr_from_prior('1824', 'cosmos', ndraw=1e4, alpha_sfh=1.0, pfile=e_params, show=False)
-    # pri_l = draw_ssfr_from_prior('5957', 'uds', ndraw=1e4, alpha_sfh=1.0, pfile=n_params, show=False)
-
     eelg_list = open('eelg_specz_ids', 'r')
     pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
     eelgs = []
@@ -677,27 +672,43 @@ if __name__ == "__main__":
             l_fields.append('cdfs')
     lbg_list.close()
 
-    pri = [0.41772065*1e-9,  0.50135904*1e-9,  0.55399038*1e-9]
-    # ^ from: tuniv_ssfr_prior(e_objs, e_fields, pfile=e_params)
-    # pri_l = tuniv_ssfr_prior(l_objs, l_fields, pfile=n_params)
-    '''
-    ssfrs_l = []
-    for i in range(len(l_fields)):
-        photname, zname, filtername, filts = n_params.get_names(l_fields[i])
-        with open(zname, 'r') as fz:
-            hdr_z = fz.readline().split()
-        dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
-        zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
-        z = zout[l_objs[i] - 1][1]
-        if z < 0:
-            z = zout[l_objs[i] - 1][-3]
-        tuniv = WMAP9.age(z).value
-        ssfrs_l.append(1 / tuniv)
-        print(i)
-    pri_l = np.percentile(ssfrs_l, [16., 50., 84.])
-    print(pri_l)
-    '''
-    pri_l = [0.40128419*1e-9, 0.44860297*1e-9, 0.56183993*1e-9]  # from ^ commented out thing
+    tun = True
+    if tun:  # flat ssfr prior = 1 / t_univ, based on perc of t_univ values for each population
+        pri = [0.41772065 * 1e-9, 0.50135904 * 1e-9, 0.55399038 * 1e-9]  # USE
+        # --> t_univ prior = [1.81*1e9, 1.99*1e9, 2.39*1e9]  # (1.99 Gyr +0.4 Gyr / -0.18 Gyr)
+        # ^ from: tuniv_ssfr_prior(e_objs, e_fields, pfile=e_params)
+        # pri_l = tuniv_ssfr_prior(l_objs, l_fields, pfile=n_params)
+        '''
+        ssfrs_l = []
+        for i in range(len(l_fields)):
+            photname, zname, filtername, filts = n_params.get_names(l_fields[i])
+            with open(zname, 'r') as fz:
+                hdr_z = fz.readline().split()
+            dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
+            zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
+            z = zout[l_objs[i] - 1][1]
+            if z < 0:
+                z = zout[l_objs[i] - 1][-3]
+            tuniv = WMAP9.age(z).value
+            ssfrs_l.append(1 / tuniv)
+            print(i)
+        pri_l = np.percentile(ssfrs_l, [16., 50., 84.])
+        print(pri_l)
+        '''
+        pri_l = [0.40128419 * 1e-9, 0.44860297 * 1e-9, 0.56183993 * 1e-9]  # from ^ commented out thing  # USE
+        # --> t_univ prior_l = [1.78*1e9, 2.23*1e9, 2.49*1e9]  # (2.23 Gyr +0.25 Gyr / -0.45 Gyr)
+    else:
+        '''
+        pri, t_perbin = draw_ssfr_from_prior2('1824', 'cosmos', ndraw=1e4, gals='eelgs', pfile=e_params)
+        pri_l, t_perbin_l = draw_ssfr_from_prior2('5957', 'uds', ndraw=1e4, gals='lbgs', pfile=n_params)
+        print(t_perbin, t_perbin_l)
+        '''
+        pri = draw_ssfr_from_prior(['1824'], ['cosmos'], ndraw=1e4, alpha_sfh=1.0, pfile=e_params, show=False,
+                                   t=1.99*1e9)
+        pri_l = draw_ssfr_from_prior(['5957'], ['uds'], ndraw=1e4, alpha_sfh=1.0, pfile=n_params, show=False,
+                                     t=2.23*1e9)
+        print(pri)
+        print(pri_l)
 
     if boot:
         cut = 'thirty_full_max'  # 'thirty_30'
@@ -813,7 +824,7 @@ if __name__ == "__main__":
         # plot_sfhs(smooth_percs, t1[0], sigma=sig)
         # plot_sfhs(smooth_percs, t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l],
         #           tpbs=[t_perbin, t_perbin_l])
-        plot_sfhs(smooth_percs, t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l], tuniv=True)
+        plot_sfhs(smooth_percs, t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l], tuniv=tun)
 
 
 '''

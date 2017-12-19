@@ -154,10 +154,15 @@ def get_gal_lists(base):
 if __name__ == "__main__":
 
     vary = True
+    short = True
     if vary:
         folders = ['pkl_evar/', 'pkl_nvar/']
         base = ['vary', 'vary']
         import eelg_varymet_params as param
+    elif short:
+        folders = ['pkl_eshort/', 'pkl_nshort/']
+        base = ['short', 'short']
+        import eelg_short_params as param
     else:
         folders = ['pkls/', 'nmpkls/']
         base = ['fixedmet', 'noelg']
@@ -240,3 +245,13 @@ if __name__ == "__main__":
     ax1.set_xlabel('Stellar ages [Gyr]', ha='center', fontsize=fs)
     ax1.set_ylabel(r'Fraction of galaxies', fontsize=fs)
     plt.show()
+
+'''
+# AGES (vary)
+(0.18668044750262114, 0.8719976513813491, 0.16742254424042702)
+(0.17024825284171152, 0.83524879157556775, 0.11934187725706735)
+
+# AGES (short)
+(0.09660974411331974, 0.44348389790922788, 0.055033720340872394)
+(0.085011178245219421, 0.4455555097442836, 0.042534426024111394)
+'''
