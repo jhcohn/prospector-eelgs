@@ -15,7 +15,7 @@ import noelg_thirty_params as nt_params
 '''
 
 
-def draw_ssfr_from_prior(obj, fld, fig=None, axes=None, ndraw=1e4, alpha_sfh=1.0, pfile=None, show=True):
+def draw_ssfr_from_prior(obj, fld, fig=None, axes=None, ndraw=1e4, alpha_sfh=1.0, pfile=None, show=True, t=None):
     # pfile=e_params or n_params
 
     # let's do it
@@ -55,8 +55,11 @@ def draw_ssfr_from_prior(obj, fld, fig=None, axes=None, ndraw=1e4, alpha_sfh=1.0
     # print(len(ssfr[0]))
     # print(mass[0, :].sum(axis=0))
     for i in range(len(mass)):  # 6
-        ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / 10**logmass)
+        if t is None:
+            ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / 10**logmass)
         # ssfr[i, :] = np.log10(np.clip(mass[i, :].sum(axis=0) / time_per_bin[i].sum() / 10**logmass, minssfr, maxssfr))
+        else:
+            ssfr[i, :] = np.log10(mass[i, :].sum(axis=0) / t / (10 ** logmass) / smass_factor)
 
     # print(ssfr)
     print('perc', np.percentile(ssfr[0], [16, 50, 84]))
@@ -173,7 +176,7 @@ def stacker(gal_draws, sigma=1):
 
 
 def plot_sfhs(percs, t, lw=1, elist=None, uvj_in=False, spec=True, sigma=1, save=False, title=None,  priors=None,
-              show=False):
+              tuniv=False, show=False):
     """
     Plots SFH stacks for two different galaxy samples side-by-side
 
@@ -189,13 +192,13 @@ def plot_sfhs(percs, t, lw=1, elist=None, uvj_in=False, spec=True, sigma=1, save
 
     if spec:
         ymin, ymax = 3e-11, 3e-8
-        label = r'Stacked sSFH [yr$^{-1}$]'
+        label = r'Stacked SFR$_{bin}$ / M$_{tot}$ [yr$^{-1}$]'  # r'Stacked sSFH [yr$^{-1}$]'
 
     fig = plt.figure()
-    ax1 = plt.subplot(1, 1, 1)
+    ax1 = plt.subplot(1, 2, 1)
 
     if uvj_in:  # also requires elist, llist to be not None; this insets uvj plots onto the top right of plot!
-        inset_axes(ax1, width=3.2, height=2.8, loc=1)  # 20%
+        inset_axes(ax1, width=8*0.32, height=8*0.28, loc=1)  # 20% width=3.2, height=2.8
         uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False)
         # create inset axis: width (%), height (inches), location
         # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
@@ -217,19 +220,22 @@ def plot_sfhs(percs, t, lw=1, elist=None, uvj_in=False, spec=True, sigma=1, save
     # ax1.text(1, 4*10**-8, 'EELGs', fontsize=30)  # use if not uvj_in
 
     if priors is not None:
-        ssfr_pri = np.zeros(shape=(len(priors), 3))
-        for i in range(len(priors)):  # 6
-            ssfr_pri[i, :] = np.percentile(priors[i, :], [16, 50, 84])
-        print(ssfr_pri)
+        if tuniv:
+            ax1.axhline(y=priors[1], color='r')  # median, +/- 1sigma for EELG prior
+        else:
+            ssfr_pri = np.zeros(shape=(len(priors), 3))
+            for i in range(len(priors)):  # 6
+                ssfr_pri[i, :] = np.percentile(priors[i, :], [16, 50, 84])
+            print(ssfr_pri)
 
-        # new_t = [3.5*10**-2, 2.5*10**-1, 7*10**-1, 1.15, 1.4, 1.8]
-        fill_t = [0, 100]
-        y1 = [10 ** ssfr_pri[0][0]] * 2
-        y2 = [10 ** ssfr_pri[0][2]] * 2
-        ax1.axhline(y=10 ** ssfr_pri[0][1], color='r')
-        ax1.axhline(y=10 ** ssfr_pri[0][0], color='r')
-        ax1.axhline(y=10 ** ssfr_pri[0][2], color='r')
-        ax1.fill_between(fill_t, y1, y2, color='r', hatch='/', facecolor='none')  # , alpha=0.3)
+            # new_t = [3.5*10**-2, 2.5*10**-1, 7*10**-1, 1.15, 1.4, 1.8]
+            fill_t = [0, 100]
+            y1 = [10 ** ssfr_pri[0][0]] * 2
+            y2 = [10 ** ssfr_pri[0][2]] * 2
+            ax1.axhline(y=10 ** ssfr_pri[0][1], color='r')
+            ax1.axhline(y=10 ** ssfr_pri[0][0], color='r')
+            ax1.axhline(y=10 ** ssfr_pri[0][2], color='r')
+            ax1.fill_between(fill_t, y1, y2, color='r', hatch='/', facecolor='none')  # , alpha=0.3)
 
     plt.tight_layout()
     plt.rc('xtick', labelsize=20)
@@ -248,8 +254,13 @@ def plot_sfhs(percs, t, lw=1, elist=None, uvj_in=False, spec=True, sigma=1, save
 
 if __name__ == "__main__":
 
+    vary = True
     others = False
-    if others:
+    if vary:
+        base = 'vary'
+        folders = 'pkl_evar/'
+        import eelg_varymet_params as e_params
+    elif others:
         base = 'thirty'
         folders = 'etpkls/'
         import eelg_thirty_params as e_params
@@ -258,8 +269,14 @@ if __name__ == "__main__":
         folders = 'pkls/'
         import eelg_fixedmet_params as e_params
 
-    pri = draw_ssfr_from_prior('1824', 'cosmos', ndraw=1e4, alpha_sfh=1.0, pfile=e_params, show=False)
-
+    # pri = draw_ssfr_from_prior('1824', 'cosmos', ndraw=1e4, alpha_sfh=1.0, pfile=e_params, show=False)
+    tun = True
+    if tun:  # flat ssfr prior = 1 / t_univ, based on perc of t_univ values for each population
+        pri = [0.41772065 * 1e-9, 0.50135904 * 1e-9, 0.55399038 * 1e-9]  # USE
+        # --> t_univ prior = [1.81*1e9, 1.99*1e9, 2.39*1e9]  # (1.99 Gyr +0.4 Gyr / -0.18 Gyr)
+    else:
+        pri = draw_ssfr_from_prior(['1824'], ['cosmos'], ndraw=1e4, alpha_sfh=1.0, pfile=e_params, show=False,
+                                   t=1.99 * 1e9)  # if short, t=1e9
     eelg_list = open('eelg_specz_ids', 'r')
     pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders
     eelgs = []
@@ -297,7 +314,7 @@ if __name__ == "__main__":
 
     print(nummy, c, 'nume')
     smooth_perc = smooth(perc1)
-    plot_sfhs(smooth_perc, t1[0], elist=eelgs, uvj_in=True, sigma=sig, priors=pri)
+    plot_sfhs(smooth_perc, t1[0], elist=eelgs, uvj_in=True, sigma=sig, priors=pri, tuniv=True)
 
 
 '''

@@ -602,11 +602,11 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
 
 if __name__ == "__main__":
 
-    boot = False
-    vary = True
-    mask = False
-    others = False
-    short = False
+    boot = 0
+    vary = 0
+    mask = 0
+    others = 0
+    short = 1
     if vary:
         base = ['vary', 'vary']
         folders = ['pkl_evar/', 'pkl_nvar/']
@@ -704,9 +704,9 @@ if __name__ == "__main__":
         print(t_perbin, t_perbin_l)
         '''
         pri = draw_ssfr_from_prior(['1824'], ['cosmos'], ndraw=1e4, alpha_sfh=1.0, pfile=e_params, show=False,
-                                   t=1.99*1e9)
+                                   t=1.99*1e9)  # if short, t=1e9
         pri_l = draw_ssfr_from_prior(['5957'], ['uds'], ndraw=1e4, alpha_sfh=1.0, pfile=n_params, show=False,
-                                     t=2.23*1e9)
+                                     t=2.23*1e9)  # if short, t =1.23*1e9
         print(pri)
         print(pri_l)
 

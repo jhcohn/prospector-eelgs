@@ -12,6 +12,7 @@ import prospect.io.read_results as bread
 import glob
 np.errstate(invalid='ignore')
 
+
 def maxprob_model(sample_results, sps):
     # grab maximum probability, plus the thetas that gave it
     maxprob = sample_results['flatprob'].max()
@@ -64,12 +65,12 @@ def sample_flatchain(chain, lnprob, parnames, ir_priors=True, include_maxlnprob=
 def set_sfh_time_vector(sample_results, ncalc):
     # if parameterized, calculate linearly in 100 steps from t=0 to t=tage
     # if nonparameterized, calculate at bin edges.
-    if 'tage' in sample_results['model'].theta_labels():
+    if 'tage' in sample_results['model'].theta_labels():  # if parametrized (i.e., if 'tage' is in your paramfile)
         nt = 100
         idx = np.array(sample_results['model'].theta_labels()) == 'tage'
         maxtime = np.max(sample_results['flatchain'][:ncalc, idx])
         t = np.linspace(0, maxtime, num=nt)
-    elif 'agebins' in sample_results['model'].params:
+    elif 'agebins' in sample_results['model'].params:  # elif unparametrized (i.e., elif 'agebins' is in your paramfile)
         in_years = 10 ** sample_results['model'].params['agebins'] / 1e9
         t = np.concatenate((np.ravel(in_years) * 0.9999, np.ravel(in_years) * 1.001))
         t.sort()  # samples on either side of the bin edges
@@ -98,24 +99,26 @@ def calc_extra_quantities(sample_results, ncalc=2000, **kwargs):  # ncalc=3000
     }
     if kwargs:
         for key in kwargs.keys():
-            opts[key] = kwargs[key]
+            opts[key] = kwargs[key]  # redefine opts dictionary if redefined at runtime
 
     parnames = np.array(sample_results['model'].theta_labels())
 
     # describe number of components in Prospector model [legacy]
     sample_results['ncomp'] = np.sum(['mass' in x for x in sample_results['model'].theta_labels()])
 
-    # array indexes over which to sample the flatchain
+    # array indexes over which to sample the flatchain (ncalc times)
     sample_idx = sample_flatchain(sample_results['flatchain'], sample_results['flatprob'], parnames,
                                   ir_priors=opts['ir_priors'], include_maxlnprob=True, nsamp=ncalc)
 
-    # initialize output arrays for SFH + emission line posterior draws
+    # initialize output arrays for SFH posterior draws
     half_time, sfr_10, sfr_100, ssfr_100, stellar_mass, ssfr_10 = [np.zeros(shape=(ncalc)) for i in range(6)]
 
     # set up time vector for full SFHs
-    t = set_sfh_time_vector(sample_results, ncalc)  # returns array of len=18
+    t = set_sfh_time_vector(sample_results, ncalc)
+
+    # initialize sfh, ssfh
     intsfr = np.zeros(shape=(t.shape[0], ncalc))
-    ssfr_full = np.zeros(shape=(t.shape[0], ncalc))  # ADDED
+    ssfr_full = np.zeros(shape=(t.shape[0], ncalc))
 
     # initialize sps, calculate maxprob
     # also confirm probability calculations are consistent with fit
@@ -137,7 +140,7 @@ def calc_extra_quantities(sample_results, ncalc=2000, **kwargs):  # ncalc=3000
     sample_results['model'].params['nebemlineinspec'] = np.array([True])
 
     loop = 0
-    # posterior sampling
+    # posterior sampling (random index, ncalc times)
     for jj, idx in enumerate(sample_idx):
 
         # model call, to set parameters
@@ -160,6 +163,7 @@ def calc_extra_quantities(sample_results, ncalc=2000, **kwargs):  # ncalc=3000
 
         # calculate mass, sSFR
         stellar_mass[jj] = sfh_params['mass']
+        print(stellar_mass[jj])
         ssfr_10[jj] = sfr_10[jj] / stellar_mass[jj]
         ssfr_100[jj] = sfr_100[jj] / stellar_mass[jj]
         ssfr_full[:, jj] = intsfr[:, jj] / stellar_mass[jj]
@@ -167,7 +171,7 @@ def calc_extra_quantities(sample_results, ncalc=2000, **kwargs):  # ncalc=3000
         loop += 1
         print('loop', loop)
 
-    # QUANTILE OUTPUTS #
+    # QUANTILE OUTPUTS
     extra_output = {}
 
     # CALCULATE Q16,Q50,Q84 FOR EXTRA PARAMETERS
@@ -190,6 +194,7 @@ def calc_extra_quantities(sample_results, ncalc=2000, **kwargs):  # ncalc=3000
             'half_time': half_time[0],
             'sfr_10': sfr_10[0],
             'sfr_100': sfr_100[0],
+            'stellar_mass': stellar_mass[0],
             'spec': spec[:, 0],
             'mags': mags[:, 0]}
     extra_output['bfit'] = bfit
@@ -215,11 +220,12 @@ def str2bool(v):
         return False
 
 
-def post_processing(out_file, param_file, full_h5file=True, **kwargs):
+def post_processing(out_file, param_file, full_h5file=True, out_incl=False, **kwargs):
     """
     Driver. Loads output, runs post-processing routine.
     """
 
+    # Dense, complex, terrible bookkeeping on my part here based on my naming system for prospector output files
     obj = ''
     field = ''
     base = ''
@@ -231,17 +237,35 @@ def post_processing(out_file, param_file, full_h5file=True, **kwargs):
         elif i == '_':
             count += 1
 
-        elif count == 0 and full_h5file:
-            if slash == 12:
+        elif out_incl:
+            if slash == 1 and count == 1:
                 obj += i
+            elif count == 2:
+                field += i
+            elif count == 3:
+                base += i
+            elif count == 4:
+                break
+
+        elif full_h5file:
+            if slash == 13 and count == 1:
+                obj += i
+            elif count == 2:
+                field += i
+            elif count == 3:
+                base += i
+            elif count == 4:
+                break
+
         elif count == 0:
             obj += i
         elif count == 1:
             field += i
         elif count == 2:
             base += i
-        elif count == 3:
+        elif count == 3 and not outy:
             break
+
     print(obj, field)
     full_base = obj + '_' + field + '_' + base
     img_base = 'img/' + full_base  # /home/jonathan/img' +
@@ -251,13 +275,18 @@ def post_processing(out_file, param_file, full_h5file=True, **kwargs):
     res, pr, mod = bread.results_from(out_file)
     print('bread')
 
-    # create flatchain, run post-processing
+    # create flatchain, run post-processing!
     res['flatchain'] = prosp_dutils.chop_chain(res['chain'], **res['run_params'])
     res['flatprob'] = prosp_dutils.chop_chain(res['lnprobability'], **res['run_params'])
     extra_output = calc_extra_quantities(res, **kwargs)
     print('extra calculated')
-    # extra = full_base + '_extra_' + pkl
-    if base == 'fixedmet':
+
+    # choose correct folder where .h5 file is stored based on param file name
+    if base == 'thirty':
+        folder = 'etpkls/'
+    elif base == 'nth':
+        folder = 'ntpkls/'
+    elif base == 'fixedmet':
         folder = 'pkls/'
     elif base == 'otherbins':
         folder = 'opkls/'
@@ -265,20 +294,25 @@ def post_processing(out_file, param_file, full_h5file=True, **kwargs):
         folder = 'nmpkls/'
     elif base == 'nother':
         folder = 'nopkls/'
+    elif base == 'vary':
+        folder = 'evar_pkl/'
 
-    extra = folder + full_base + '_extra_' + pkl
+    # pkl extra output!
+    extra = folder + full_base + '_extra_' + pkl  # full_base + '_extra_' + pkl
     print(extra)
     with open(extra, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(extra_output, newfile, pickle.HIGHEST_PROTOCOL)
     print('extra pickled')
     
-    # PRINT TRACE SHOWING HOW ITERATIONS CONVERGE FOR EACH PARAMETER
-    tracefig, prob = bread.param_evol(res)  # print tracefig, store probability
+    # PRINT TRACE SHOWING HOW ITERATIONS PROGRESS FOR EACH PARAMETER
+    # I edited param_evol to also store lnprob, but this is a silly and long-obsolete way of doing this
+    tracefig, prob = bread.param_evol(res)  # prints tracefig, store probability
     plt.title(full_base)  # BUCKET just added
-    plt.savefig(img_base + '_tracefig.png', bbox_inches='tight')
+    # plt.savefig(img_base + '_tracefig.png', bbox_inches='tight')
     # plt.show()
 
     # FIND WALKER, ITERATION THAT GIVE MAX PROBABILITY
+    # a result of the silly, long-obsolete way I'm grabbing lnprob above
     print('max', prob.max())
     row = prob.argmax() / len(prob[0])
     col = prob.argmax() - row * len(prob[0])
@@ -288,7 +322,7 @@ def post_processing(out_file, param_file, full_h5file=True, **kwargs):
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
     bread.subtriangle(res, start=0, thin=5, show_titles=True)
     plt.title(full_base)  # BUCKET just added
-    plt.savefig(img_base + '_cornerfig.png', bbox_inches='tight')
+    # plt.savefig(img_base + '_cornerfig.png', bbox_inches='tight')
     # plt.show()
     # For FAST: truths=[mass, age, tau, dust2] (for 1824: [9.78, 0.25, -1., 0.00])
 
@@ -310,6 +344,7 @@ def post_processing(out_file, param_file, full_h5file=True, **kwargs):
     wave = np.asarray(wave)
 
     # CHANGING OBSERVED TO REST FRAME WAVELENGTH
+    # grabbing data from catalogs
     if field == 'cdfs':
         datname = '/home/jonathan/cdfs/cdfs.v1.6.11.cat'
         zname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout'
@@ -320,31 +355,36 @@ def post_processing(out_file, param_file, full_h5file=True, **kwargs):
         datname = '/home/jonathan/uds/uds.v1.5.10.cat'
         zname = '/home/jonathan/uds/uds.v1.5.8.awk.zout'
 
+    # photometry catalog
     with open(datname, 'r') as f:
         hdr = f.readline().split()
     dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
     dat = np.loadtxt(datname, comments='#', delimiter=' ', dtype=dtype)
 
+    # redshift catalog
     with open(zname, 'r') as fz:
         hdr_z = fz.readline().split()
     dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
     zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
 
-    idx = dat['id'] == obj  # array filled: False when dat['id'] != obj, True when dat['id'] == obj
-    zred = zout['z_spec'][idx][0]  # z = z_spec
+    # if z_spec exists, use it; else use best-fit z_phot
+    idx = dat['id'] == obj  # array filled with: False for all dat['id'] != obj, True for dat['id'] == obj
+    zred = zout['z_spec'][idx][0]
     if zred == -99:
-        zred = zout['z_peak'][idx][0]  # if z_spec does not exist, z = z_phot
+        zred = zout['z_peak'][idx][0]
     print('redshift', zred)
 
-    wave_rest = []  # REST FRAME WAVELENGTH
+    # convert stored wavelengths to rest frame wavelengths
+    wave_rest = []
     for j in range(len(wave)):
         wave_rest.append(wave[j]/(1 + zred))  # 1 + z = l_obs / l_emit --> l_emit = l_obs / (1 + z)
     wave_rest = np.asarray(wave_rest)
 
-    # OUTPUT SED results to files
+    # OUTPUT SED results to pkls
+    full_base = folder + full_base
     write_res = full_base + '_res_' + pkl  # results
     with open(write_res, 'wb') as newfile:  # 'wb' because binary format
-        pickle.dump(res, newfile, pickle.HIGHEST_PROTOCOL)  # res includes res['obs']['maggies'] and ...['maggies_unc']
+        pickle.dump(res, newfile, pickle.HIGHEST_PROTOCOL)  # res includes res['obs']['maggies'], ['maggies_unc'], etc.
     write_sed = full_base + '_sed_' + pkl  # model sed
     with open(write_sed, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(phot, newfile, pickle.HIGHEST_PROTOCOL)
@@ -358,7 +398,7 @@ def post_processing(out_file, param_file, full_h5file=True, **kwargs):
     with open(write_sps, 'wb') as newfile:  # 'wb' because binary format
         pickle.dump(sps.wavelengths, newfile, pickle.HIGHEST_PROTOCOL)
 
-    # OUTPUT CHI_SQ results to files
+    # OUTPUT chi_sq results to pkls
     chi_sq = ((res['obs']['maggies'] - phot) / res['obs']['maggies_unc']) ** 2
     write_chisq = full_base + '_chisq_' + pkl
     with open(write_chisq, 'wb') as newfile:  # 'wb' because binary format
@@ -367,21 +407,22 @@ def post_processing(out_file, param_file, full_h5file=True, **kwargs):
     with open(write_justchi, 'wb') as newfile:
         pickle.dump((res['obs']['maggies'] - phot) / res['obs']['maggies_unc'], newfile, pickle.HIGHEST_PROTOCOL)
 
-    # PLOT CHISQ
+    # PLOT chi_sq
     plt.plot(wave_rest, chi_sq, 'o', color='b')
     plt.title(str(obj) + r' $\chi^2$')
     plt.xlabel('Rest frame wavelength [angstroms]')
     plt.ylabel(r'$\chi^2$')
-    plt.savefig(img_base + '_chisq.png', bbox_inches='tight')
+    # plt.savefig(img_base + '_chisq.png', bbox_inches='tight')
     # plt.show()
 
-    # HOW CONVERGED IS THE CODE?? LET'S FIND OUT!
+    # HOW CONVERGED IS THE CODE?? LET'S FIND OUT! --> kl test
     parnames = np.array(res['model'].theta_labels())
     fig, kl_ax = plt.subplots(1, 1, figsize=(7, 7))
     for l in xrange(parnames.shape[0]):
         kl_ax.plot(res['kl_iteration'], np.log10(res['kl_divergence'][:, l]), 'o', label=parnames[l], lw=1.5,
                    linestyle='-', alpha=0.6)
 
+    # OUTPUT kl test to pkls
     write_klit = full_base + '_klit_' + pkl
     with open(write_klit, 'wb') as newfile:
         pickle.dump(res['kl_iteration'], newfile, pickle.HIGHEST_PROTOCOL)
@@ -396,13 +437,12 @@ def post_processing(out_file, param_file, full_h5file=True, **kwargs):
     kl_ax.axhline(np.log10(kl_div_lim), linestyle='--', color='red', lw=2, zorder=1)
     kl_ax.legend(prop={'size': 5}, ncol=2, numpoints=1, markerscale=0.7)
     plt.title(str(obj) + ' kl')
-    plt.savefig(img_base + '_kl.png', bbox_inches='tight')
+    # plt.savefig(img_base + '_kl.png', bbox_inches='tight')
     # plt.show()
 
 
 if __name__ == "__main__":
     # don't create keyword if not passed in!
-    # '''
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('--parfile')
     parser.add_argument('--outname')
@@ -416,22 +456,19 @@ if __name__ == "__main__":
     param_file = kwargs['parfile']
     print(out_file, param_file)
 
+    # bookkeeping purposes for being lazy about how I enter the outname
+    outy = False
     full = False
-    if out_file[-1] == '5':
+    if out_file[-1] == '5' and out_file[0] == '/':
         full = True
+    elif out_file[0] == 'o' and not full:
+        outy = True
+    print(outy, full)
 
-    '''
-    folder = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out'
-    count = 0
-    for infile in glob.glob(os.path.join(folder, '*.h5')):
-        count += 1
-        print("current file is: " + infile)
-    print(count)
-    '''
-    post_processing(out_file=out_file, param_file=param_file, full_h5file=full, **kwargs)
+    post_processing(out_file=out_file, param_file=param_file, full_h5file=full, out_incl=outy, **kwargs)
 
 '''
-RUNNING WITH:
+e.g. from command line:
 python output.py --outname=12105_cosmos_fixedmet_1501774978_mcmc.h5 --parfile=eelg_fixedmet_params.py
 # Takes ~8 mins to run
 '''
