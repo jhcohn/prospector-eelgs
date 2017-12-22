@@ -87,8 +87,12 @@ sfh_output.py: modified from Joel's extra_output.py for creating and pickling SF
 
 sfh_plot.py: copied from Joel's extra_output.py, for outputting the SFH, with minimal changes to Joel's code; defunct
 
+sizes.py: currently using to calculate half-light radii of galaxies; from files extracted/written by Megan
+
 smart_stack.py: used to plot side-by-side stacked sSFHs for EELGs vs LBGs
 -Running with: python smart_stack.py
+
+ssfr_now.py: inaptly named, currently using to get SFHs and other parameters for different galaxies based on composite SED of origin, rather than just EELG vs LBG
 
 stack_sfh.py: use to plot stacked SFHs for lists of galaxies; defunct
 
