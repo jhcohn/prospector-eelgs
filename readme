@@ -92,7 +92,9 @@ sizes.py: currently using to calculate half-light radii of galaxies; from files 
 smart_stack.py: used to plot side-by-side stacked sSFHs for EELGs vs LBGs
 -Running with: python smart_stack.py
 
-ssfr_now.py: inaptly named, currently using to get SFHs and other parameters for different galaxies based on composite SED of origin, rather than just EELG vs LBG
+ssfr_hists.py: now using to make new fig 3 (side-by-side histograms of SSFR values in the most recent time bin for EELG COMP_10 and our Ss)
+
+ssfr_now.py: inaptly named, currently using to get SFHs and other parameters for the galaxies from each individual composite SED at a time, rather than just EELG vs LBG
 
 stack_sfh.py: use to plot stacked SFHs for lists of galaxies; defunct
 
@@ -116,3 +118,4 @@ Note: Currently using...
 *prospector.py			to run prospector
 *output.py			to generate tracefigs, cornerfigs and kl convergence plots, and to pickle SED info, spectra, wavelengths, chi, chi^2, SFR, and sSFR (called and used in make_all_plots.py)
 *smart_stack.py			to generate stacked plot of sSFHs
+*ssfr_hists.py			now using in place of smart_stack.py or one_stack.py
