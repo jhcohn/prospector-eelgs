@@ -8,6 +8,7 @@ from mpl_toolkits.axes_grid.inset_locator import inset_axes
 import uvj
 from astropy.cosmology import WMAP9
 import scipy
+from matplotlib.ticker import MultipleLocator
 
 
 def draw_sfrs(objs, flds, new_logmass=None, ndraw=1e4, alpha_sfh=1.0, pfile=None, show=True):
@@ -446,35 +447,47 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     :param sigma: how many sigma of error we want to show in the plot
     :return: plot
     """
-    label = r'Fraction'  # r'Stacked SFR$_{bin}$ / M$_{tot}$ [yr$^{-1}$]'
-    x = [10**-8, 5*10**-8, 10**-7]  # used if log=0
-    log = 1
+    log = 0
+    x = [0.5e-8, 1e-8, 1.5e-8, 2e-8]  # used if log=0
+    # y = [0.0, 0.05, 0.10, 0.15]  # used regardless of log
+    # y = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70]  # used regardless of log
+    y = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25]  # , 0.30, 0.35]  # used regardless of log; max 0.35 for 1e-9 bin spacing
 
     fig = plt.figure()
     ax1 = plt.subplot(1, 2, 1)
     ax2 = plt.subplot(1, 2, 2, sharey=ax1, sharex=ax1)
-    if log:
-        ax1.set_xscale("log")
-        x = [10**-11, 10**-10, 10**-9, 10**-8, 10**-7]
-    ax1.set_xlim(xmin=3*10**-12, xmax=10**-7)
-    ax1.set_ylim(ymin=0., ymax=0.40)
+    ax1.set_xlim(xmin=3*10**-14, xmax=2.25e-8)  # 3*10**-12, 7e-8
     ax1.xaxis.set_ticks(x)
-    ax1.set_ylabel(label)
+    ax1.set_ylim(ymin=0., ymax=0.28)  # 0.39)  # for 1e-9 bin spacing, use 0.39; for 0.67e-9 bin spacing, use
+    ax1.yaxis.set_ticks(y)
+    if not log:
+        uvj_loc = 1  # 'upper right'
+        labels = [5, 10, 15, 20]
+        ax1.set_xticklabels(labels)
+    elif log:
+        uvj_loc = 'upper center'
+        ax1.set_xlim(xmin=3 * 10 ** -12, xmax=10 ** -7)  # 3*10**-12
+        ax1.set_xscale("log")
+        x = [1e-14, 1e-13, 1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7]
+        ax1.set_xlim(xmin=3*10**-15, xmax=1e-7)  # 3*10**-12
+        ax1.xaxis.set_ticks(x)
+    ax1.set_ylabel(r'Fraction', fontsize=30)
     fig.subplots_adjust(wspace=0)
-    # ax2.set_xscale("log")
-    # ax2.set_xlim(xmin=10**-12, xmax=10**-7)
-    # ax2.set_ylim(ymin=0., ymax=1.)
 
     if uvj_in:  # also requires elist, llist to be not None; this insets uvj plots onto the top right of plot!
-        inset_axes(ax1, width=8*0.32, height=8*0.28, loc=1)  # 20%
+        inset_axes(ax1, width=8*0.32, height=8*0.28, loc=uvj_loc)  # 20%
         uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False)
         # create inset axis: width (%), height (inches), location
         # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
         # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
-        inset_axes(ax2, width=8*0.32, height=8*0.28, loc=1)  # 20%
+        inset_axes(ax2, width=8*0.32, height=8*0.28, loc=uvj_loc)  # 20%
         uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False)
 
-    # DO THE PLOTTING!
+    if priors is not None:
+        ax1.axvline(x=priors[0][1], color='k', ls='--', label='Prior')  # median, +/- 1sigma for EELG prior
+        ax2.axvline(x=priors[1][1], color='k', ls='--', label='Prior')  # median, +/- 1sigma for SFG prior
+
+    # DO THE PLOTTING! AND KS TEST!
     print('hi')
     logged1 = []
     logged2 = []
@@ -486,50 +499,45 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     perc2 = np.percentile(draws[1], [25, 50, 75])
     print(perc1, perc2)
 
-    hi = np.histogram(draws[0], bins=39, range=(10**-12, 10**-7))  # get p <0.05 at ~35 bins
-    hey = np.histogram(draws[1], bins=39, range=(10**-12, 10**-7))
+    # KS test bins: 100 bins corresponds to bin width 1e-9 (1 Gyr^-1)
+    num_bins = 100
+    hi = np.histogram(draws[0], bins=num_bins, range=(10**-12, 10**-7))
+    hey = np.histogram(draws[1], bins=num_bins, range=(10**-12, 10**-7))
+    # print(scipy.stats.ks_2samp(hi[0], hey[0]))  # (100: 0.19); (200: 0.03); (500: 1e-4); (1000: 1e-7)
+    print(scipy.stats.anderson_ksamp((hi[0], hey[0])))  # (15: 0.4); (50: 0.1); (75: 0.03); (100: 0.007); (200: 1e-4)
+    # NOTE: the above numbers changed WRONG: NOW CORRECT, for anderson-darling: (100: 0.043)
+    print(min(draws[1]), max(draws[1]))  # ~4.7e-14, 21*1e-9
+    print(np.percentile(draws[1], [16, 50, 84]))  # 4.08e-10, 1.38e-9, 28.9e-9
+    print(min(draws[0]), max(draws[0]))  # 2.5e-10, 12e-9
+    print(np.percentile(draws[0], [16, 50, 84]))  # 1.25e-9, 3.05e-9, 4.59e-9
 
-    print(scipy.stats.ks_2samp(hi[0], hey[0]))
-    ax1.hist(draws[0], histtype='bar', bins=10, weights=[3./(18*3*10**3)]*len(draws[0]), color='b', alpha=0.5, lw=2,
-             label='EELGs')
-    ax2.hist(draws[1], histtype='bar', bins=10, weights=[1./(87*3*10**3)]*len(draws[1]), color='r', alpha=0.5, lw=2,
-             label='SFGs')
-
-    # ax1.set_yscale("log")
-    '''
-    ax1.set_ylim(ymin, 10**-7)  # , ymax
-    ax1.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
-    ax1.set_ylabel(label, fontsize=30)  # 30
-    ax1.text(2*10**-2, 4*10**-8, 'EELGs', fontsize=30)  # use if uvj_in
-    # ax1.text(0.5, 5*10**-8, 'EELGs', fontsize=30)  # use if uvj_in
-    '''
-    # ax2.set_yscale("log")
-    '''
-    ax2.set_ylim(ymin, 10**-7)  # , ymax
-    ax2.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
-    ax2.text(2*10**-2, 4*10**-8, 'LBGs', fontsize=30)  # use if uvj_in
-    # ax2.text(0.5, 5*10**-8, 'LBGs', fontsize=30)  # use if uvj_in
-    '''
-    if priors is not None:
-        ax1.axvline(x=priors[0][1], color='k', label='Prior')  # median, +/- 1sigma for EELG prior
-        ax2.axvline(x=priors[1][1], color='k', label='Prior')  # median, +/- 1sigma for LBG prior
-
+    display_num = np.arange(1e-14, 1e-7 + 1e-9, 0.67e-9)  # display_num = np.arange(1e-11, 1e-7 + 1e-9, 1e-9)
+    # use 1e-9 OR 0.67e-9 for bin width in np.arange^
+    # display_num = np.linspace(1e-12, 1e-7, num=30)
     fs = 20
-    ax1.legend(numpoints=1, loc='upper left', prop={'size': fs})
-    ax2.legend(numpoints=1, loc='upper left', prop={'size': fs})
+    if not log:
+        ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[1./(18*3*10**3)]*len(draws[0]), color='b',
+                 alpha=0.5, lw=2, label='EELGs')
+        ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(87*3*10**3)]*len(draws[1]), color='r',
+                 alpha=0.5, lw=2, label='SFGs')
+        fig.text(0.5, 0.04, r'SSFR (most recent bin; Gyr$^{-1}$)', ha='center', fontsize=30)  # 30
+        ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.3, 0.88), prop={'size': fs})
+        ax2.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.3, 0.88), prop={'size': fs})
+    else:
+        ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[3./(18*3*10**3)]*len(draws[0]), color='b',
+                 alpha=0.5, lw=2, label='EELGs')
+        ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(87*3*10**3)]*len(draws[1]), color='r',
+                 alpha=0.5, lw=2, label='SFGs')
+        fig.text(0.5, 0.04, 'SSFR (most recent bin; yr$^{-1}$)', ha='center', fontsize=30)  # 30
+        ax1.legend(numpoints=1, loc='upper right', prop={'size': fs})
+        ax2.legend(numpoints=1, loc='upper right', prop={'size': fs})
+
     plt.setp(ax2.get_yticklabels(), visible=False)  # hide y-axis labels on right-hand subplot to prevent overlap
-    # plt.subplots_adjust(wspace=0.05)  # vertical whitespace (i.e. the width) between the two subplots
     plt.rc('xtick', labelsize=20)
     plt.rc('ytick', labelsize=20)
     plt.rcParams.update({'font.size': 22})
-    # plt.xlabel('SSFR (most recent bin)', fontsize=30)
-    fig.text(0.5, 0.04, 'SSFR (most recent bin)', ha='center', fontsize=30)  # 30
-    # plt.tight_layout()
 
-    if save:
-        plt.savefig(title + '.png', bbox_inches='tight')
-    else:
-        plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -543,7 +551,7 @@ if __name__ == "__main__":
     if vary:
         base = ['vary', 'vary']
         folders = ['pkl_evar/', 'pkl_nvar/']
-        mass = [10.15, 10.51]
+        mass = [9.94, 10.51]
         import eelg_varymet_params as e_params
         import eelg_varymet_params as n_params
     elif mask:
@@ -589,18 +597,54 @@ if __name__ == "__main__":
     else:
         eelg_list = open('Comp_10.dat', 'r')
         eelgs = []
+        e_objs = []
+        e_fields = []
         for line in eelg_list:
             if line[0] == '#':
                 pass
             else:
                 cols = line.split()
                 if int(cols[0]) - 200000 > 0:
+                    e_objs.append(str(int(cols[0]) - 200000))
+                    e_fields.append('uds')
                     eelgs.append(str(int(cols[0]) - 200000) + '_uds_' + base[0])  # base[1] = noelg (or nother)
                 elif int(cols[0]) - 100000 > 0:
+                    e_objs.append(str(int(cols[0]) - 100000))
+                    e_fields.append('cosmos')
                     eelgs.append(str(int(cols[0]) - 100000) + '_cosmos_' + base[0])  # base[1] = noelg (or nother)
                 else:
+                    e_objs.append(str(int(cols[0])))
+                    e_fields.append('cdfs')
                     eelgs.append(str(int(cols[0])) + '_cdfs_' + base[0])  # base[1] = noelg (or nother)
         eelg_list.close()
+        '''
+        # CALCULATE redshifts of all galaxies in C_10
+        zs = []
+        ts = []
+        from astropy.cosmology import WMAP9
+        for i in range(len(eelgs)):
+            print(e_fields[i])
+            if e_fields[i] == 'cosmos':
+                zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'
+            elif e_fields[i] == 'cdfs':
+                zname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout'
+            elif e_fields[i] == 'uds':
+                zname = '/home/jonathan/uds/uds.v1.5.8.awk.zout'
+            with open(zname, 'r') as fz:
+                hdr_z = fz.readline().split()
+            dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
+            zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
+
+            idx = zout['id'] == e_objs[i]  # creates array of True/False: True when dat[id] = objname
+            zred = zout['z_spec'][idx][0]  # use z_spec
+            if zred == -99:  # if z_spec doesn't exist
+                zred = zout['z_peak'][idx][0]  # use z_phot
+            tuniv = WMAP9.age(zred).value
+            ts.append(tuniv)
+            zs.append(zred)
+        print('ts', ts)
+        print(np.median(ts))  # 1.88930392535 Gyr
+        '''
 
     lbg_list = open('lbg_ids', 'r')
     flist = {}
@@ -628,9 +672,11 @@ if __name__ == "__main__":
 
     tun = True
     if tun:  # flat ssfr prior = 1 / t_univ, based on perc of t_univ values for each population
-        pri = [0.41772065 * 1e-9, 0.50135904 * 1e-9, 0.55399038 * 1e-9]  # USE
+        # pri = [0.41772065 * 1e-9, 0.50135904 * 1e-9, 0.55399038 * 1e-9]  # USE
+        pri = [0.41772065 * 1e-9, 0.529380625 * 1e-9, 0.55399038 * 1e-9]  #  for C_10 (median)
         pri_l = [0.40128419 * 1e-9, 0.44860297 * 1e-9, 0.56183993 * 1e-9]  # from ^ commented out thing  # USE
         # --> t_univ prior_l = [1.78*1e9, 2.23*1e9, 2.49*1e9]  # (2.23 Gyr +0.25 Gyr / -0.45 Gyr)
+        # t_univ prior C_10: 1.889 Gyr --> 0.529 * 1e-9
     else:
         pri = draw_ssfr_from_prior(['1824'], ['cosmos'], ndraw=1e4, alpha_sfh=1.0, pfile=e_params, show=False,
                                    t=1.99*1e9)  # if short, t=1e9
@@ -685,13 +731,19 @@ if __name__ == "__main__":
 
     all2 = stacker(draws2, sigma=sig)
 
-    newall1 = all1[0] + all1[1] + all1[2]
-    newall2 = all2[0] + all2[1] + all2[2]
-    print(len(all1[0]), len(all2[0]), len(all1[1]))
+    new1 = []
+    for i in range(len(all1[0])):
+        for j in (0, 1, 2):
+            new1.append(all1[j][i])
+    new2 = []
+    for i in range(len(all2[0])):
+        for j in (0, 1, 2):
+            new2.append(all2[j][i])
+    print(len(all1[0]), len(all2[0]), len(new1), len(new2))
 
     # smooth_percs = perc1, perc2
     print(nummy, c, 'nume')
     print(numl, cl, 'numl')
     # smooth_percs = [smooth(perc1), smooth(perc2)]
 
-    plot_sfhs([newall1, newall2], t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l], tuniv=tun)
+    plot_sfhs([new1, new2], t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l], tuniv=tun)
