@@ -475,12 +475,14 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     fig.subplots_adjust(wspace=0)
 
     if uvj_in:  # also requires elist, llist to be not None; this insets uvj plots onto the top right of plot!
-        inset_axes(ax1, width=8*0.32, height=8*0.28, loc=uvj_loc)  # 20%
+        ht = 10*0.28  # 8*0.28
+        wd = 10*0.32  # 8*0.32
+        inset_axes(ax1, width=wd, height=ht, loc=uvj_loc)  # 20%
         uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False)
         # create inset axis: width (%), height (inches), location
         # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
         # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
-        inset_axes(ax2, width=8*0.32, height=8*0.28, loc=uvj_loc)  # 20%
+        inset_axes(ax2, width=wd, height=ht, loc=uvj_loc)  # 20%
         uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False)
 
     if priors is not None:
@@ -507,7 +509,7 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     print(scipy.stats.anderson_ksamp((hi[0], hey[0])))  # (15: 0.4); (50: 0.1); (75: 0.03); (100: 0.007); (200: 1e-4)
     # NOTE: the above numbers changed WRONG: NOW CORRECT, for anderson-darling: (100: 0.043)
     print(min(draws[1]), max(draws[1]))  # ~4.7e-14, 21*1e-9
-    print(np.percentile(draws[1], [16, 50, 84]))  # 4.08e-10, 1.38e-9, 28.9e-9
+    print(np.percentile(draws[1], [16, 50, 84]))  # 4.08e-10, 1.38e-9, 2.89e-9
     print(min(draws[0]), max(draws[0]))  # 2.5e-10, 12e-9
     print(np.percentile(draws[0], [16, 50, 84]))  # 1.25e-9, 3.05e-9, 4.59e-9
 
@@ -521,8 +523,10 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
         ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(87*3*10**3)]*len(draws[1]), color='r',
                  alpha=0.5, lw=2, label='SFGs')
         fig.text(0.5, 0.04, r'SSFR (most recent bin; Gyr$^{-1}$)', ha='center', fontsize=30)  # 30
-        ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.3, 0.88), prop={'size': fs})
-        ax2.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.3, 0.88), prop={'size': fs})
+        ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.88), prop={'size': fs})
+        ax2.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.88), prop={'size': fs})
+        # ax1.legend(numpoints=1, loc='upper left', prop={'size': fs})
+        # ax2.legend(numpoints=1, loc='upper left', prop={'size': fs})
     else:
         ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[3./(18*3*10**3)]*len(draws[0]), color='b',
                  alpha=0.5, lw=2, label='EELGs')
