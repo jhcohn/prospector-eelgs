@@ -17,10 +17,12 @@ def all_plots(fileset, objname, znames, field):
     # FILTERS SCALE FACTOR
     filt_factor = 10 ** 10  # 10 ** 6
 
-    # LEGEND, TEXT LOCATION
+    # LEGEND, TEXT LOCATION, FONT SIZE
     loc = 2  # loc=1 (up R), loc=2 (up L), loc=3 (low L), loc=4 (low R); loc=7 (center R)
     textx = 10**4  # 700
     texty = 5*10**2  # 50
+    fs = 20
+    fs_text = 30
 
     # AXIS LIMS
     ymin = 2*10**-3  # 10**-7
@@ -34,24 +36,24 @@ def all_plots(fileset, objname, znames, field):
     ax1.set_xlim(xmin, xmax)
     ax1.set_ylim(ymin, ymax)
     # 'axis_name' ('both' is an option), which='both' --> major & minor ticks!
-    ax1.tick_params('x', length=3, width=1, which='both', labelsize=20)
-    ax1.tick_params('y', length=3, width=0.5, which='both', labelsize=20)
+    ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)
+    ax1.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
 
     ax2 = plt.subplot(3, 1, 2, sharex=ax1)
     ax2.set_yscale("log")
     ax2.set_xscale("log")
     ax2.set_xlim(xmin, xmax)
     ax2.set_ylim(ymin, ymax)
-    ax2.tick_params('x', length=3, width=1, which='both', labelsize=20)
-    ax2.tick_params('y', length=3, width=0.5, which='both', labelsize=20)
+    ax2.tick_params('x', length=3, width=1, which='both', labelsize=fs)
+    ax2.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
 
     ax3 = plt.subplot(3, 1, 3, sharex=ax1)
     ax3.set_yscale("log")
     ax3.set_xscale("log")
     ax3.set_xlim(xmin, xmax)
     ax3.set_ylim(ymin, ymax)
-    ax3.tick_params('x', length=3, width=1, which='both', labelsize=20)
-    ax3.tick_params('y', length=3, width=0.5, which='both', labelsize=20)
+    ax3.tick_params('x', length=3, width=1, which='both', labelsize=fs)
+    ax3.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
 
     for j in range(len(fileset)):
         print(j)
@@ -125,7 +127,7 @@ def all_plots(fileset, objname, znames, field):
             ax1.axvspan(4800, 5050, color='k', alpha=0.3)
             # ax1.text(700, 3, 'z ~ ' + str(zred) + ', EELG', fontsize=20)
             ax1.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', EELG',
-                     fontsize=20)
+                     fontsize=fs)
             plt.subplots_adjust(hspace=.0)
 
             # Redshift for each obj) (note: len(main[0] = 156; elements 153:155 = use, snr, use_nosnr, z_spec)
@@ -136,12 +138,12 @@ def all_plots(fileset, objname, znames, field):
             ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', markerfacecolor='None', linestyle='', color='r',
                          label=r'Observations', markeredgecolor='r', markeredgewidth=0.75)  # plot observations
             ax2.plot(sps_wave, spec_jan, color='b', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
-            ax2.set_ylabel(r'Flux [$\mu$Jy]', fontsize=20)  # 30
+            ax2.set_ylabel(r'Flux [$\mu$Jy]', fontsize=fs_text)  # 30
             ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax2.axvspan(4800, 5050, color='k', alpha=0.3)
             # ax2.text(700, 3, 'z ~ ' + str(zred) + ', LBG', fontsize=20)
-            ax2.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', LBG',
-                     fontsize=20)
+            ax2.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', SFG',
+                     fontsize=fs)
             plt.subplots_adjust(hspace=.0)
 
             widths.fig2(ax2, field[j], zred, scale=(phot.max() * filt_factor), rest=True)  # WIDTHS
@@ -154,14 +156,14 @@ def all_plots(fileset, objname, znames, field):
             # ax3.set_ylabel(r'Flux [$\mu$Jy]')
             # ax3.text(700, 1, 'z ~ ' + str(zred) + ', Qui', fontsize=20)
             ax3.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', Qui',
-                     fontsize=20)
+                     fontsize=fs)
             ax3.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax3.axvspan(4800, 5050, color='k', alpha=0.3)
             plt.subplots_adjust(hspace=.0)
 
             widths.fig2(ax3, field[j], zred, scale=(phot.max() * filt_factor), rest=True)  # WIDTHS
     print('show')
-    plt.xlabel(r'Rest frame wavelength [$\AA$]', fontsize=20)  # 30
+    plt.xlabel(r'Rest frame wavelength [$\AA$]', fontsize=fs_text)  # 20
     plt.show()
 
 if __name__ == "__main__":
@@ -187,6 +189,8 @@ if __name__ == "__main__":
     field3 = 'uds'
 
     pre1 = 'nmpkls/' + obj1 + '_' + field1 + '_' + kwargs['base1']
+    # pre2 = 'pkl_emask/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    # pre3 = 'pkl_nmask/' + obj3 + '_' + field3 + '_' + kwargs['base3']
     pre2 = 'pkl_evar/' + obj2 + '_' + field2 + '_' + kwargs['base2']
     pre3 = 'pkl_nvar/' + obj3 + '_' + field3 + '_' + kwargs['base3']
     # pre2 = 'pkls/' + obj2 + '_' + field2 + '_' + kwargs['base2']
@@ -234,7 +238,9 @@ if __name__ == "__main__":
 
 '''
 Currently running with:
+python make_fig2.py --obj1=20752 --obj2=12105 --obj3=5957 --base1=noelg --base2=vary --base3=vary
 python make_fig2.py --obj1=20752 --obj2=1824 --obj3=5957 --base1=noelg --base2=fixedmet --base3=noelg
 python make_fig2.py --obj1=20752 --obj2=1824 --obj3=5957 --base1=noelg --base2=vary --base3=vary
+python make_fig2.py --obj1=20752 --obj2=1824 --obj3=5957 --base1=noelg --base2=newmask --base3=newmask
 # try uds 5957 for second obj, since 5206 is an EELG
 '''

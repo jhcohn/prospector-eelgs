@@ -22,6 +22,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
     ax1.set_yscale("log")
     ax1.set_xscale("log")
     fs = 20  # 30
+    fs_text = 30
     textx = 1100
     texty = 300  # 500
 
@@ -79,10 +80,11 @@ def all_plots(fileset, objname, field, loc='upper left'):
                          label=r'Observed Photometry')  # plot observations
             ax1.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
             ax1.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
-            ax1.set_ylabel(r'$\mu$Jy', fontsize=fs)  # 30
+            ax1.set_ylabel(r'$\mu$Jy', fontsize=fs_text)  # 30
 
             # ax1.text(1000, 50, 'EELG', fontsize=20)
-            ax1.text(textx, texty, 'COSMOS-1824 (EELG)', fontsize=20)  # 700, 600
+            # ax1.text(textx, texty, 'COSMOS-1824 (EELG)', fontsize=20)  # 700, 600
+            ax1.text(textx, texty, 'UDS-15462 (EELG)', fontsize=20)  # 700, 600
             # ax1.set_xlabel(r'Rest frame wavelength')
             ax3 = plt.subplot(gs[2], sharex=ax1)  # ax2 = smaller lower axis
             ax3.plot(wave_rest, chi, 'o', color='k')  # plot chi
@@ -90,7 +92,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             plt.setp(ax1.get_xticklabels(), visible=False)  # hide xtick labels on upper axis
             yticks = ax3.yaxis.get_major_ticks()  # show ytick labels on lower axis
             yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
-            ax3.set_ylabel(r'$\chi$', fontsize=fs)
+            ax3.set_ylabel(r'$\chi$', fontsize=fs_text)
             # ax3.set_xlabel(r'Rest frame wavelength', fontsize=fs)  # 30
             ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             # plt.subplots_adjust(hspace=.0)
@@ -106,8 +108,8 @@ def all_plots(fileset, objname, field, loc='upper left'):
             # add uvj plot to inset axis
         elif j == 1:
             print(j)
-            ax2 = plt.subplot(gs[1], sharey=ax1)  # ax2 = bigger upper axis (right)
             # plt.axvline(x=5270, color='k')  # proving no offset in two axes
+            ax2 = plt.subplot(gs[1], sharey=ax1)  # ax2 = bigger upper axis (right)
             ax2.set_yscale("log")
             ax2.set_xscale("log")
             # ax2.set_ylim(ymin, ymax)
@@ -119,7 +121,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             # ax2.set_ylabel(r'$\mu$Jy')
 
             # ax2.text(1000, 50, 'LBG', fontsize=20)
-            ax2.text(textx, texty, 'COSMOS-4708 (LBG)', fontsize=20)  # 1025, 600
+            ax2.text(textx, texty, 'COSMOS-4708 (SFG)', fontsize=20)  # 1025, 600
             # ax2.set_xlabel(r'Rest frame wavelength')
             ax4 = plt.subplot(gs[3], sharex=ax2, sharey=ax3)
             ax4.plot(wave_rest, chi, 'o', color='k')  # plot chi
@@ -127,7 +129,8 @@ def all_plots(fileset, objname, field, loc='upper left'):
             plt.setp(ax2.get_xticklabels(), visible=False)  # hide xtick labels on upper axis
             plt.setp(ax2.get_yticklabels(), visible=False)  # hide ytick labels on upper axis
             plt.setp(ax4.get_yticklabels(), visible=False)  # hide ytick labels on lower axis
-            plt.setp(ax4, yticks=[-2, 0, 2, 4, 6], yticklabels=['-2', '0', '2', '4', '6'])
+            # plt.setp(ax4, yticks=[-2, -1, 0, 1, 2], yticklabels=['-2', '-1', '0', '1', '2'])  # NOTE: USE FOR NEWMASK
+            plt.setp(ax4, yticks=[-2, 0, 2, 4, 6], yticklabels=['-2', '0', '2', '4', '6'])  # NOTE: USE FOR VARY
             # plt.setp(ax4, yticks=[-8, -4, 0, 4, 8], yticklabels=['-8', '-4', '0', '4', '8'])
             # ax4.yaxis.get_major_ticks(numticks=5)  # show ytick labels on lower axis
             # yticks[-1].label1.set_visible(False)  # hide uppermost ytick label on lower axis to prevent overlap
@@ -153,9 +156,11 @@ def all_plots(fileset, objname, field, loc='upper left'):
     ax1.set_xlim(xmin, xmax)  # 700, xmax
     ax1.set_ylim(ymin, ymax)
     ax2.set_xlim(xmin, xmax)  # 10**3, xmax
+    ax3.set_ylim(-3, 3)
+    ax4.set_ylim(-3, 3)
 
     # xlabel!
-    fig.text(0.5, 0.04, r'Rest frame wavelength', ha='center', va='bottom', fontsize=fs)  # 30
+    fig.text(0.5, 0.04, r'Rest frame wavelength', ha='center', va='bottom', fontsize=fs_text)  # 30
 
     # TICK PARAMS
     ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)
@@ -187,8 +192,13 @@ if __name__ == "__main__":
 
     field1 = kwargs['field1']
     field2 = kwargs['field2']
-    pre1 = 'pkl_evar/' + obj1 + '_' + field1 + '_' + kwargs['base1']
-    pre2 = 'pkl_nvar/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    if kwargs['base1'] == 'vary':
+        pre1 = 'pkl_evar/' + obj1 + '_' + field1 + '_' + kwargs['base1']
+        pre2 = 'pkl_nvar/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    else:
+        pre1 = 'pkl_emask/' + obj1 + '_' + field1 + '_' + kwargs['base1']
+        pre2 = 'pkl_nmask/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+
     # pre1 = 'pkls/' + obj1 + '_' + field1 + '_' + kwargs['base1']
     # pre2 = 'nmpkls/' + obj2 + '_' + field2 + '_' + kwargs['base2']
 
@@ -222,6 +232,8 @@ if __name__ == "__main__":
 
 '''
 Currently running with:
+python make_fig1.py --obj1=15462 --field1=uds --base1=vary --obj2=4708 --field2=cosmos --base2=vary
 python make_fig1.py --obj1=1824 --field1=cosmos --base1=fixedmet --obj2=4708 --field2=cosmos --base2=noelg
 python make_fig1.py --obj1=1824 --field1=cosmos --base1=vary --obj2=4708 --field2=cosmos --base2=vary
+python make_fig1.py --obj1=1824 --field1=cosmos --base1=newmask --obj2=4708 --field2=cosmos --base2=newmask
 '''
