@@ -478,12 +478,12 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
         ht = 10*0.28  # 8*0.28
         wd = 10*0.32  # 8*0.32
         inset_axes(ax1, width=wd, height=ht, loc=uvj_loc)  # 20%
-        uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False)
+        uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False,col='purple')
         # create inset axis: width (%), height (inches), location
         # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
         # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
         inset_axes(ax2, width=wd, height=ht, loc=uvj_loc)  # 20%
-        uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False)
+        uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False, col='b')
 
     if priors is not None:
         ax1.axvline(x=priors[0][1], color='k', ls='--', label='Prior')  # median, +/- 1sigma for EELG prior
@@ -518,11 +518,11 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     # display_num = np.linspace(1e-12, 1e-7, num=30)
     fs = 20
     if not log:
-        ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[1./(18*3*10**3)]*len(draws[0]), color='b',
-                 alpha=0.5, lw=2, label='EELGs')
-        ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(87*3*10**3)]*len(draws[1]), color='r',
-                 alpha=0.5, lw=2, label='SFGs')
-        fig.text(0.5, 0.04, r'SSFR (most recent bin; Gyr$^{-1}$)', ha='center', fontsize=30)  # 30
+        ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[1./(18*3*10**3)]*len(draws[0]), color='purple',
+                 alpha=0.75, lw=2, label='EELGs')
+        ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(87*3*10**3)]*len(draws[1]), color='b',
+                 alpha=0.75, lw=2, label='SFGs')
+        fig.text(0.5, 0.04, r'sSFR (most recent bin) [Gyr$^{-1}$]', ha='center', fontsize=30)  # 30
         ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.88), prop={'size': fs})
         ax2.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.88), prop={'size': fs})
         # ax1.legend(numpoints=1, loc='upper left', prop={'size': fs})
@@ -650,7 +650,7 @@ if __name__ == "__main__":
         print(np.median(ts))  # 1.88930392535 Gyr
         '''
 
-    lbg_list = open('lbg_ids', 'r')
+    lbg_list = open('lbg_ids', 'r')  # lbg_ids1
     flist = {}
     lbgs = []
     l_objs = []

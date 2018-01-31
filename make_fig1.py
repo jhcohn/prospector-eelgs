@@ -76,11 +76,12 @@ def all_plots(fileset, objname, field, loc='upper left'):
             spec_jan.append(spec[i] * 3631 * 10 ** 6)
 
         if j == 0:
-            ax1.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='r',
+            ax1.plot(sps_wave, spec_jan, color='k', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
+            ax1.plot(wave_rest, sed_jan, 'D', color='k', markerfacecolor='None', markersize=10, markeredgewidth=1.25,
+                     markeredgecolor='k', label=r'Model Photometry')  # plot best fit model
+            ax1.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='purple',
                          label=r'Observed Photometry')  # plot observations
-            ax1.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
-            ax1.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
-            ax1.set_ylabel(r'$\mu$Jy', fontsize=fs_text)  # 30
+            ax1.set_ylabel(r'Flux [$\mu$Jy]', fontsize=fs_text)  # 30
 
             # ax1.text(1000, 50, 'EELG', fontsize=20)
             # ax1.text(textx, texty, 'COSMOS-1824 (EELG)', fontsize=20)  # 700, 600
@@ -103,7 +104,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
             # create inset axis: width (%), height (inches), location
             # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
             # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
-            uvj.uvj_plot(objname[j], field[j], title=False, labels=False, lims=True, size=20, show=False)
+            uvj.uvj_plot(objname[j], field[j], title=False, labels=False, lims=True, size=20, show=False, col='purple')
             print('uvj1')
             # add uvj plot to inset axis
         elif j == 1:
@@ -114,10 +115,11 @@ def all_plots(fileset, objname, field, loc='upper left'):
             ax2.set_xscale("log")
             # ax2.set_ylim(ymin, ymax)
             # ax2.set_title(field[1] + '-' + objname[1])
-            ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='r',
+            ax2.plot(sps_wave, spec_jan, color='k', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
+            ax2.plot(wave_rest, sed_jan, 'D', color='k', markerfacecolor='None', markersize=10, markeredgewidth=1.25,
+                     markeredgecolor='k', label=r'Model Photometry')  # plot best fit model
+            ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='b',
                          label=r'Observed Photometry')  # plot observations
-            ax2.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model Photometry')  # plot best fit model
-            ax2.plot(sps_wave, spec_jan, color='b', alpha=0.5, label=r'Model Spectrum')  # plot spectrum
             # ax2.set_ylabel(r'$\mu$Jy')
 
             # ax2.text(1000, 50, 'LBG', fontsize=20)
@@ -160,7 +162,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
     ax4.set_ylim(-3, 3)
 
     # xlabel!
-    fig.text(0.5, 0.04, r'Rest frame wavelength', ha='center', va='bottom', fontsize=fs_text)  # 30
+    fig.text(0.5, 0.03, r'Wavelength (Rest) [$\AA$]', ha='center', va='bottom', fontsize=fs_text)  # 30
 
     # TICK PARAMS
     ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)

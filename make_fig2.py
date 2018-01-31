@@ -118,13 +118,14 @@ def all_plots(fileset, objname, znames, field):
 
         print(zred)
         if j == 1:
-            ax1.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model')  # plot bfit model
-            ax1.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', markerfacecolor='None', linestyle='', color='r',
-                         label=r'Observations', markeredgecolor='r', markeredgewidth=0.75)  # plot observations
-            ax1.plot(sps_wave, spec_jan, color='b', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
+            ax1.plot(sps_wave, spec_jan, color='k', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
+            ax1.plot(wave_rest, sed_jan, 'D', color='k', markerfacecolor='None', markersize=10, markeredgewidth=1.25,
+                     markeredgecolor='k', label=r'Model Photometry')  # plot best fit model
+            ax1.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='purple',
+                         label=r'Observations')  # plot observations
             # ax1.set_ylabel(r'Flux [$\mu$Jy]')
             ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
-            ax1.axvspan(4800, 5050, color='k', alpha=0.3)
+            ax1.axvspan(4800, 5050, color='k', alpha=0.2)
             # ax1.text(700, 3, 'z ~ ' + str(zred) + ', EELG', fontsize=20)
             ax1.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', EELG',
                      fontsize=fs)
@@ -134,13 +135,14 @@ def all_plots(fileset, objname, znames, field):
             widths.fig2(ax1, field[j], zred, scale=(phot.max() * filt_factor), rest=True)  # WIDTHS
 
         elif j == 2:
-            ax2.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model')  # plot best fit model
-            ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', markerfacecolor='None', linestyle='', color='r',
-                         label=r'Observations', markeredgecolor='r', markeredgewidth=0.75)  # plot observations
-            ax2.plot(sps_wave, spec_jan, color='b', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
+            ax2.plot(sps_wave, spec_jan, color='k', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
+            ax2.plot(wave_rest, sed_jan, 'D', color='k', markerfacecolor='None', markersize=10, markeredgewidth=1.25,
+                     markeredgecolor='k', label=r'Model Photometry')  # plot best fit model
+            ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='b',
+                         label=r'Observations')  # plot observations
             ax2.set_ylabel(r'Flux [$\mu$Jy]', fontsize=fs_text)  # 30
             ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
-            ax2.axvspan(4800, 5050, color='k', alpha=0.3)
+            ax2.axvspan(4800, 5050, color='k', alpha=0.2)
             # ax2.text(700, 3, 'z ~ ' + str(zred) + ', LBG', fontsize=20)
             ax2.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', SFG',
                      fontsize=fs)
@@ -149,21 +151,22 @@ def all_plots(fileset, objname, znames, field):
             widths.fig2(ax2, field[j], zred, scale=(phot.max() * filt_factor), rest=True)  # WIDTHS
 
         elif j == 0:
-            ax3.plot(wave_rest, sed_jan, 'o', color='b', label=r'Model')  # plot best fit model
-            ax3.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', markerfacecolor='None', linestyle='', color='r',
-                         label=r'Observations', markeredgecolor='r', markeredgewidth=0.75)  # plot observations
-            ax3.plot(sps_wave, spec_jan, color='b', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
+            ax3.plot(sps_wave, spec_jan, color='k', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
+            ax3.plot(wave_rest, sed_jan, 'D', color='k', markerfacecolor='None', markersize=10, markeredgewidth=1.25,
+                     markeredgecolor='k', label=r'Model Photometry')  # plot best fit model
+            ax3.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='r',
+                         label=r'Observations')  # plot observations
             # ax3.set_ylabel(r'Flux [$\mu$Jy]')
             # ax3.text(700, 1, 'z ~ ' + str(zred) + ', Qui', fontsize=20)
             ax3.text(textx, texty, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', Qui',
                      fontsize=fs)
             ax3.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
-            ax3.axvspan(4800, 5050, color='k', alpha=0.3)
+            ax3.axvspan(4800, 5050, color='k', alpha=0.2)
             plt.subplots_adjust(hspace=.0)
 
             widths.fig2(ax3, field[j], zred, scale=(phot.max() * filt_factor), rest=True)  # WIDTHS
     print('show')
-    plt.xlabel(r'Rest frame wavelength [$\AA$]', fontsize=fs_text)  # 20
+    plt.xlabel(r'Wavelength (Rest) [$\AA$]', fontsize=fs_text)  # 20
     plt.show()
 
 if __name__ == "__main__":

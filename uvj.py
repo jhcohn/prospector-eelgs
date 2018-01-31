@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import argparse
 
 
-def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, size=20, show=True, ids=True):
+def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, size=20, show=True, col='b'):
     # UVJ plotter
     # Choose correct catalogs based on field name
     if objlist is not None:
@@ -120,7 +120,7 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
                 plt.scatter(special_uv[i], special_vj[i], color='b', marker="*", s=20)
         '''
         if star:
-            plt.scatter(special_vj, special_uv, color='b', marker="*", s=100)
+            plt.scatter(special_vj, special_uv, color=col, marker="*", s=100)
 
         if title:
             plt.title(field + '-' + objname)
@@ -137,8 +137,8 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
             plt.ylim(-1., 2.5)  # 3
             plt.yticks([-1., 0., 1., 2.])  # , 3.])
 
-        plt.xlabel(r'$V - J$ (Rest)', fontsize=size)
-        plt.ylabel(r'$U - V$ (Rest)', fontsize=size)
+        plt.xlabel(r'$V - J$', fontsize=size)  # (Rest)
+        plt.ylabel(r'$U - V$', fontsize=size)  # (Rest)
         # if show:
         #    if objlist is None:
         #        plt.show()
@@ -147,7 +147,7 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
         print(nummy)
         print(len(special_vj), len(special_uv))
         for i in range(len(special_vj)):
-            plt.scatter(special_vj[i], special_uv[i], color='b', marker="*", s=20)
+            plt.scatter(special_vj[i], special_uv[i], color=col, marker="*", s=20)
     elif show:
         plt.show()
 
