@@ -31,6 +31,8 @@ eelg_otherbins_params.py: eelg_fixedmet_params.py, but with different agebins
 
 eelg_quickstart_params.py: same as eelg_emission_params.py, but skip do_Powell process; start run by using previous best fit values as input initial parameter values
 
+eelg_thvary_params.py: eelg_varymet_params.py, but with new agebins (0-30 Myr, ...)
+
 eelg_varymet_params.py: eelg_fixedmet_params.py, but with metallicity allowed to vary
 
 fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector; defunct
@@ -108,13 +110,12 @@ write_runs.py: using to write .lsf files for running prospector on computing clu
 -Running with: python write_runs.py
 
 Note: Currently using...
-*eelg_fixedmet_params.py	to generate prospector output with emission lines with logzsol fixed
-*eelg_otherbins_params.py	to generate prospector output with emission lines with logzsol fixed, using different agebins
+*eelg_thvary_params.py		same as eelg_varymet_params.py, but with different agebins
+*eelg_varymet_params.py		to generate prospector output with emission lines, with logzsol varying
+*get_mass_dust.py		to display mass, dust, and metallicity values for a given sample output from prospector
 *make_all_plots.py		to produce SFH and sSFR plots, as well as SED with chi and uvj plot (calling print_sfh.py, uvj.py, and, if including overlain filter curves, widths.py)
 *make_fig1.py			to produce side-by-side SED+ plots
 *make_fig2.py			to produce plot of SEDs with filterwidths overlain in each field
-*noelg_multirun_params.py	to generate prospector output with dust emission, emission lines, and logzsol and gaslogz both fixed
-*noelg_otherbins_params.py	to generate prospector output with dust emission, emission lines, and logzsol and gaslogz both fixed, with other agebins
 *prospector.py			to run prospector
 *output.py			to generate tracefigs, cornerfigs and kl convergence plots, and to pickle SED info, spectra, wavelengths, chi, chi^2, SFR, and sSFR (called and used in make_all_plots.py)
 *smart_stack.py			to generate stacked plot of sSFHs
