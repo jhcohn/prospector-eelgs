@@ -451,14 +451,14 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     x = [0.5e-8, 1e-8, 1.5e-8, 2e-8]  # used if log=0
     # y = [0.0, 0.05, 0.10, 0.15]  # used regardless of log
     # y = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70]  # used regardless of log
-    y = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25]  # , 0.30, 0.35]  # used regardless of log; max 0.35 for 1e-9 bin spacing
+    y = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]  # , 0.35]  # used regardless of log; max 0.35 for 1e-9 bin spacing
 
     fig = plt.figure()
     ax1 = plt.subplot(1, 2, 1)
     ax2 = plt.subplot(1, 2, 2, sharey=ax1, sharex=ax1)
     ax1.set_xlim(xmin=3*10**-14, xmax=2.25e-8)  # 3*10**-12, 7e-8
     ax1.xaxis.set_ticks(x)
-    ax1.set_ylim(ymin=0., ymax=0.28)  # 0.39)  # for 1e-9 bin spacing, use 0.39; for 0.67e-9 bin spacing, use
+    ax1.set_ylim(ymin=0., ymax=0.33)  # 0.28)  # 0.39)  # for 1e-9 bin spacing, use 0.39; for 0.67e-9 bin spacing, use
     ax1.yaxis.set_ticks(y)
     if not log:
         uvj_loc = 1  # 'upper right'
@@ -520,7 +520,7 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     if not log:
         ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[1./(18*3*10**3)]*len(draws[0]), color='purple',
                  alpha=0.75, lw=2, label='EELGs')
-        ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(87*3*10**3)]*len(draws[1]), color='b',
+        ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(166*3*10**3)]*len(draws[1]), color='b',
                  alpha=0.75, lw=2, label='SFGs')
         fig.text(0.5, 0.04, r'sSFR (most recent bin) [Gyr$^{-1}$]', ha='center', fontsize=30)  # 30
         ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.88), prop={'size': fs})
@@ -549,15 +549,22 @@ if __name__ == "__main__":
     comp = 1
     boot = 0
     vary = 1
+    thvary = 0
     mask = 0
     others = 0
     short = 0
     if vary:
         base = ['vary', 'vary']
-        folders = ['pkl_evar/', 'pkl_nvar/']
-        mass = [9.94, 10.51]
+        folders = ['pkl_evar/', 'pkl_nvary/']
+        mass = [9.94, 10.55]
         import eelg_varymet_params as e_params
         import eelg_varymet_params as n_params
+    elif thvary:
+        base = ['thvary', 'thvary']
+        folders = ['pkl_ethvary/', 'pkl_nthvary/']
+        mass = [9.83, 10.56]
+        import eelg_thvary_params as e_params
+        import eelg_thvary_params as e_params
     elif mask:
         base = ['newmask', 'newmask']
         folders = ['pkl_emask/', 'pkl_nmask/']
@@ -650,7 +657,7 @@ if __name__ == "__main__":
         print(np.median(ts))  # 1.88930392535 Gyr
         '''
 
-    lbg_list = open('lbg_ids', 'r')  # lbg_ids1
+    lbg_list = open('lbg_ids1', 'r')  # lbg_ids1
     flist = {}
     lbgs = []
     l_objs = []

@@ -87,8 +87,9 @@ def draw_ssfr_from_prior2(obj, fld, gals=None, ndraw=1e4, pfile=None):
             n += 1
 
     for i in range(len(mass)):
-        ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / mass_cml[-(i+1), :])  # mass_cml defined in reverse order
+        # ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / mass_cml[-(i+1), :])  # mass_cml defined in reverse order
         # = (fractional mass formed in bin) / (time per bin) / (cumulative mass formed up to this point)
+        ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / 10**logmass)  # mass_cml defined in reverse order
         # ssfr[i, :] = np.log10(np.clip(mass[i, :].sum(axis=0) / time_per_bin[i].sum() / 10**logmass, minssfr, maxssfr))
 
     perc = np.zeros(shape=(len(mass), 3))  # 6, 3
@@ -195,7 +196,8 @@ def draw_ssfr_from_prior(objs, flds, fig=None, axes=None, ndraw=1e4, alpha_sfh=1
         # ssfr[i, :] = np.log10(mass[i, :] / time_per_bin[i] / 10**logmass)
         # ssfr[i, :] = np.log10(np.clip(mass[i, :].sum(axis=0) / time_per_bin[i].sum() / 10**logmass, minssfr, maxssfr))
         # ssfr[i, :] = np.log10(mass[i, :].sum(axis=0) / time_per_bin[i].sum() / (10**logmass / smass_factor))  # smass
-        ssfr[i, :] = np.log10(mass[i, :].sum(axis=0) / t / (10**logmass / smass_factor))  # smass
+        # ssfr[i, :] = np.log10(mass[i, :].sum(axis=0) / t / (10**logmass / smass_factor))  # smass
+        ssfr[i, :] = np.log10(mass[i, :].sum(axis=0) / t / 10**logmass)  # smass
 
     # print(ssfr)
     print('perc', np.percentile(ssfr[0], [16, 50, 84]))
@@ -277,7 +279,7 @@ def bootstrap(X, n=None, X_err=None):
         return X_resample, resample_i
 
 
-def randraw(infile, num=1000):  # num=1000
+def randraw(infile, logmass, num=1000):  # num=1000
     """
     For a given galaxy, randraw samples the posterior num times for each point in extra_output['extras']['sfh'][i]
 
@@ -288,13 +290,19 @@ def randraw(infile, num=1000):  # num=1000
     with open(infile, 'rb') as exout:
         extra_output = pickle.load(exout)
 
-    draw_from_sfh = np.zeros(shape=(len(extra_output['extras']['ssfr']), num))  # shape=(22, num)
+#    draw_from_sfh = np.zeros(shape=(len(extra_output['extras']['ssfr']), num))  # shape=(22, num)  # BUCKET MASS WRONG?
+    draw_from_sfh = np.zeros(shape=(len(extra_output['extras']['sfh']), num))  # shape=(22, num)
     # print(len(extra_output['extras']['ssfr']), len(extra_output['extras']['ssfr'][0]))  # 22, 2000
     # print(len(draw_from_sfh), len(draw_from_sfh[0]))  # 22, num
 
+    '''  # BUCKET MASS WRONG?
     for i in range(len(extra_output['extras']['ssfr'])):  # at each of these 22 points
         for j in range(num):  # randomly draw from the ssfr posterior num times
-            draw_from_sfh[i][j] = extra_output['extras']['ssfr'][i][random.randint(0, num)]
+            draw_from_sfh[i][j] = extra_output['extras']['ssfr'][i][random.randint(0, num)] / 0.8  # BUCKET 1/0.8 here?
+    '''
+    for i in range(len(extra_output['extras']['sfh'])):  # at each of these 22 points
+        for j in range(num):  # randomly draw from the ssfr posterior num times
+            draw_from_sfh[i][j] = extra_output['extras']['sfh'][i][random.randint(0, num)] / (10**logmass) / 0.8
 
     return draw_from_sfh, extra_output['extras']['t_sfh']
 
@@ -450,12 +458,12 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     ax2 = plt.subplot(1, 2, 2)  # , sharey=ax1, sharex=ax1)  # don't need to share axis if plot same region & never zoom
 
     if uvj_in:  # also requires elist, llist to be not None; this insets uvj plots onto the top right of plot!
-        inset_axes(ax1, width=8*0.32, height=8*0.28, loc=9)  # 20%
+        inset_axes(ax1, width=8*0.32, height=8*0.28, loc=1)  # 20%
         uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False)
         # create inset axis: width (%), height (inches), location
         # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
         # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
-        inset_axes(ax2, width=8*0.32, height=8*0.28, loc=9)  # 20%
+        inset_axes(ax2, width=8*0.32, height=8*0.28, loc=1)  # 20%
         uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False)
 
     if sigma == 1:
@@ -495,15 +503,15 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     ax1.set_ylim(ymin, 10**-7)  # , ymax
     ax1.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
     ax1.set_ylabel(label, fontsize=30)  # 30
-    # ax1.text(2*10**-2, 4*10**-8, 'EELGs', fontsize=30)  # use if uvj_in
-    ax1.text(0.5, 5*10**-8, 'EELGs', fontsize=30)  # use if uvj_in
+    ax1.text(2*10**-2, 4*10**-8, 'EELGs', fontsize=30)  # use if uvj_in
+    # ax1.text(0.5, 5*10**-8, 'EELGs', fontsize=30)  # use if uvj_in
 
     ax2.set_yscale("log")
     ax2.set_xscale("log")
     ax2.set_ylim(ymin, 10**-7)  # , ymax
     ax2.set_xlim(10**-2, 2.5)  # (0, 2.5)  # (10**-2, 13.6)
-    # ax2.text(2*10**-2, 4*10**-8, 'LBGs', fontsize=30)  # use if uvj_in
-    ax2.text(0.5, 5*10**-8, 'LBGs', fontsize=30)  # use if uvj_in
+    ax2.text(2*10**-2, 4*10**-8, 'LBGs', fontsize=30)  # use if uvj_in
+    # ax2.text(0.5, 5*10**-8, 'LBGs', fontsize=30)  # use if uvj_in
 
     if priors is not None:
         if tuniv:
@@ -535,40 +543,6 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
                 # ax2.axvline(x=2.11)
             # END NEW
 
-        '''
-        # OLD, use for wrong draw_from_ssfr_prior()
-        ssfr_pri = np.zeros(shape=(len(priors[0]), 3))
-        ssfr_l_pri = np.zeros(shape=(len(priors[0]), 3))
-        for i in range(len(priors[0])):  # 6
-            ssfr_pri[i, :] = np.percentile(priors[0][i, :], [16, 50, 84])
-            ssfr_l_pri[i, :] = np.percentile(priors[1][i, :], [16, 50, 84])
-        print(ssfr_pri, ssfr_l_pri)
-
-        # new_t = [3.5*10**-2, 2.5*10**-1, 7*10**-1, 1.15, 1.4, 1.8]
-        fill_t = [0, 100]
-        y1 = [10 ** ssfr_pri[0][0]] * 2
-        y2 = [10 ** ssfr_pri[0][2]] * 2
-        ax1.axhline(y=10 ** ssfr_pri[0][1], color='r')
-        ax1.axhline(y=10 ** ssfr_pri[0][0], color='r')
-        ax1.axhline(y=10 ** ssfr_pri[0][2], color='r')
-        ax1.fill_between(fill_t, y1, y2, color='r', hatch='/', facecolor='none')  # , alpha=0.3)
-        yl1 = [10 ** ssfr_pri[1][0]] * 2
-        yl2 = [10 ** ssfr_pri[1][2]] * 2
-        ax2.axhline(y=10 ** ssfr_pri[1][1], color='r')
-        ax2.axhline(y=10 ** ssfr_pri[1][0], color='r')
-        ax2.axhline(y=10 ** ssfr_pri[1][2], color='r')
-        ax2.fill_between(fill_t, yl1, yl2, color='r', hatch='/', facecolor='none')  # , alpha=0.3)
-        '''
-
-        '''
-        # OLD, already commented
-        for l in range(len(ssfr_pri)):
-            ax1.errorbar(new_t[l], 10**ssfr_pri[l][1], yerr=[[10**ssfr_pri[l][0]], [10**ssfr_pri[l][2]]], fmt='o',
-                         color='r')
-            ax2.errorbar(new_t[l], 10**ssfr_l_pri[l][1], yerr=[[10**ssfr_l_pri[l][0]], [10**ssfr_l_pri[l][2]]], fmt='o',
-                         color='r')
-        '''
-
     plt.setp(ax2.get_yticklabels(), visible=False)  # hide y-axis labels on right-hand subplot to prevent overlap
     plt.subplots_adjust(wspace=0.05)  # vertical whitespace (i.e. the width) between the two subplots
     plt.tight_layout()
@@ -578,21 +552,26 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     fig.text(0.5, 0.04, 'Lookback time [Gyr]', ha='center', fontsize=30)  # 30
     plt.tight_layout()
 
-    '''
+    # '''
     diff = []
     diff2 = []
     for i in range(len(percs[0])):
-        print(percs[0][i, 1] - priors[0][1])
+        # print(percs[0][i, 1], priors[0][1])
         diff.append(percs[0][i, 1] - priors[0][1])
     for i in range(len(percs[1])):
-        print(percs[1][i, 1] - priors[1][1])
+        # print(percs[1][i, 1] - priors[1][1])
         diff2.append(percs[1][i, 1] - priors[1][1])
     diff = [diff[1], diff[4], diff[8], diff[13], diff[17], diff[21]]
     diff2 = [diff2[1], diff2[4], diff2[8], diff2[13], diff2[17], diff2[21]]
     tpb = [1e8, 4.01e8, 4.99e8, 2.84e8, 3.65e8, 4.685e8]
-    print(np.dot(diff, tpb))
-    print(np.dot(diff2, tpb))
-    '''
+    sum = 0
+    sum2 = 0
+    for i in range(len(diff)):
+        sum += tpb[i] * diff[i]
+        sum2 += tpb[i] * diff2[i]
+    print(np.dot(diff, tpb), sum)
+    print(np.dot(diff2, tpb), sum2)
+    # '''
 
     if save:
         plt.savefig(title + '.png', bbox_inches='tight')
@@ -602,53 +581,76 @@ def plot_sfhs(percs, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
 
 if __name__ == "__main__":
 
+    comp = 1
     boot = 0
-    vary = 0
+    vary = 1
     mask = 0
-    others = 0
-    short = 1
+    others = 1
+    short = 0
     if vary:
         base = ['vary', 'vary']
-        folders = ['pkl_evar/', 'pkl_nvar/']
+        folders = ['pkl_evar/', 'pkl_nvary/']
+        mass = [9.94, 10.55]
         import eelg_varymet_params as e_params
         import eelg_varymet_params as n_params
     elif mask:
         base = ['newmask', 'newmask']
         folders = ['pkl_emask/', 'pkl_nmask/']
+        mass = [10.15, 10.51]
         import eelg_newmask_params as e_params
         import eelg_newmask_params as n_params
     elif others:
-        base = ['thirty', 'nth']  # base = ['otherbins', 'nother']  # use for otherbins
-        folders = ['etpkls/', 'ntpkls/']  # ['opkls/', 'nopkls/']
-        import eelg_thirty_params as e_params
-        import noelg_thirty_params as n_params
+        base = ['thvary', 'thvary']  # base = ['otherbins', 'nother']  # use for otherbins
+        folders = ['pkl_ethvary/', 'pkl_nthvary/']  # ['opkls/', 'nopkls/']
+        mass = [9.83, 10.56]
+        import eelg_thvary_params as e_params
+        import eelg_thvary_params as n_params
     elif short:
         base = ['short', 'short']
         folders = ['pkl_eshort/', 'pkl_nshort/']
+        mass = [10.07, 10.39]
         import eelg_short_params as e_params
         import eelg_short_params as n_params
     else:
         base = ['fixedmet', 'noelg']  # use for fixedmet
         folders = ['pkls/', 'nmpkls/']
+        mass = [9.98, 10.26]
         import eelg_fixedmet_params as e_params
         import noelg_multirun_params as n_params
 
-    eelg_list = open('eelg_specz_ids', 'r')
-    pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
-    eelgs = []
-    e_objs = []
-    e_fields = []
-    for line in eelg_list:
-        if line[0] == '#':
-            pass
-        else:
-            cols = line.split()
-            e_objs.append(cols[1])
-            e_fields.append(cols[0])
-            eelgs.append(cols[1] + '_' + cols[0] + '_' + base[0])  # base[0] = fixedmet (or otherbins)
-    eelg_list.close()
+    if comp == 0:
+        pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
+        eelg_list = open('eelg_specz_ids', 'r')
+        eelgs = []
+        e_objs = []
+        e_fields = []
+        for line in eelg_list:
+            if line[0] == '#':
+                pass
+            else:
+                cols = line.split()
+                e_objs.append(cols[1])
+                e_fields.append(cols[0])
+                eelgs.append(cols[1] + '_' + cols[0] + '_' + base[0])  # base[0] = fixedmet (or otherbins)
+        eelg_list.close()
+    else:
+        pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
+        eelg_list = open('Comp_10.dat', 'r')
+        eelgs = []
+        for line in eelg_list:
+            if line[0] == '#':
+                pass
+            else:
+                cols = line.split()
+                if int(cols[0]) - 200000 > 0:
+                    eelgs.append(str(int(cols[0]) - 200000) + '_uds_' + base[0])  # base[1] = noelg (or nother)
+                elif int(cols[0]) - 100000 > 0:
+                    eelgs.append(str(int(cols[0]) - 100000) + '_cosmos_' + base[0])  # base[1] = noelg (or nother)
+                else:
+                    eelgs.append(str(int(cols[0])) + '_cdfs_' + base[0])  # base[1] = noelg (or nother)
+        eelg_list.close()
 
-    lbg_list = open('lbg_ids', 'r')
+    lbg_list = open('lbg_ids1', 'r')
     flist = {}
     lbgs = []
     l_objs = []
@@ -739,7 +741,8 @@ if __name__ == "__main__":
                 file = pkls + glxy + '_extra_out.pkl'
                 if os.path.exists(file):
                     nummy += 1
-                    temp = randraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
+                    temp = randraw(file, mass[0])  # temp[0] lists num=1000 random posterior samples
+                    # temp[1] = time vector
                     draws.append(temp[0])
                     t1.append(temp[1])
                 else:
@@ -758,7 +761,7 @@ if __name__ == "__main__":
                 file = l_pkls + glxy + '_extra_out.pkl'
                 if os.path.exists(file):
                     numl += 1
-                    temp = randraw(file)
+                    temp = randraw(file, mass[1])
                     draws2.append(temp[0])
                 else:
                     print(file)
@@ -785,8 +788,9 @@ if __name__ == "__main__":
             file = pkls + glxy + '_extra_out.pkl'
             if os.path.exists(file):
                 nummy += 1
-                temp = randraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
-                # temp = bootdraw(file)  # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
+                # temp = randraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
+                temp = randraw(file, mass[0])  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
+                # temp = bootdraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
                 draws.append(temp[0])
                 # boots.append(bootstrap(temp[0]))
                 t1.append(temp[1])
@@ -808,7 +812,8 @@ if __name__ == "__main__":
 
             if os.path.exists(file):
                 numl += 1
-                temp = randraw(file)
+                # temp = randraw(file)
+                temp = randraw(file, mass[1])
                 # temp = bootdraw(file)
                 draws2.append(temp[0])
                 # t2.append(temp[1])
