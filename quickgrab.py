@@ -8,10 +8,12 @@ from prospect.likelihood import lnlike_spec, lnlike_phot, write_log
 import sys
 import argparse
 import pickle
+import os
+import glob
 np.errstate(invalid='ignore')
 
 
-def printer(out_file):
+def printer(out_file, cvg=600):
     objname = ''
     count = 0
     field = ''
@@ -34,6 +36,7 @@ def printer(out_file):
     # PRINT TRACE SHOWING HOW ITERATIONS CONVERGE FOR EACH PARAMETER
     tracefig, prob = bread.param_evol(res)  # print tracefig, store probability
     plt.show()
+    # plt.savefig('delete' + '_tracefig2.png', bbox_inches='tight')
 
     # FIND WALKER, ITERATION THAT GIVE MAX (AND MIN) PROBABILITY
     # print(prob)
@@ -46,8 +49,9 @@ def printer(out_file):
     # ''' #
 
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
-    cornerfig = bread.subtriangle(res, start=400, thin=5, show_titles=True)
+    bread.subtriangle(res, start=cvg, thin=5, show_titles=True)  # set start by when kl converges!
     plt.show()
+    # plt.savefig('delete' + '_ctracefig2.png', bbox_inches='tight')
     # For FAST: truths = [mass, age, tau, dust2] (for 1824: [9.78, 0.25, -1., 0.00])
     return objname, field, res, mod, walker, iteration
 # ''' #
@@ -62,7 +66,6 @@ def sed(objname, field, res, mod, walker, iteration, param_file, **kwargs):
     run_params = model_setup.get_run_params(argv=sargv, **clargs)
     sps = model_setup.load_sps(**run_params)
 
-
     # GET MODELED SPECTRA AND PHOTOMETRY
     # These have the same shape as the obs['spectrum'] and obs['maggies'] arrays.
     spec, phot, mfrac = mod.mean_model(res['chain'][walker, iteration, :], obs=res['obs'], sps=sps)
@@ -75,12 +78,14 @@ def sed(objname, field, res, mod, walker, iteration, param_file, **kwargs):
     wave = np.asarray(wave)
     print('len', len(sps.wavelengths), len(spec))
 
+    ''' #
     plt.plot(sps.wavelengths, spec)
     plt.xlabel('Wavelength [angstroms]')
     plt.title(str(objname) + ' spec')
     plt.show()
 
     # ''' #
+    ''' #
     # HOW CONVERGED IS THE CODE?? LET'S FIND OUT!
     parnames = np.array(res['model'].theta_labels())
     fig, kl_ax = plt.subplots(1, 1, figsize=(7, 7))
@@ -135,16 +140,20 @@ def sed(objname, field, res, mod, walker, iteration, param_file, **kwargs):
     # PLOT MODEL SED BEST FIT, INPUT PHOT
     yerr = res['obs']['maggies_unc']
     plt.subplot(111, xscale="log", yscale="log")
-    plt.errorbar(wave_rest, res['obs']['maggies'], yerr=yerr, marker='o', linestyle='', color='r',
+    plt.errorbar(wave_rest, res['obs']['maggies'], yerr=yerr, marker='o', linestyle='', color='purple',
                  label='Observed photometry')
-    plt.plot(wave_rest, phot, 'o', label='Model at {},{}'.format(walker, iteration), color='b')
+    plt.plot(wave_rest, phot, 'D', label='Model', color='b', markerfacecolor='None', markersize=10,
+             markeredgewidth=1.25, markeredgecolor='k')  # label='Model at {},{}'.format(walker, iteration)
     plt.legend(loc="best", fontsize=20)
-    plt.title(str(objname) + ' SED')
-    plt.plot(sps.wavelengths, spec, color='b', alpha=0.5)
-    plt.xlabel('Rest frame wavelength [angstroms]')
+    plt.title(str(field) + '-' + str(objname) + ' SED')
+    plt.plot(sps.wavelengths, spec, color='k', alpha=0.5)
+    plt.xlabel(r'Wavelength (Rest) [$\AA$]')
     plt.ylabel('Maggies')
+    plt.xlim(10**3, 2.5*10**4)
+    plt.ylim(10**-5, 4*10**3)
     plt.show()
 
+    ''' #
     # PLOT CHI_SQ BESTFIT
     chi_sq = ((res['obs']['maggies'] - phot) / res['obs']['maggies_unc']) ** 2
     plt.plot(wave_rest, chi_sq, 'o', color='b')
@@ -169,13 +178,49 @@ if __name__ == "__main__":
     files = {'outname': '', 'parfile': ''}
     for key in kwargs.keys():
         files[key] = kwargs[key]
-    out_file = files['outname']
-    param_file = files['parfile']
-    print(param_file, out_file)
 
-    objname, field, res, mod, walker, iteration = printer(out_file)
+    if files['outname'] == 'all':
+        with open('Comp_10.dat', 'r') as comp:
+            e_objs = []
+            e_fs = []
+            for line in comp:
+                if line[0] == '#':
+                    pass
+                else:
+                    cols = line.split()
+                    if int(cols[0]) - 200000 > 0:
+                        e_objs.append(str(int(cols[0]) - 200000))
+                        e_fs.append('uds')
+                    elif int(cols[0]) - 100000 > 0:
+                        e_objs.append(str(int(cols[0]) - 100000))
+                        e_fs.append('cosmos')
+                    else:
+                        e_objs.append(str(int(cols[0])))
+                        e_fs.append('cdfs')
+        cvg = [1600, 1900, 1400, 1050, 900, 1400, 800, 1150, 875, 1250, 1300, 1250, 1150, 1300, 1200,
+               2150, 1600, 1050]
+        # 12105, 11462, 12533, 12552, 12903, 14808, 15124, 17189, 17342, 18561, 18742, 21076, 21442, 22768, 11063,
+        # 17423, 8787, 15462
+        for i in range(len(e_objs)):
+            for infile in glob.glob(os.path.join('/home/jonathan/.conda/envs/snowflakes/lib/python2.7/' +
+                                                 'site-packages/prospector/git/out/out_evar/', e_objs[i] + '*.h5')):
+                out_file = infile
+                param_file = files['parfile']
+                print(param_file, out_file)
+                true_field = e_fs[i]
+                true_obj = e_objs[i]
 
-    sed(objname, field, res, mod, walker, iteration, param_file, **kwargs)
+                objname, field, res, mod, walker, iteration = printer(out_file, cvg=cvg[i])
+                # sed(true_obj, true_field, res, mod, walker, iteration, param_file, **kwargs)
+
+    else:
+        out_file = files['outname']
+        param_file = files['parfile']
+        print(param_file, out_file)
+
+        objname, field, res, mod, walker, iteration = printer(out_file)
+
+        sed(objname, field, res, mod, walker, iteration, param_file, **kwargs)
 
 '''
 RUNNING WITH:
