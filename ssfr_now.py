@@ -5,111 +5,176 @@ import one_stack as one
 import get_mass_dust as gmd
 
 
-def get_ssfr(file, mass):
+def get_ssfr(file):
     with open(file, 'rb') as exout:
         extra_output = pickle.load(exout)
+        # print(len(extra_output['extras']['ssfr']), len(extra_output['extras']['ssfr'][0]))  # 22, 2000
 
-    return extra_output['bfit']['sfr_100'] / mass
+        ssfr = np.percentile(extra_output['extras']['ssfr'][0], [16., 50., 84.])[1]  # median ssfr
+    return extra_output['bfit']['sfr_100'], ssfr
+
+
+def get_sfh(file):
+    with open(file, 'rb') as exout:
+        extra_output = pickle.load(exout)
+        # print(len(extra_output['extras']['sfh']), len(extra_output['extras']['sfh'][0]))  # 22, 2000
+
+        sfh = extra_output['extras']['sfh']
+        return sfh
+
 
 if __name__ == "__main__":
 
     git = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
-    boot = 0
-    vary = 1
-    mask = 0
-    others = 0
-    short = 0
+    vary = 0
+    fifty = 1
     if vary:
         base = ['vary', 'vary']
-        out_folds = ['out_evar/', 'out_nvar/']
-        folders = ['pkl_evar/', 'pkl_nvar/']
-        mass = [10.15, 10.51]
+        out_folds = ['out/out_evar/', 'out/out_nvary/']
+        folders = ['pkl_evar/', 'pkl_nvary/']
+        # mass = [10.15, 10.51]
         import eelg_varymet_params as e_params
         import eelg_varymet_params as n_params
-    elif mask:
-        base = ['newmask', 'newmask']
-        folders = ['pkl_emask/', 'pkl_nmask/']
-        mass = [10.15, 10.51]
-        import eelg_newmask_params as e_params
-        import eelg_newmask_params as n_params
-    elif others:
-        base = ['thirty', 'nth']  # base = ['otherbins', 'nother']  # use for otherbins
-        folders = ['etpkls/', 'ntpkls/']  # ['opkls/', 'nopkls/']
-        mass = [10., 10.3]  # PLACEHOLDER
-        import eelg_thirty_params as e_params
-        import noelg_thirty_params as n_params
-    elif short:
-        base = ['short', 'short']
-        folders = ['pkl_eshort/', 'pkl_nshort/']
-        mass = [10.07, 10.39]
-        import eelg_short_params as e_params
-        import eelg_short_params as n_params
-    else:
-        base = ['fixedmet', 'noelg']  # use for fixedmet
-        folders = ['pkls/', 'nmpkls/']
-        mass = [9.98, 10.26]
-        import eelg_fixedmet_params as e_params
-        import noelg_multirun_params as n_params
+    elif fifty:
+        base = ['fifty', 'vary']
+        out_folds = ['out/out_efifty/', 'out/out_nvary/']
+        folders = ['pkl_efifty/', 'pkl_nvary/']
+        import eelg_fifty_params as e_params
+        import eelg_fifty_params as n_params
 
-    eelg_list = open('eelg_specz_ids', 'r')
+    import stellar_ages as sa
+    eelgs, lbgs1 = sa.get_gal_lists(base)
     pkls = git + folders[0]
-    eelgs = []
-    e_objs = []
-    e_fields = []
+    l_pkls = git + folders[1]
+
+    sfh = []
+    ssfr = []
+    sfr = []
+    # BUILD COMP
+    comp = []
+    eelg_list = open('Comp_10.dat', 'r')
     for line in eelg_list:
         if line[0] == '#':
             pass
         else:
             cols = line.split()
-            e_objs.append(cols[1])
-            e_fields.append(cols[0])
-            eelgs.append(cols[1] + '_' + cols[0] + '_' + base[0])  # base[0] = fixedmet (or otherbins)
+            if int(cols[0]) - 200000 > 0:
+                comp.append(str(int(cols[0]) - 200000) + '_uds_' + base[0])  # base[1] = noelg (or nother)
+            elif int(cols[0]) - 100000 > 0:
+                comp.append(str(int(cols[0]) - 100000) + '_cosmos_' + base[0])  # base[1] = noelg (or nother)
+            else:
+                comp.append(str(int(cols[0])) + '_cdfs_' + base[0])  # base[1] = noelg (or nother)
     eelg_list.close()
+    eelgs1 = []
+    count = 0
+    for file in eelgs:
+        for i in range(len(comp)):
+            if file.startswith(comp[i]):
+                if comp[i] == '20366_cdfs_vary':
+                    pass
+                else:
+                    print(file)
+                    eelgs1.append(file)
+    eelgs = eelgs1
+    # END checking COMP
+    print(len(eelgs))
 
-    lbg_list = open('lbg_ids', 'r')
-    flist = {}
-    lbgs = []
-    l_objs = []
-    l_fields = []
-    l_pkls = git + folders[1]
-    for line in lbg_list:
-        if int(line) - 200000 > 0:
-            flist[str(int(line) - 200000)] = 'uds'
-            lbgs.append(str(int(line) - 200000) + '_uds_' + base[1])  # base[1] = noelg (or nother)
-            l_objs.append(int(line) - 200000)
-            l_fields.append('uds')
-        elif int(line) - 100000 > 0:
-            flist[str(int(line) - 100000)] = 'cosmos'
-            lbgs.append(str(int(line) - 100000) + '_cosmos_' + base[1])
-            l_objs.append(int(line) - 100000)
-            l_fields.append('cosmos')
-        else:
-            flist[str(int(line))] = 'cdfs'
-            lbgs.append(str(int(line)) + '_cdfs_' + base[1])
-            l_objs.append(int(line))
-            l_fields.append('cdfs')
-    lbg_list.close()
-
-    ssfr = []
+    second = []
     for glxy in eelgs:
         file = pkls + glxy + '_extra_out.pkl'
         if os.path.exists(file):
-            ssfr.append(get_ssfr(file, mass[0]))
+            get = get_ssfr(file)
+            sfr.append(get[0])
+            ssfr.append(get[1])
+            sfh.append(get_sfh(file)[0])
+            second.append(get_sfh(file)[4])
         else:
             print(file)
 
+    sfh_l = []
     ssfr_l = []
-    for glxy in lbgs:
+    sfr_l = []
+    for glxy in lbgs1:
         file = l_pkls + glxy + '_extra_out.pkl'
 
         if os.path.exists(file):
-            ssfr_l.append(get_ssfr(file, mass[1]))
+            get = get_ssfr(file)
+            sfr_l.append(get[0])
+            ssfr_l.append(get[1])
+            sfh_l.append(get_sfh(file)[0])
         else:
             print(file)
+    lbgs = []
+    for i in range(len(lbgs1)):
+        if lbgs1[i] == '22919_cdfs_vary':
+            pass
+        else:
+            lbgs.append(lbgs1[i])
 
-    print(np.percentile(ssfr, [16, 50, 84]))
-    print(np.percentile(ssfr_l, [16, 50, 84]))
+    import get_mass_dust as gmd
+    out = git + out_folds[0]
+    out_l = git + out_folds[1]
+    eelgs1 = []
+    lbgs1 = []
+    for file in os.listdir(out):
+        if file.endswith(".h5"):
+            eelgs1.append(file)
+    for file in os.listdir(out_l):
+        if file.endswith(".h5"):
+            lbgs1.append(file)
 
+    print(len(eelgs))
+    frac = np.zeros(shape=(len(eelgs), 10**3))
+    frac2 = np.zeros(shape=(len(eelgs), 10**3))
+    for i in range(len(eelgs)):
+        print(i)
+        get_e = gmd.printer(out + eelgs1[i], percs=False)
+        for k in range(10**3):
+            # print((get_e[np.random.randint(len(get_e))]))
+            # print(sfh[i][np.random.randint(len(sfh[i]))])
+            frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))] * (10**8) / (10 ** get_e[np.random.randint(len(get_e))])
+            frac2[i, k] = second[i][np.random.randint(len(second[i]))] * (10 ** 8) /\
+                          (10 ** get_e[np.random.randint(len(get_e))])
+    frac_l = np.zeros(shape=(len(lbgs), 10**3))
+    for i in range(len(lbgs)):
+        print(i)
+        get_l = gmd.printer(out_l + lbgs1[i], percs=False)
+        for k in range(10**3):
+            # print((get_l[np.random.randint(len(get_l))]))
+            # print(sfh_l[i][np.random.randint(len(sfh_l[i]))])
+            frac_l[i, k] = sfh_l[i][np.random.randint(len(sfh_l[i]))] * (10**8) / (10**get_l[np.random.randint(len(get_l))])
+
+    all_fracs2 = []
+    all_fracs = []
+    for i in range(len(frac)):
+        all_fracs.append(np.percentile(frac[i], [16., 50., 84.]))
+        all_fracs2.append(np.percentile(frac2[i], [16., 50., 84.]))
+    all_fracs_l = []
+    for i in range(len(frac_l)):
+        all_fracs_l.append(np.percentile(frac_l[i], [16., 50., 84.]))
+    print(np.percentile(all_fracs, [16., 50., 84.]))  # 86.7 - 26.1, 26.1 - 9.1
+    print(np.percentile(all_fracs2, [16., 50., 84.]))  # 21.3 - 5.1, 5.1 - 0.91
+    print(np.percentile(all_fracs_l, [16., 50., 84.]))  # 28.7% - 8.95%, 8.95% - 2.5%
+    print('me')
+
+    print(np.percentile(sfr, [16, 50, 84]) / (10 ** 9.84233))
+    print(np.percentile(sfr_l, [16, 50, 84]) / (10 ** 10.55351))
+
+    print(np.percentile(sfr, [16, 50, 84])[1] * 10 ** 8 / (10 ** 9.84233))
+    print(np.percentile(sfr_l, [16, 50, 84])[1] * 10 ** 8 / (10 ** 10.55351))
+    '''
+    ssfr = []
+    ssfr_l = []
+    for i in range(len(sfr)):
+        ssfr.append(sfr[i] / mass[i])
+    for i in range(len(mass)):
+        ssfr_l.append(sfr_l[i] / mass_l[i])
+    '''
+    print(np.percentile(ssfr, [16., 50., 84.]))
+    print(np.percentile(ssfr_l, [16., 50., 84.]))
+
+
+    '''
     newpath = '/home/jonathan/'
     comps = ['Comp_04.dat', 'Comp_10.dat', 'Comp_14.dat']  # 'Comp_12.dat',
     for file in comps:
@@ -186,6 +251,7 @@ if __name__ == "__main__":
 
         smooth_perc = one.smooth(perc1)
         one.plot_sfhs(smooth_perc, t1[0], elist=eelgs, uvj_in=True, sigma=sig, priors=pri, tuniv=True)
+    '''
 
 '''
 # COMP_04:
