@@ -543,6 +543,17 @@ class BurstyModel(sedmodel.SedModel):  # NEW, replacing below
 
 
 class FracSFH(FastStepBasis):  # NEW CLASS
+    @property
+    def emline_wavelengths(self):
+        return self.ssp.emline_wavelengths
+
+    @property
+    def get_nebline_luminosity(self):
+        """Emission line luminosities in units of Lsun per solar mass formed
+        """
+
+        return self.ssp.emline_luminosity / self.params['mass'].sum()
+
     def get_galaxy_spectrum(self, **params):
         self.update(**params)
 

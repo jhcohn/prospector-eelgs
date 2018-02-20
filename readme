@@ -18,6 +18,8 @@ eelg_all_fields_params.py: same as eelg_emission_params.py, but can use for CDFS
 
 eelg_emission_params.py: same as eelg_npSFH_params.py, now with nebular emission turned on; defunct
 
+eelg_fifty_params.py: same as eelg_multirun_params.py, but with agebins 0-50 Myr, 50-100 Myr, 100 Myr-1 Gyr, etc.
+
 eelg_fixedmet_params.py: same as eelg_multirun_params.py, but with logzsol fixed
 
 eelg_multirun_params.py: same as eelg_emission_params.py, but now with field and objname as command line arguments
@@ -34,6 +36,8 @@ eelg_quickstart_params.py: same as eelg_emission_params.py, but skip do_Powell p
 eelg_thvary_params.py: eelg_varymet_params.py, but with new agebins (0-30 Myr, ...)
 
 eelg_varymet_params.py: eelg_fixedmet_params.py, but with metallicity allowed to vary
+
+emlines.py: using to get emission line fluxes & equivalent widths
 
 fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector; defunct
 
@@ -96,7 +100,7 @@ smart_stack.py: used to plot side-by-side stacked sSFHs for EELGs vs LBGs
 
 ssfr_hists.py: now using to make new fig 3 (side-by-side histograms of SSFR values in the most recent time bin for EELG COMP_10 and our Ss)
 
-ssfr_now.py: inaptly named, currently using to get SFHs and other parameters for the galaxies from each individual composite SED at a time, rather than just EELG vs LBG
+ssfr_now.py: previously used this to get SFHs and other parameters for the galaxies from each individual composite SED at a time, rather than just EELG vs LBG; now, using to get current ssfr, current sfr, and fraction of mass formed in the most recent time bin(s) for each galaxy/each population as a whole
 
 stack_sfh.py: use to plot stacked SFHs for lists of galaxies; defunct
 
@@ -110,8 +114,9 @@ write_runs.py: using to write .lsf files for running prospector on computing clu
 -Running with: python write_runs.py
 
 Note: Currently using...
-*eelg_thvary_params.py		same as eelg_varymet_params.py, but with different agebins
+*eelg_fifty_params.py		same as eelg_varymet_params.py, but with different agebins
 *eelg_varymet_params.py		to generate prospector output with emission lines, with logzsol varying
+*emlines.py			to calculate emission line fluxes and line ratios
 *get_mass_dust.py		to display mass, dust, and metallicity values for a given sample output from prospector
 *make_all_plots.py		to produce SFH and sSFR plots, as well as SED with chi and uvj plot (calling print_sfh.py, uvj.py, and, if including overlain filter curves, widths.py)
 *make_fig1.py			to produce side-by-side SED+ plots
@@ -120,3 +125,4 @@ Note: Currently using...
 *output.py			to generate tracefigs, cornerfigs and kl convergence plots, and to pickle SED info, spectra, wavelengths, chi, chi^2, SFR, and sSFR (called and used in make_all_plots.py)
 *smart_stack.py			to generate stacked plot of sSFHs
 *ssfr_hists.py			now using in place of smart_stack.py or one_stack.py
+*ssfr_now.py			to calculate (for each population) current ssfr, sfr, and fraction of mass formed in most recent bin

@@ -28,6 +28,7 @@ if __name__ == "__main__":
     git = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
     vary = 0
     fifty = 1
+    fix = 0
     if vary:
         base = ['vary', 'vary']
         out_folds = ['out/out_evar/', 'out/out_nvary/']
@@ -41,6 +42,10 @@ if __name__ == "__main__":
         folders = ['pkl_efifty/', 'pkl_nvary/']
         import eelg_fifty_params as e_params
         import eelg_fifty_params as n_params
+    elif fix:
+        base = ['fix', 'vary']
+        out_folds = ['out/out_efix/', 'out/out_nvary/']
+        folders = ['pkl_efix/', 'pkl_nvary/']
 
     import stellar_ages as sa
     eelgs, lbgs1 = sa.get_gal_lists(base)
@@ -126,15 +131,20 @@ if __name__ == "__main__":
     print(len(eelgs))
     frac = np.zeros(shape=(len(eelgs), 10**3))
     frac2 = np.zeros(shape=(len(eelgs), 10**3))
+    frac100 = np.zeros(shape=(len(eelgs), 10**3))
     for i in range(len(eelgs)):
         print(i)
         get_e = gmd.printer(out + eelgs1[i], percs=False)
         for k in range(10**3):
             # print((get_e[np.random.randint(len(get_e))]))
             # print(sfh[i][np.random.randint(len(sfh[i]))])
-            frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))] * (10**8) / (10 ** get_e[np.random.randint(len(get_e))])
-            frac2[i, k] = second[i][np.random.randint(len(second[i]))] * (10 ** 8) /\
+            time = 10 ** 8
+            if fifty:
+                time = .5 * 10 ** 8
+            frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))] * time / (10 ** get_e[np.random.randint(len(get_e))])
+            frac2[i, k] = second[i][np.random.randint(len(second[i]))] * time /\
                           (10 ** get_e[np.random.randint(len(get_e))])
+            frac100[i, k] = frac[i, k] + frac2[i, k]
     frac_l = np.zeros(shape=(len(lbgs), 10**3))
     for i in range(len(lbgs)):
         print(i)
@@ -146,19 +156,22 @@ if __name__ == "__main__":
 
     all_fracs2 = []
     all_fracs = []
+    all_fracs100 = []
     for i in range(len(frac)):
         all_fracs.append(np.percentile(frac[i], [16., 50., 84.]))
         all_fracs2.append(np.percentile(frac2[i], [16., 50., 84.]))
+        all_fracs100.append(np.percentile(frac100[i], [16., 50., 84.]))
     all_fracs_l = []
     for i in range(len(frac_l)):
         all_fracs_l.append(np.percentile(frac_l[i], [16., 50., 84.]))
-    print(np.percentile(all_fracs, [16., 50., 84.]))  # 86.7 - 26.1, 26.1 - 9.1
-    print(np.percentile(all_fracs2, [16., 50., 84.]))  # 21.3 - 5.1, 5.1 - 0.91
-    print(np.percentile(all_fracs_l, [16., 50., 84.]))  # 28.7% - 8.95%, 8.95% - 2.5%
+    print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')
+    print(np.percentile(all_fracs, [16., 50., 84.]), 'most recent bin')  # 86.7 - 26.1, 26.1 - 9.1
+    print(np.percentile(all_fracs2, [16., 50., 84.]), 'second bin')  # 21.3 - 5.1, 5.1 - 0.91
+    print(np.percentile(all_fracs_l, [16., 50., 84.]), 'lbgs most recent 100 Myr')  # 28.7% - 8.95%, 8.95% - 2.5%
     print('me')
 
-    print(np.percentile(sfr, [16, 50, 84]) / (10 ** 9.84233))
-    print(np.percentile(sfr_l, [16, 50, 84]) / (10 ** 10.55351))
+    print(np.percentile(sfr, [16, 50, 84]))  # / (10 ** 9.84233))
+    print(np.percentile(sfr_l, [16, 50, 84]))  # / (10 ** 10.55351))
 
     print(np.percentile(sfr, [16, 50, 84])[1] * 10 ** 8 / (10 ** 9.84233))
     print(np.percentile(sfr_l, [16, 50, 84])[1] * 10 ** 8 / (10 ** 10.55351))

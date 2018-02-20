@@ -267,6 +267,31 @@ def tie_gas_logz(logzsol=None, **extras):
 def transform_logtau_to_tau(tau=None, logtau=None, **extras):
     return 10**logtau
 
+
+def sfrac_to_masses(logmass=None, agebins=None, sfrac=None, **extras):  # BUCKET NEW ADDED
+    """This transforms from sfr fractions to bin mass fractions. The
+    transformation is such that sfr fractions are drawn from a Dirichlet
+    prior.  See Betancourt et al. 2010
+    :returns masses:
+        The stellar mass formed in each age bin.
+    """
+    # sfr fractions (e.g. Leja 2017)
+
+    # taken from relevant lines in get_galaxy_spectrum() in class FracSFH()
+    # fractions = np.array(self.params['sfr_fraction'])
+    fractions = np.array(sfrac)
+    bin_fractions = np.append(fractions, (1 - np.sum(fractions)))
+    time_per_bin = []
+    # for (t1, t2) in self.params['agebins']:
+    for (t1, t2) in agebins:
+        time_per_bin.append(10 ** t2 - 10 ** t1)
+    bin_fractions *= np.array(time_per_bin)
+    bin_fractions /= bin_fractions.sum()
+
+    masses = bin_fractions * (10 ** logmass)  # bin_fractions * self.params['mass']
+
+    return masses
+
 #############
 # MODEL_PARAMS
 #############
@@ -311,8 +336,8 @@ model_params.append({'name': 'mass', 'N': 1,
                      'prior_args': {'mini': 1e1, 'maxi': 1e14}})
 
 model_params.append({'name': 'logzsol', 'N': 1,
-                     'isfree': False,  # fixedmet
-                     'init': -1.0,  # fixedmet (was 0.0, now using -1.0, marking with "m1fixedmet")
+                     'isfree': False,
+                     'init': 0.0,
                      'init_disp': 0.4,
                      'log_param': True,
                      'units': r'$\log (Z/Z_\odot)$',
@@ -438,7 +463,7 @@ model_params.append({'name': 'gas_logz', 'N': 1,
 
 model_params.append({'name': 'gas_logu', 'N': 1,
                      'isfree': False,  # BUCKET1 emission lines --> isfree: True (OR False because not important)
-                     'init': -2.0,
+                     'init': -1.0,  # -2.0,
                      'units': '',
                      'prior_function': tophat,
                      'prior_args': {'mini': -4, 'maxi': -1}})
@@ -518,6 +543,17 @@ class BurstyModel(sedmodel.SedModel):  # NEW, replacing below
 
 
 class FracSFH(FastStepBasis):  # NEW CLASS
+    @property
+    def emline_wavelengths(self):
+        return self.ssp.emline_wavelengths
+
+    @property
+    def get_nebline_luminosity(self):
+        """Emission line luminosities in units of Lsun per solar mass formed
+        """
+
+        return self.ssp.emline_luminosity / self.params['mass'].sum()
+
     def get_galaxy_spectrum(self, **params):
         self.update(**params)
 
@@ -613,6 +649,6 @@ model_type = BurstyModel
 
 '''
 RUNNING WITH
-mpirun -n 4 python prospector.py --param_file=eelg_fixedmet_params.py --outfile=1824_cosmos_fixedmet --niter=2500
+mpirun -n 4 python prospector.py --param_file=eelg_varymet_params.py --outfile=1824_cosmos_fixedmet --niter=2500
 --field=cosmos --objname=1824
 '''
