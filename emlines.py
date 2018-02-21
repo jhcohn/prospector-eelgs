@@ -177,9 +177,9 @@ def ems(param_file, out_file, enames=None):
 
         ### calculate luminosity (in Lsun)
         idx = fsps_name[jj] == dat['name']
-        print(sps.params['mass'], 'mass')  # e.g. BIG23104018432.0, 10554496000.0 (~1e10)
+        # print(sps.params['mass'], 'mass')  # e.g. BIG23104018432.0, 10554496000.0 (~1e10)
         print(sps.params['mass'].sum())
-        eflux = float(sps.get_nebline_luminosity[idx]*sps.params['mass'].sum())
+        eflux = float(sps.get_nebline_luminosity[idx]*sps.params['mass'].sum() * 3.848*10**33)  # erg/s per L_sol
         elam = float(sps.emline_wavelengths[idx])
         print(sps.get_nebline_luminosity[idx])  # 1e-1 to 1e-10, typically ~1e-2 to 1e-6
         print(eflux, 'eflux')
@@ -210,8 +210,8 @@ if __name__ == "__main__":
         files[key] = kwargs[key]
 
     if files['outname'] == 'all':
-        data = 'lbg_ids1'  # 'Comp_10.dat'
-        fold = 'out_nvary/'  # 'out_evar/'
+        data = 'lbg_ids1'  # 'lbg_ids1'  # 'Comp_10.dat'
+        fold = 'out_nvary/'  # 'out_nvary/'  # 'out_evar/'
         with open(data, 'r') as comp:
             e_objs = []
             e_fs = []
@@ -232,7 +232,7 @@ if __name__ == "__main__":
         # 12105, 11462, 12533, 12552, 12903, 14808, 15124, 17189, 17342, 18561, 18742, 21076, 21442, 22768, 11063,
         # 17423, 8787, 15462
         lines = np.zeros(shape=(len(e_objs), 8))  # [OII]1, [OII]2, Hdelta, Hbeta, [OIII]1, [OIII]2, Halpha, [NII] = 8
-        width = lines
+        width = np.zeros(shape=(len(e_objs), 8))
         for i in range(len(e_objs)):
             for infile in glob.glob(os.path.join('/home/jonathan/.conda/envs/snowflakes/lib/python2.7/' +
                                                  'site-packages/prospector/git/out/' + fold, e_objs[i] + '*.h5')):
@@ -249,11 +249,15 @@ if __name__ == "__main__":
             eqws = []
             for idx in out:  # for each line in out
                 fluxes.append(out[idx]['flux'])  # that line's flux
+                print(fluxes[-1], out[idx], out[idx]['flux'])
                 eqws.append(out[idx]['eqw'])  # that line's eqw
+                print(eqws[-1])
             lines[i, :] = fluxes
+            print('fluxes', fluxes)
             width[i, :] = eqws
-        print(lines)
-        print(width)
+            # print('lines', lines)
+        print('lines', lines)
+        print('width', width)
         ratio = []
         for i in range(len(e_objs)):
             ratio.append((lines[i][4] + lines[i][5]) / (lines[i][0] + lines[i][1]))  # OIII doublet / OII doublet
