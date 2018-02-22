@@ -283,8 +283,8 @@ if __name__ == "__main__":
     scale_spec = specmed2 / specmed
     print(scale_phot, scale_sed, scale_spec)
     phot = scale_phot * phot
-    sed = scale_sed * sed
-    spec *= 2.3  # scale_spec * spec
+    sed *= scale_phot  # scale_sed * sed
+    spec *= scale_phot  # 2.3  # scale_spec * spec
 
     delmod = []
     delspec = []
