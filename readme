@@ -10,6 +10,8 @@ assembly_time.py: calculate mass-weighted ages (and save to .txt files) for gala
 
 bootstack.py: use for bootstrapping and plotting sSFHs (built from smart_stack.py)
 
+deltafig.py: use to make new fig2, showing difference in SED shape for EELG and SFG
+
 dust_multirun_params.py: same as eelg_fixedmet_params.py, but with add_dust_emission turned on and logzsol not fixed; defunct
 
 eelg_5bins_params.py: same as eelg_emission_params.py, but tweak using different arrangements/numbers of SFH bins; defunct
@@ -55,6 +57,8 @@ make_fig1.py: using to make Figure 2 for the paper. Shh. I know.
 make_fig2.py: using to make Figure 1 for the paper. Shhhhh.
 
 model_test.py: load model, test lnp of initial model given different values of metallicity; defunct
+
+new_fig1.py: new Figure 1
 
 noelg_multirun_params.py: eelg_multirun_params.py, but with add_dust_emission turned on (also currently using different SFH bins). NOW changed into eelg_fixedmet_params.py but with gaslogz held fixed and dust on. NOW fixing metallicity based on Gallazzi et al. 2005 stellar mass-metallicity relation.
 
@@ -114,13 +118,13 @@ write_runs.py: using to write .lsf files for running prospector on computing clu
 -Running with: python write_runs.py
 
 Note: Currently using...
+*deltafig.py			to plot new fig showing difference in SED shape (new fig2)
 *eelg_fifty_params.py		same as eelg_varymet_params.py, but with different agebins
 *eelg_varymet_params.py		to generate prospector output with emission lines, with logzsol varying
 *emlines.py			to calculate emission line fluxes and line ratios
 *get_mass_dust.py		to display mass, dust, and metallicity values for a given sample output from prospector
 *make_all_plots.py		to produce SFH and sSFR plots, as well as SED with chi and uvj plot (calling print_sfh.py, uvj.py, and, if including overlain filter curves, widths.py)
-*make_fig1.py			to produce side-by-side SED+ plots
-*make_fig2.py			to produce plot of SEDs with filterwidths overlain in each field
+*new_fig1.py			to produce plot of SEDs with filterwidths overlain
 *prospector.py			to run prospector
 *output.py			to generate tracefigs, cornerfigs and kl convergence plots, and to pickle SED info, spectra, wavelengths, chi, chi^2, SFR, and sSFR (called and used in make_all_plots.py)
 *smart_stack.py			to generate stacked plot of sSFHs
