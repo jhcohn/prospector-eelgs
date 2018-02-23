@@ -9,6 +9,62 @@ from matplotlib import gridspec
 from mpl_toolkits.axes_grid.inset_locator import (inset_axes, InsetPosition, mark_inset)
 
 
+def smooth(x, window_len=11, window='hanning'):
+    """smooth the data using a window with requested size.
+
+    This method is based on the convolution of a scaled window with the signal.
+    The signal is prepared by introducing reflected copies of the signal
+    (with the window size) in both ends so that transient parts are minimized
+    in the begining and end part of the output signal.
+
+    input:
+        x: the input signal
+        window_len: the dimension of the smoothing window; should be an odd integer
+        window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
+            flat window will produce a moving average smoothing.
+
+    output:
+        the smoothed signal
+
+    example:
+
+    t=linspace(-2,2,0.1)
+    x=sin(t)+randn(len(t))*0.1
+    y=smooth(x)
+
+    see also:
+
+    numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
+    scipy.signal.lfilter
+
+    TODO: the window parameter could be the window itself if an array instead of a string
+    NOTE: length(output) != length(input), to correct this: return y[(window_len/2-1):-(window_len/2)] instead of just y.
+    """
+    print(len(x), 'look')
+    if x.ndim != 1:
+        raise(ValueError, "smooth only accepts 1 dimension arrays.")
+
+    if x.size < window_len:
+        raise(ValueError, "Input vector needs to be bigger than window size.")
+
+    if window_len < 3:
+        return x
+
+    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+        raise(ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
+
+    s = np.r_[x[window_len - 1:0:-1], x, x[-2:-window_len - 1:-1]]
+    # print(len(s))
+    if window == 'flat':  # moving average
+        w = np.ones(window_len, 'd')
+    else:
+        w = eval('np.' + window + '(window_len)')
+
+    y = np.convolve(w / w.sum(), s, mode='valid')
+    print(len(y), 'at me')
+    return y
+
+
 def all_plots(fileset, objname, field, loc='upper left'):
     # FIGURES
     fig = plt.figure()
@@ -180,6 +236,7 @@ def all_plots(fileset, objname, field, loc='upper left'):
     ax4.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
     plt.show()
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('--obj1')
@@ -274,6 +331,9 @@ if __name__ == "__main__":
     # SCALE EELG PHOT SO IT'S MEDIAN = MEDIAN OF SFGs
     med1 = np.median(phot)
     med2 = np.median(phot2)
+    f1500_1 = phot[4]
+    f1500_2 = phot2[4]
+    scale_f1500 = f1500_2 / f1500_1
     scale_phot = med2 / med1
     sedmed = np.median(sed)
     sedmed2 = np.median(sed2)
@@ -285,6 +345,7 @@ if __name__ == "__main__":
     phot = scale_phot * phot
     sed *= scale_phot  # scale_sed * sed
     spec *= scale_phot  # 2.3  # scale_spec * spec
+    spec = smooth(spec)
 
     delmod = []
     delspec = []
@@ -310,38 +371,30 @@ if __name__ == "__main__":
     ax1.set_xlabel(r'Wavelength (Rest) [$\rm \AA$]', fontsize=fs_text)
     # fig.text(0.5, 0.03, r'Wavelength (Rest) [$\rm \AA$]', ha='center', va='bottom', fontsize=fs_text)  # 30
 
-    include_spec = 1
-    if include_spec:
-        # ax2 = plt.subplot(gs[1], sharey=ax1, sharex=ax1)
-        ax1.set_ylim(0.2, 3)  # (0, 8)
-        ax1.set_xlim(10**3, 21000)
-        ax1.set_xscale('log')
-        ax1.plot(wave_rest, delmod, marker='D', linestyle='', markerfacecolor='None', markeredgecolor='k',
-                 markersize=10, markeredgewidth=1., label=r'$\Delta$ Model')
-        ax1.plot(wave_rest, delphot, marker='o', linestyle='', color='r', label=r'$\Delta$ Flux')
-        ax1.plot(sps_wave, delspec, color='k', label=r'$\Delta$ Spectrum', alpha=0.5)
-        ax1.axhline(y=1., linestyle='--', color='k')
-        ax1.legend(numpoints=1, loc='upper left', prop={'size': 20})
-        # inset_axes(ax1, width=8 * 0.32, height=8 * 0.28, loc=1)
+    # GET PLOTTING!
+    # ax2 = plt.subplot(gs[1], sharey=ax1, sharex=ax1)
+    ax1.set_ylim(0.2, 3)  # 5)  # (0, 8)
+    ax1.set_xlim(10**3, 21000)
+    ax1.set_xscale('log')
+    ax1.plot(wave_rest, delmod, marker='D', linestyle='', markerfacecolor='None', markeredgecolor='k',
+             markersize=10, markeredgewidth=1., label=r'Model')
+    ax1.plot(wave_rest, delphot, marker='o', linestyle='', color='r', label=r'Flux')
+    ax1.plot(sps_wave, delspec, color='k', label=r'Spectrum', alpha=0.5)
+    ax1.axhline(y=1., linestyle='--', color='k')
+    ax1.legend(numpoints=1, loc='upper left', prop={'size': 20})
+    # inset_axes(ax1, width=8 * 0.32, height=8 * 0.28, loc=1)
 
-        # INSET UVJ (EELG)
-        ax2 = fig.add_axes([0.741, 0.642, 0.218*0.7, 0.35*0.7])  # left edge, bottom edge, width, height
-        objs = [obj1 + '_' + field1, obj2 + '_' + field2]
-        uvj.uvj_plot(-1, 'all', objlist=objs, title=False, labels=False, lims=True, size=25, show=False,
-                     col=['purple', 'b'])
+    # INSET UVJ (EELG)
+    ax2 = fig.add_axes([0.741, 0.642, 0.218*0.7, 0.35*0.7])  # left edge, bottom edge, width, height
+    objs = [obj1 + '_' + field1, obj2 + '_' + field2]
+    uvj.uvj_plot(-1, 'all', objlist=objs, title=False, labels=False, lims=True, size=25, show=False,
+                 col=['purple', 'b'], legend=[r'EELG', r'SFG'])
 
-        # EELG, SFG names
-        ax1.text(1.7*10**3, 2.82, str(field1).upper() + '-' + str(obj1) + ', EELG (purple)', fontsize=fs_text)
-        ax1.text(1.7*10**3, 2.65, str(field2).upper() + '-' + str(obj2) + ', SFG (blue)', fontsize=fs_text)
-
-    else:
-        ax1.set_ylim(0, 3)
-        ax1.set_xlim(10**3, 21000)
-        ax1.plot(wave_rest, delmod, marker='D', linestyle='', markerfacecolor='None', markeredgecolor='k',
-                 markersize=10, markeredgewidth=1., label=r'$\Delta$ Model')
-        ax1.plot(wave_rest, delphot, marker='o', linestyle='', color='r', label=r'$\Delta$ Flux')
-        ax1.axhline(y=1., linestyle='--', color='k')
-        ax1.legend(numpoints=1, loc='upper left', prop={'size': 20})
+    # EELG, SFG names
+    # ax1.text(1.7*10**3, 2.82, str(field1).upper() + '-' + str(obj1) + ', EELG', fontsize=fs_text)
+    # ax1.text(1.7*10**3, 2.65, str(field2).upper() + '-' + str(obj2) + ', SFG', fontsize=fs_text)
+    ax1.text(1.7*10**3, 4.7, str(field1).upper() + '-' + str(obj1) + ', EELG', fontsize=fs_text)
+    ax1.text(1.7*10**3, 4.4, str(field2).upper() + '-' + str(obj2) + ', SFG', fontsize=fs_text)
 
     # TICK PARAMS
     ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)
@@ -354,7 +407,9 @@ if __name__ == "__main__":
 
 '''
 Currently running with:
-python deltafig.py --obj1=12533 --field1=cdfs --base1=fifty --obj2=7817 --field2=cdfs --base2=vary
+python deltafig.py --obj1=21442 --field1=cdfs --base1=fifty --obj2=7817 --field2=cdfs --base2=vary
+
+# python deltafig.py --obj1=12533 --field1=cdfs --base1=fifty --obj2=7817 --field2=cdfs --base2=vary
 
 python deltafig.py --obj1=15462 --field1=uds --base1=vary --obj2=2920 --field2=cosmos --base2=vary
 python deltafig.py --obj1=21076 --field1=cdfs --base1=vary --obj2=7817 --field2=cdfs --base2=vary
