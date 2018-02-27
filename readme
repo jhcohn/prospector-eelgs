@@ -41,6 +41,8 @@ eelg_varymet_params.py: eelg_fixedmet_params.py, but with metallicity allowed to
 
 emlines.py: using to get emission line fluxes & equivalent widths
 
+fast_compare.py: plot comparisons of FAST-derived stellar masses vs Prospector-derived stellar masses for galaxies
+
 fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector; defunct
 
 get_mass_dust.py: print out median and +/- 1sigma values for the varying parameters (stellar mass, dust, gaslogz, logzsol if applicable) for each population (EELGs and LBGs) as a whole
