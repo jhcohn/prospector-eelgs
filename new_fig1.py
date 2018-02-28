@@ -11,18 +11,17 @@ from mpl_toolkits.axes_grid.inset_locator import inset_axes
 
 def all_plots(fileset, objname, znames, field):
     # FIGURES
-    plt.figure()
-    # prepares fig to hold two sets side-by-side of: two axes, one atop other, size ratio 3:1
+    fig = plt.figure()
 
     scale = True
     if scale:
         # FILTERS SCALE FACTOR
-        filt_factor1 = 7. * 10 ** 7.5  # 10 ** 10  # 10 ** 6
-        filt_factor2 = 0.7 * filt_factor1  # 1.75 * 10 ** 7.5  # 10 ** 10  # 10 ** 6
+        filt_factor1 = 10**8.4  # 10**7.5  # 7. * 10 ** 7.5
+        filt_factor2 = 0.5 * filt_factor1  # 6. * filt_factor1  # 0.7 * filt_factor1
 
         # AXIS LIMS
-        ymin = 5*10**-2  # 2*10**-3  # 10**-7
-        ymax = 200  # 2*10**3  # 5*10**3
+        ymin = 8*10**-2  # 5*10**-2
+        ymax = 400  # 300
         xmin = 700  # 600
         xmax = 2.7 * 10 ** 4  # 3*10**4
         ymin2 = ymin
@@ -31,11 +30,11 @@ def all_plots(fileset, objname, znames, field):
         # LEGEND, TEXT LOCATION, FONT SIZE
         loc = 2  # loc=1 (up R), loc=2 (up L), loc=3 (low L), loc=4 (low R); loc=7 (center R)
         textx = 720  # 1.5 * 10 ** 3  # 10**4  # 700
-        texty1 = 15  # 12  # 50
+        texty1 = 30  # 20
         texty2 = texty1
         fs = 20
         fs_text = 30
-        ylabel = r'Scaled Flux [$1500 \rm \AA$]'
+        ylabel = r'Scaled F$_\nu$ [$1500 \rm \AA$]'
 
     else:
         # FILTERS SCALE FACTOR
@@ -141,6 +140,7 @@ def all_plots(fileset, objname, znames, field):
         if j == 0:
             if scale:
                 scale_factor = res_jan[4]  # max(res_jan)
+                print(type(res_jan[4]))
                 spec_jan = spec_jan / scale_factor
                 sed_jan = sed_jan / scale_factor
                 res_jan = res_jan / scale_factor
@@ -150,7 +150,7 @@ def all_plots(fileset, objname, znames, field):
                      markeredgecolor='k', label=r'Model Photometry')  # plot best fit model
             ax1.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='purple',
                          label=r'Observations')  # plot observations
-            ax1.set_ylabel(ylabel, fontsize=fs_text)
+            # ax1.set_ylabel(ylabel, fontsize=fs_text)
             ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             # ax1.axvline(4800, color='k', ls='--')
             # ax1.axvline(5050, color='k', ls='--')
@@ -175,7 +175,7 @@ def all_plots(fileset, objname, znames, field):
                      markeredgecolor='k', label=r'Model Photometry')  # plot best fit model
             ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='b',
                          label=r'Observations')  # plot observations
-            ax2.set_ylabel(ylabel, fontsize=fs_text)  # 30
+            # ax2.set_ylabel(ylabel, fontsize=fs_text)  # 30
             ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax2.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
             # ax2.text(700, 3, 'z ~ ' + str(zred) + ', LBG', fontsize=20)
@@ -186,6 +186,8 @@ def all_plots(fileset, objname, znames, field):
             widths.fig2(ax2, field[j], zred, scale=(phot.max() * filt_factor2), rest=True)  # WIDTHS
             plt.subplots_adjust(hspace=.0)
     print('show')
+
+    fig.text(0.07, 0.5, ylabel, fontsize=fs_text, va='center', rotation='vertical')
     plt.xlabel(r'Wavelength (Rest) [$\rm \AA$]', fontsize=fs_text)  # 20
     plt.show()
 
@@ -195,6 +197,7 @@ if __name__ == "__main__":
     parser.add_argument('--obj2')
     parser.add_argument('--base1')
     parser.add_argument('--base2')
+    parser.add_argument('--field')
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -203,9 +206,20 @@ if __name__ == "__main__":
 
     obj1 = kwargs['obj1']
     obj2 = kwargs['obj2']
+    fd = kwargs['field']  # 'cdfs' 'cosmos' 'uds'
 
-    field1 = 'cdfs'
-    field2 = 'cdfs'
+    if fd == 'cdfs':
+        znames = ['/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout', '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout']
+        field1 = 'cdfs'
+        field2 = 'cdfs'
+    elif fd == 'cosmos':
+        znames = ['/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout', '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout']
+        field1 = 'cosmos'
+        field2 = 'cosmos'
+    else:
+        znames = ['/home/jonathan/uds/uds.v1.5.8.awk.zout', '/home/jonathan/uds/uds.v1.5.8.awk.zout']
+        field1 = 'uds'
+        field2 = 'uds'
 
     pre1 = 'pkl_efifty/' + obj1 + '_' + field1 + '_' + kwargs['base1']
     pre2 = 'pkl_nvary/' + obj2 + '_' + field2 + '_' + kwargs['base2']
@@ -235,11 +249,26 @@ if __name__ == "__main__":
     objs = [obj1, obj2]
     fields = [field1, field2]
 
-    znames = ['/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout', '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout']
-
     all_plots(fileset, objs, znames, fields)
 
 '''
 Currently running with:
+python new_fig1.py --obj1=21442 --base1=fifty --obj2=7817 --base2=vary --field=cdfs
+python new_fig1.py --obj1=12105 --base1=fifty --obj2=2729 --base2=vary --field=cosmos  # pretty good, deltafig 2xtreme
+python new_fig1.py --obj1=12105 --base1=fifty --obj2=3623 --base2=vary --field=cosmos  # pretty good, deltafig 2xtreme!!
+python new_fig1.py --obj1=12105 --base1=fifty --obj2=8233 --base2=vary --field=cosmos  # not bad...
+python new_fig1.py --obj1=12105 --base1=fifty --obj2=12535 --base2=vary --field=cosmos  # pretty good, big-ish z-diff
+python new_fig1.py --obj1=12105 --base1=fifty --obj2=12676 --base2=vary --field=cosmos  # not bad, deltafig good emlines
+# but not great slope
+
+# WAS DOING:
 python new_fig1.py --obj1=12533 --base1=fifty --obj2=7817 --base2=vary
+# look for smaller photometric errors than 12533
+# Shape-wise, I like 11462. 12903 not as bad error-wise. 15124 best errors, but lack of impressive emission points.
+# 18561 not super terrible. 21442 quite good.
+
+Prior to taking this ratio, I scaled the EELG such that its median flux is the same as the median flux of the SFG (the
+SFG inherently has a larger continuum, the only purpose of this scaling is so that a ratio of "1" corresponds to
+effectively equivalent fluxes on the EELG and SFG compared to their respective continua; the scaling doesn't change the
+actual shape of the plot at all).
 '''

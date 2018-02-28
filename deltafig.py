@@ -1,68 +1,13 @@
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import ndimage
 import argparse
 import print_sfh
 import uvj
 import widths  # WIDTHS
 from matplotlib import gridspec
 from mpl_toolkits.axes_grid.inset_locator import (inset_axes, InsetPosition, mark_inset)
-
-
-def smooth(x, window_len=11, window='hanning'):
-    """smooth the data using a window with requested size.
-
-    This method is based on the convolution of a scaled window with the signal.
-    The signal is prepared by introducing reflected copies of the signal
-    (with the window size) in both ends so that transient parts are minimized
-    in the begining and end part of the output signal.
-
-    input:
-        x: the input signal
-        window_len: the dimension of the smoothing window; should be an odd integer
-        window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
-            flat window will produce a moving average smoothing.
-
-    output:
-        the smoothed signal
-
-    example:
-
-    t=linspace(-2,2,0.1)
-    x=sin(t)+randn(len(t))*0.1
-    y=smooth(x)
-
-    see also:
-
-    numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
-    scipy.signal.lfilter
-
-    TODO: the window parameter could be the window itself if an array instead of a string
-    NOTE: length(output) != length(input), to correct this: return y[(window_len/2-1):-(window_len/2)] instead of just y.
-    """
-    print(len(x), 'look')
-    if x.ndim != 1:
-        raise(ValueError, "smooth only accepts 1 dimension arrays.")
-
-    if x.size < window_len:
-        raise(ValueError, "Input vector needs to be bigger than window size.")
-
-    if window_len < 3:
-        return x
-
-    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise(ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
-
-    s = np.r_[x[window_len - 1:0:-1], x, x[-2:-window_len - 1:-1]]
-    # print(len(s))
-    if window == 'flat':  # moving average
-        w = np.ones(window_len, 'd')
-    else:
-        w = eval('np.' + window + '(window_len)')
-
-    y = np.convolve(w / w.sum(), s, mode='valid')
-    print(len(y), 'at me')
-    return y
 
 
 def all_plots(fileset, objname, field, loc='upper left'):
@@ -241,10 +186,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('--obj1')
     parser.add_argument('--obj2')
-    parser.add_argument('--field1')
-    parser.add_argument('--field2')
     parser.add_argument('--base1')
     parser.add_argument('--base2')
+    parser.add_argument('--field')
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -254,8 +198,8 @@ if __name__ == "__main__":
     obj1 = kwargs['obj1']
     obj2 = kwargs['obj2']
 
-    field1 = kwargs['field1']
-    field2 = kwargs['field2']
+    field1 = kwargs['field']
+    field2 = kwargs['field']
     if kwargs['base1'] == 'vary':
         pre1 = 'pkl_evar/' + obj1 + '_' + field1 + '_' + kwargs['base1']
         pre2 = 'pkl_nvary/' + obj2 + '_' + field2 + '_' + kwargs['base2']
@@ -345,7 +289,28 @@ if __name__ == "__main__":
     phot = scale_phot * phot
     sed *= scale_phot  # scale_sed * sed
     spec *= scale_phot  # 2.3  # scale_spec * spec
-    spec = smooth(spec)
+    # print(max(spec), min(spec))
+
+    # SMOOTHING
+    # print(len(spec))
+    # print(sps_wave[0], sps_wave[100], sps_wave[250], sps_wave[4450])
+    # (795.0, 1765.0, 3590.0, 7381.9327999999996)
+    #spec = ndimage.filters.gaussian_filter1d(spec, sigma=10.)
+    #spec2 = ndimage.filters.gaussian_filter1d(spec2, sigma=10.)
+    # spec = smooth(spec, window_len=5, window='hanning')
+    '''
+    specl = spec[:100]  # big, wide waves
+    speclc = spec[100:250]  # tiny wiggles
+    specc = spec[250:4450]  # big emission lines
+    specr = spec[4450:]  # mostly smaller stuff
+    specl = savitzky_golay(specl, 5, 3)
+    speclc = savitzky_golay(speclc, 11, 3)
+    specc = savitzky_golay(specc, 5, 3)
+    specr = savitzky_golay(specr, 7, 3)
+    spec = np.concatenate((specl, speclc, specc, specr))
+    # spec = savitzky_golay(spec, 5, 3)  # window size 51, polynomial order 3
+    '''
+    # print(len(spec), 'same?')  # , max(spec), min(spec))
 
     delmod = []
     delspec = []
@@ -358,6 +323,9 @@ if __name__ == "__main__":
         delphot.append(phot[i] / phot2[i])
     print(len(phot), len(phot2), len(delmod), len(delphot))
     wave_rest = np.asarray(wave_rest)
+
+    # SMOOTH!
+    delspec = ndimage.filters.gaussian_filter1d(delspec, sigma=3.)
 
     # PLOT IT
     # SETUP FIG
@@ -373,8 +341,12 @@ if __name__ == "__main__":
 
     # GET PLOTTING!
     # ax2 = plt.subplot(gs[1], sharey=ax1, sharex=ax1)
-    ax1.set_ylim(0.2, 3)  # 5)  # (0, 8)
-    ax1.set_xlim(10**3, 21000)
+    ymax = 5.75 # 4.1  # 4.5
+    ymin = 0.0001  # 0.2
+    xmax = 21000
+    xmin = 10 ** 3
+    ax1.set_ylim(ymin, ymax)  # 3)  # 5)  # (0, 8)
+    ax1.set_xlim(xmin, xmax)
     ax1.set_xscale('log')
     ax1.plot(wave_rest, delmod, marker='D', linestyle='', markerfacecolor='None', markeredgecolor='k',
              markersize=10, markeredgewidth=1., label=r'Model')
@@ -393,8 +365,8 @@ if __name__ == "__main__":
     # EELG, SFG names
     # ax1.text(1.7*10**3, 2.82, str(field1).upper() + '-' + str(obj1) + ', EELG', fontsize=fs_text)
     # ax1.text(1.7*10**3, 2.65, str(field2).upper() + '-' + str(obj2) + ', SFG', fontsize=fs_text)
-    ax1.text(1.7*10**3, 4.7, str(field1).upper() + '-' + str(obj1) + ', EELG', fontsize=fs_text)
-    ax1.text(1.7*10**3, 4.4, str(field2).upper() + '-' + str(obj2) + ', SFG', fontsize=fs_text)
+    ax1.text(1.6*10**3, ymax * 0.94, str(field1).upper() + '-' + str(obj1) + ', EELG', fontsize=fs_text)
+    ax1.text(1.6*10**3, ymax * 0.88, str(field2).upper() + '-' + str(obj2) + ', SFG', fontsize=fs_text)
 
     # TICK PARAMS
     ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)
@@ -407,7 +379,9 @@ if __name__ == "__main__":
 
 '''
 Currently running with:
-python deltafig.py --obj1=21442 --field1=cdfs --base1=fifty --obj2=7817 --field2=cdfs --base2=vary
+# python deltafig.py --obj1=21442 --field1=cdfs --base1=fifty --obj2=7817 --field2=cdfs --base2=vary
+python deltafig.py --obj1=21442 --base1=fifty --obj2=7817 --base2=vary --field=cdfs
+python deltafig.py --obj1=12105 --base1=fifty --obj2=3623 --base2=vary --field=cosmos
 
 # python deltafig.py --obj1=12533 --field1=cdfs --base1=fifty --obj2=7817 --field2=cdfs --base2=vary
 
