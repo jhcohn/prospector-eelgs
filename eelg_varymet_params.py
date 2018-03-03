@@ -228,41 +228,17 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
         if ly_mask[i]:
             phot_mask[i] = False
     # print(phot_mask)
+
     # NEWNEWNEW  # FLUX IS AB_MAG FLUX WITH A ZEROPOINT OF 25
-    # m_ab = -2.5 log_10(f_cat) + 25            where f_cat is the catalog flux in a given bandpass
-    # m_ab = -2.5 log_10(f_nu) - 48.6		for f_nu in erg/s/cm^2/Hz
-    # -->
-    # -2.5 log_10(f_nu) = -2.5 log_10(f_cat) + 73.6
-    # log_10(f_nu) = log_10(f_cat) - 29.44
-    # f_nu = 10^(-29.44) f_cat
-    '''
-    f_nu_erg = flux * 10 ** -29.44
-    unc_nu_erg = unc * 10 * -29.44
-    flux = f_nu_erg * 10 ** 23  # 1Jy = 10**-23 erg/s/cm^2/Hz --> [ergs/s/cm^2/Hz] * 10**23 [Jy /(erg/s/cm^2/Hz)]
-    unc = unc_nu_erg * 10 ** 23
-    '''
-    # OR m_ab = -2.5 log_10(f_cat) + 25, m_ab = -2.5 log_10(f_nu) + 8.90        for f_nu in Jy
+    # m_ab = -2.5 log_10(f_cat) + 25        for zfourge catalog fluxes
+    # m_ab = -2.5 log_10(f_nu) + 8.90       for f_nu in Jy
     # --> -2.5 log_10(f_cat) + 25 - 8.90 = -2.5 log_10(f_cat) + 16.1 = -2.5 log_10(f_nu)
     # --> log_10(f_nu) = log_10(f_cat) - 6.44 --> f_nu = f_cat * 10 ** -6.44
-    '''
-    del_mag = []
-    for fl in range(len(flux)):
-        del_mag.append(0.434 * unc[fl] / flux[fl])
-    '''
     flux *= 10 ** -6.44
     unc *= 10 ** -6.44
-    print(flux, 'flux!')
-    print(unc, 'unc!')
-    '''
-    maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
-    maggies_unc = unc * 10**-6 / 3631
-
-    unc_thing = []
-    for dm in range(len(del_mag)):
-        unc_thing.append(maggies[dm] * del_mag[dm])
-    maggies_unc = 2.303 * 0.4 * unc_thing
-    '''
-    maggies = flux / 3631  # 1 maggy / Jy
+    # print(flux, 'flux!')
+    # print(unc, 'unc!')
+    maggies = flux / 3631  # 1 maggy = 3631 Jy
     maggies_unc = unc / 3631
     print(maggies, 'maggy')
     print(maggies_unc, 'munc')

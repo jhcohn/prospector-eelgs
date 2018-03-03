@@ -23,11 +23,16 @@ cosmos_pre = 'cosmos.v1.3.6_'
 uds_pre = 'uds.v1.5.8_'
 
 eelgs = 1  # True=1
-folders = ['pkl_efifty/', 'pkl_nvary/']  # ['pkl_efifty', 'pkl_nvary']  # ['pkl_evar', 'pkl_nvary']  # ['pkl_emask', 'pkl_nmask']
-folder = 'pkl_efifty/'
-out_fold = 'out_efifty/'
-file = 'fifty'  # 'fifty'  # 'vary'  # 'newmask'
-base = ['fifty', 'vary']
+# folders = ['pkl_efifty/', 'pkl_nvary/']  # ['pkl_efifty', 'pkl_nvary']  # ['pkl_evar', 'pkl_nvary']
+folders = ['evar2_pkls/', 'pkl_ecorr/']
+# folder = 'pkl_efifty/'
+folder = 'evar2_pkls/'
+# out_fold = 'out_efifty/'
+out_fold = 'out_corrin/'
+# file = 'fifty'  # 'fifty'  # 'vary'  # 'newmask'
+file = 'vary'
+# base = ['fifty', 'vary']  # fifty, vary
+base = ['vary', 'vary']
 fs = 20  # 30
 fs_text = 30
 textx = 1100
@@ -54,7 +59,7 @@ for [objs, fields] in full_set:
     for i in range(len(objs)):
         obj = objs[i]
         field = fields[i]
-        pre = folder + '/' + str(obj) + '_' + field + '_' + file + '_'
+        pre = folder + str(obj) + '_' + field + '_' + file + '_'
         print(pre)
         base = '_out.pkl'
         extra = pre + 'extra' + base  # includes SFH *AND* rest of extra_output, so call it extra and not sfh
@@ -68,6 +73,7 @@ for [objs, fields] in full_set:
 
         files = [extra, res, sed, restwave, spec, spswave, chisq, justchi]
         print(files)
+        print(os.path.exists(files[1]))
         # map.all_plots(files, obj, field, file, loc='upper left', sfh=False, curves=False, sep_uvj=False)
 
         if os.path.exists(files[1]):
@@ -104,6 +110,7 @@ for [objs, fields] in full_set:
                     else:
                         red = zname[l][17]  # using zout catalog, z_peak = z_phot; index good for all zout cats
 
+            print(red, 'red')
             fast_file = place + pre + str(eelg_objs[i]) + '.awk.fit'
             if os.path.exists(fast_file):
 
@@ -124,7 +131,6 @@ for [objs, fields] in full_set:
                         prosp_mass = get[0]
                 print(prosp_mass)
                 print('these!')
-                print('exist fast')
                 print(fast_file)
                 with open(fast_file, 'r') as ffile:
                     wls = []
@@ -140,7 +146,7 @@ for [objs, fields] in full_set:
                             flam = float(cols[1]) * 10 ** -19  # erg s^-1 cm^-2 Angstrom^-1
                             # flx in F_lambda --> F_nu = F_lam * lam^2 / c = erg s^-1 cm^-2 Hz-1
                             # erg s-1 cm-2 A-1 * A^2 * A-1 * Hz-1 = erg cm-2 s-1 Hz-1
-                            fnu = flam * (float(cols[0]) / (1 + red))**2 / (2.998*10**18)
+                            fnu = flam * (float(cols[0]))**2 / (2.998*10**18)
                             fjy = fnu * 10**23  # 1 Jy = 10^-23 erg s-1 cm-2 Hz-1 --> f[erg,etc.]*10^23 Jy/erg = f[jy]
                             fujy = fjy * 10**6  # Jy to uJy
                             flx.append(fujy)
@@ -192,6 +198,18 @@ for [objs, fields] in full_set:
                 spec_jan = []
                 for i in range(len(spec)):
                     spec_jan.append(spec[i] * factor)
+
+                # BUCKET COMPARE DIFF
+                for wl in range(len(wls)):
+                    if 1490 < wls[wl] < 1510:
+                        idx_l = wl
+                        print('a')
+                for wr in range(len(sps_wave)):
+                    if 1490 < sps_wave[wr] < 1510:
+                        idx_r = wr
+                        print('b')
+                print(flx[idx_l], spec_jan[idx_r], flx[idx_l] / spec_jan[idx_r])  # ratio is 0.0523375
+                print(wls[idx_l], sps_wave[idx_r])  # 1508, 1505
 
                 fig = plt.figure()
                 gs = gridspec.GridSpec(1, 1)  # , height_ratios=[3, 1])
@@ -258,6 +276,3 @@ for [objs, fields] in full_set:
                 fig.text(0.5, 0.03, r'Wavelength (Rest) [$\rm \AA$]', ha='center', va='bottom', fontsize=fs_text)  # 30
                 plt.show()
 
-
-if chi_stuff:
-    print(np.percentile(max, [16, 50, 84]))
