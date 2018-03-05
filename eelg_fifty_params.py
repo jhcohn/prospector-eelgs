@@ -228,8 +228,8 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
         if ly_mask[i]:
             phot_mask[i] = False
     # print(phot_mask)
-    maggies = flux * 10**-6 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]
-    maggies_unc = unc * 10**-6 / 3631
+    maggies = flux * 10**-6.44 / 3631  # flux [uJy] * 1e-6 [Jy / uJy] * 1 [maggy] / 3631 [Jy]  # CORRECTED
+    maggies_unc = unc * 10**-6.44 / 3631  # CORRECTED
 
     # ERROR FLOOR
     maggies_unc = np.clip(maggies_unc, maggies * err_floor, np.inf)  # for any unc < err_floor, replace with err_floor
