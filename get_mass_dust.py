@@ -12,25 +12,96 @@ import os
 np.errstate(invalid='ignore')
 
 
-def printer(out_file):
+def md(sample_results, start=0, thin=1, percs=True):
+    """Make a triangle plot of the (thinned, latter) samples of the posterior
+    parameter space.  Optionally make the plot only for a supplied subset of
+    the parameters.
+
+    :param start:
+        The iteration number to start with when drawing samples to plot.
+
+    :param thin:
+        The thinning of each chain to perform when drawing samples to plot.
+    """
+    # pull out the parameter names and flatten the thinned chains
+    try:
+        parnames = np.array(sample_results['theta_labels'])
+    except(KeyError):
+        parnames = np.array(sample_results['model'].theta_labels())
+    flatchain = sample_results['chain'][:, start::thin, :]
+    flatchain = flatchain.reshape(flatchain.shape[0] * flatchain.shape[1],
+                                  flatchain.shape[2])
+
+    # print(np.percentile(flatchain[:, 0], [16, 50, 84]), len(flatchain[0]))  len(flatchain[0]) = 8 = len(parnames)
+    # print(parnames) = [u'logmass' u'sfr_fraction_1' u'sfr_fraction_2' u'sfr_fraction_3' u'sfr_fraction_4'
+    # u'sfr_fraction_5' u'dust2' u'logzsol' u'gas_logz']
+    # IF METALLICITY: print(parnames) = [... u'dust2' u'logzsol' u'gaslogz']
+    if percs:
+        mass = np.percentile(flatchain[:, 0], [16, 50, 84])[1]
+        dust = np.percentile(flatchain[:, 6], [16, 50, 84])[1]
+        gasmet = np.percentile(flatchain[:, -1], [16, 50, 84])[1]
+        metal = None
+        if parnames[7] == u'logzsol':
+            metal = np.percentile(flatchain[:, 7], [16, 50, 84])[1]
+        ret = [mass, dust, metal, gasmet]
+    else:
+        mass = flatchain[:, 0]
+        print(len(mass), 'mass')
+        dust = flatchain[:, 6]
+        gasmet = flatchain[:, -1]
+        metal = None
+        if parnames[7] == u'logzsol':
+            metal = flatchain[:, 7]
+        ret = mass
+    return ret
+
+
+def printer(out_file, percs=True):
     print(out_file)
 
     res, pr, mod = bread.results_from(out_file)
     # ''' #
 
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
-    return bread.md(res, start=650, thin=5)  # set start by when kl converges!  # returns mass, dust, stellar Z, gas Z
+    return md(res, start=-1000, thin=5, percs=percs)  # -650
+    # set start by when kl converges!  # returns mass, dust, stellar Z, gas Z
 
 
 if __name__ == "__main__":
 
-    vary = 1
+    corr = 0
+    fico = 1
+
+    vary = 0
+    fifty = 0
+    fix = 0
+    newu = 0
     others = 0
     short = 0
-    if vary:
+    if corr:
+        folders = ['out_ecorr/', 'out_ncorr/']
+        pars = ['eelg_varymet_params.py', 'eelg_varymet_params.py']
+        base = 'corr'
+    elif fico:
+        folders = ['out_efico/', 'out_ncorr/']
+        pars = ['eelg_fifty_params.py', 'eelg_fifty_params.py']
+        base = 'fico'
+    elif vary:
         folders = ['out_evar/', 'out_nvary/']
         pars = ['eelg_varymet_params.py', 'eelg_varymet_params.py']
         base = 'vary'
+    elif fifty:
+        folders = ['out_efifty/', 'out_efifty/']  # out_nfifty
+        pars = ['eelg_fifty_params.py', 'eelg_fifty_params.py']
+        base = 'fifty'
+    elif fix:
+        folders = ['out_efix/', 'out_efifty/']  # out_nfifty
+        pars = ['eelg_fixedmet_params.py', 'eelg_fifty_params.py']
+        base = 'fix'
+    elif newu:
+        folders = ['out_enewu/', 'out_enewu/']  # out_nfifty
+        pars = ['eelg_newu_params.py', 'eelg_newu_params.py']
+        base = 'newu'
     elif others:
         folders = ['out_ethvary/', 'out_nthvary/']
         pars = ['eelg_thvary_params.py', 'eelg_thvary_params.py']
@@ -49,7 +120,7 @@ if __name__ == "__main__":
             eelgs1.append(file)
 
     ### NEW COMP
-    eelg_list = open('Comp_10.dat', 'r')
+    eelg_list = open('eelg_specz_ids1', 'r')
     comp = []
     for line in eelg_list:
         if line[0] == '#':
@@ -88,18 +159,32 @@ if __name__ == "__main__":
     for i in range(len(eelgs)):
         get_e[:, i] = printer(oute + eelgs[i])
 
+    masse = np.percentile(get_e[0], [16., 50., 84.])
+    duste = np.percentile(get_e[1], [16., 50., 84.])
+    mete = np.percentile(get_e[2], [16., 50., 84.])
+    gasmete = np.percentile(get_e[3], [16., 50., 84.])
+
+    # '''
     get_l = np.zeros(shape=(4, len(lbgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as lbgs
     for i in range(len(lbgs)):
         get_l[:, i] = printer(outl + lbgs[i])
 
-    print('masse', np.percentile(get_e[0], [16., 50., 84.]))
-    print('duste', np.percentile(get_e[1], [16., 50., 84.]))
-    print('mete', np.percentile(get_e[2], [16., 50., 84.]))
-    print('gasmete', np.percentile(get_e[3], [16., 50., 84.]))
-    print('mass', np.percentile(get_l[0], [16., 50., 84.]))
+    mass = np.percentile(get_l[0], [16., 50., 84.])
+    dust = np.percentile(get_l[1], [16., 50., 84.])
+    met = np.percentile(get_l[2], [16., 50., 84.])
+    gasmet = np.percentile(get_l[3], [16., 50., 84.])
+    # '''
+
+    print('masse', masse)
+    print('duste', duste)
+    print('mete', mete)
+    print('gasmete', gasmete)
+    # '''
+    print('mass', mass)
     print('dust', np.percentile(get_l[1], [16., 50., 84.]))
     print('met', np.percentile(get_l[2], [16., 50., 84.]))
     print('gasmet', np.percentile(get_l[3], [16., 50., 84.]))
+    # '''
 
 '''
 RUNNING WITH:

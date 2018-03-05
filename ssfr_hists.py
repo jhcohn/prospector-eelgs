@@ -361,47 +361,6 @@ def smooth(perc):
     # print(smoother)
     return smoother
 
-'''
-# Also plots it
-def stacker2(gal_draws, times, sigma=1, spec=True, lw=1):
-    """
-    stacker2 takes input of random points drawn from a list of galaxies' SFH posteriors, concatenates them within each
-    bin, and then calculates the median and 1 sigma errors in each bin
-    gal_draws should be in format draws = [draw_from_sfh1, draw_from_sfh2, ...]
-    times should be in format times = [t1, t2, t3, ...]
-    each draw_from_sfh has shape=(22,num)
-
-    :param gal_draws: list comprised of draw_from_sfh (i.e. comprised of the output from randraw) for a list of galaxies
-    :param times: list comprised of extra_output['extras']['t_sfh'] that correspond respectively to entries in gal_draws
-    :param sigma: how many sigma of error we want to show in the plot
-    :return: perc = stored lists of the median and +/- sigma SFH values calculated from the gal_draws
-    """
-
-    # print(len(perc), len(perc[0]), len(perc[0][0]))  # number of galaxies (12), number of points (22), 2*sigma+1 (3)
-    # print(len(gal_draws[0][0]))  # 1000
-
-    fig = plt.figure()
-    ax1 = plt.subplot(1, 1, 1)
-
-    for k in range(len(gal_draws)):
-        perc = np.zeros(shape=(len(gal_draws[0]), 2 * sigma + 1))  # len(gal_draws[0])=22=len(t); len(perc)=22, len(perc[0])=3
-        # append the num=1000 values in each gal_draws[k] at each of the 22 points to all_draws:
-        for jj in xrange(len(times[k])):
-            print(perc[jj, :])
-            perc[jj, :] = np.percentile(gal_draws[k][jj, :], [16.0, 50.0, 84.0])
-
-        ax1.plot(times[k], perc[:, 1], '-', color='k', lw=lw)  # median
-        ax1.fill_between(times[k], perc[:, 0], perc[:, 2], color='k', alpha=0.3)  # fill region between +/- 1sigma
-        ax1.plot(times[k], perc[:, 0], '-', color='k', alpha=0.3, lw=lw)  # -1sigma
-        ax1.plot(times[k], perc[:, 2], '-', color='k', alpha=0.3, lw=lw)  # +1sigma
-
-    ax1.set_yscale("log")
-    ax1.set_xscale("log")
-    plt.show()
-
-    return perc
-'''
-
 
 def stacker(gal_draws, sigma=1):
     """
@@ -448,21 +407,22 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     :return: plot
     """
     log = 0
-    x = [0.5e-8, 1e-8, 1.5e-8, 2e-8]  # used if log=0
+    x = [0.5e-8, 1e-8, 1.5e-8]  # , 2e-8]  # used if log=0
     # y = [0.0, 0.05, 0.10, 0.15]  # used regardless of log
     # y = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70]  # used regardless of log
-    y = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]  # , 0.35]  # used regardless of log; max 0.35 for 1e-9 bin spacing
+    y = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]
+    # , 0.35]  # used regardless of log; max 0.35 for 1e-9 bin spacing
 
     fig = plt.figure()
     ax1 = plt.subplot(1, 2, 1)
     ax2 = plt.subplot(1, 2, 2, sharey=ax1, sharex=ax1)
-    ax1.set_xlim(xmin=3*10**-14, xmax=2.25e-8)  # 3*10**-12, 7e-8
+    ax1.set_xlim(xmin=3*10**-14, xmax=1.75e-8)  # 2.25e-8)  # 3*10**-12, 7e-8
     ax1.xaxis.set_ticks(x)
-    ax1.set_ylim(ymin=0., ymax=0.33)  # 0.28)  # 0.39)  # for 1e-9 bin spacing, use 0.39; for 0.67e-9 bin spacing, use
+    ax1.set_ylim(ymin=0., ymax=0.34)  # 0.33)  # 0.28)  # 0.39)
     ax1.yaxis.set_ticks(y)
     if not log:
         uvj_loc = 1  # 'upper right'
-        labels = [5, 10, 15, 20]
+        labels = [5, 10, 15]  # , 20]
         ax1.set_xticklabels(labels)
     elif log:
         uvj_loc = 'upper center'
@@ -478,12 +438,16 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
         ht = 10*0.28  # 8*0.28
         wd = 10*0.32  # 8*0.32
         inset_axes(ax1, width=wd, height=ht, loc=uvj_loc)  # 20%
-        uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False,col='purple')
+        ecols = ['purple' for idx in range(len(elist))]
+        lcols = ['blue' for idx in range(len(llist))]
+        # for colr in range(len(elist)):
+        #     cols.append('purple')
+        uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False, col=ecols)
         # create inset axis: width (%), height (inches), location
         # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
         # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
         inset_axes(ax2, width=wd, height=ht, loc=uvj_loc)  # 20%
-        uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False, col='b')
+        uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False, col=lcols)
 
     if priors is not None:
         ax1.axvline(x=priors[0][1], color='k', ls='--', label='Prior')  # median, +/- 1sigma for EELG prior
@@ -512,15 +476,17 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     print(np.percentile(draws[1], [16, 50, 84]))  # 4.08e-10, 1.38e-9, 2.89e-9
     print(min(draws[0]), max(draws[0]))  # 2.5e-10, 12e-9
     print(np.percentile(draws[0], [16, 50, 84]))  # 1.25e-9, 3.05e-9, 4.59e-9
+    # sqrt(N_SFG) = sqrt(167) = 12.92285 --> error on mean: {1.38e-9}^{+0.117e-9}_{-0.00752e-9} (max 1.497)
+    # sqrt(N_EELG) = sqrt(18) = 4.24264 --> error on mean: {3.05e-9}^{+0.363e-9}_{-0.424e-9} (min 2.626)
 
     display_num = np.arange(1e-14, 1e-7 + 1e-9, 0.67e-9)  # display_num = np.arange(1e-11, 1e-7 + 1e-9, 1e-9)
     # use 1e-9 OR 0.67e-9 for bin width in np.arange^
     # display_num = np.linspace(1e-12, 1e-7, num=30)
     fs = 20
     if not log:
-        ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[1./(18*3*10**3)]*len(draws[0]), color='purple',
+        ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[1./(19*3*10**3)]*len(draws[0]), color='purple',
                  alpha=0.75, lw=2, label='EELGs')
-        ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(166*3*10**3)]*len(draws[1]), color='b',
+        ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(167*3*10**3)]*len(draws[1]), color='b',
                  alpha=0.75, lw=2, label='SFGs')
         fig.text(0.5, 0.04, r'sSFR (most recent bin) [Gyr$^{-1}$]', ha='center', fontsize=30)  # 30
         ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.88), prop={'size': fs})
@@ -548,17 +514,54 @@ if __name__ == "__main__":
 
     comp = 1
     boot = 0
-    vary = 1
+
+    corr = 0
+    fico = 1
+
+    vary = 0
+    fifty = 0
+    fix = 0
+    newu = 0
     thvary = 0
     mask = 0
     others = 0
     short = 0
-    if vary:
+    if corr:
+        base = ['corr', 'corr']
+        folders = ['pkl_ecorr/', 'pkl_ncorr/']
+        mass = [9.48, 10.12]
+        import eelg_varymet_params as e_params
+        import eelg_varymet_params as n_params
+    elif fico:
+        base = ['fico', 'corr']
+        folders = ['pkl_efico/', 'pkl_ncorr/']
+        mass = [9.42, 10.12]
+        import eelg_varymet_params as e_params
+        import eelg_varymet_params as n_params
+    elif vary:
         base = ['vary', 'vary']
         folders = ['pkl_evar/', 'pkl_nvary/']
         mass = [9.94, 10.55]
         import eelg_varymet_params as e_params
         import eelg_varymet_params as n_params
+    elif fix:
+        base = ['fix', 'vary']
+        folders = ['pkl_efix/', 'pkl_nvary/']
+        mass = [9.59, 10.55]
+        import eelg_fixedmet_params as e_params
+        import eelg_varymet_params as n_params
+    elif newu:
+        base = ['newu', 'vary']
+        folders = ['pkl_enewu/', 'pkl_nvary/']  # pkl_nnewu
+        mass = [9.91, 10.55]
+        import eelg_newu_params as e_params
+        import eelg_newu_params as n_params
+    elif fifty:
+        base = ['fifty', 'vary']
+        folders = ['pkl_efifty/', 'pkl_nvary/']  # pkl_nfifty
+        mass = [9.84, 10.55]  # sSFRs of 7/Gyr would double mass in 1 Gyr
+        import eelg_newu_params as e_params
+        import eelg_newu_params as n_params
     elif thvary:
         base = ['thvary', 'thvary']
         folders = ['pkl_ethvary/', 'pkl_nthvary/']

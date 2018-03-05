@@ -24,15 +24,16 @@ uds_pre = 'uds.v1.5.8_'
 
 eelgs = 1  # True=1
 # folders = ['pkl_efifty/', 'pkl_nvary/']  # ['pkl_efifty', 'pkl_nvary']  # ['pkl_evar', 'pkl_nvary']
-folders = ['evar2_pkls/', 'pkl_ecorr/']
+# folders = ['evar2_pkls/', 'pkl_ecorr/']
+# folders = ['pkl_ecorr/', 'pkl_ncorr/']
 # folder = 'pkl_efifty/'
-folder = 'evar2_pkls/'
+folder = 'pkl_efico/'
 # out_fold = 'out_efifty/'
-out_fold = 'out_corrin/'
+out_fold = 'out_efico/'
 # file = 'fifty'  # 'fifty'  # 'vary'  # 'newmask'
-file = 'vary'
+file = 'fico'
 # base = ['fifty', 'vary']  # fifty, vary
-base = ['vary', 'vary']
+base = ['fico', 'corr']
 fs = 20  # 30
 fs_text = 30
 textx = 1100

@@ -26,14 +26,27 @@ def get_sfh(file):
 if __name__ == "__main__":
 
     git = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
+    corr = 0
+    fico = 1
     vary = 0
-    fifty = 1
+    fifty = 0
     fix = 0
-    if vary:
+    if corr:
+        base = ['corr', 'corr']
+        out_folds = ['out/out_ecorr/', 'out/out_ncorr/']
+        folders = ['pkl_ecorr/', 'pkl_ncorr/']
+        import eelg_varymet_params as e_params
+        import eelg_varymet_params as n_params
+    elif fico:
+        base = ['fico', 'corr']
+        out_folds = ['out/out_efico/', 'out/out_ncorr/']
+        folders = ['pkl_efico/', 'pkl_ncorr/']
+        import eelg_fifty_params as e_params
+        import eelg_varymet_params as n_params
+    elif vary:
         base = ['vary', 'vary']
         out_folds = ['out/out_evar/', 'out/out_nvary/']
         folders = ['pkl_evar/', 'pkl_nvary/']
-        # mass = [10.15, 10.51]
         import eelg_varymet_params as e_params
         import eelg_varymet_params as n_params
     elif fifty:
@@ -75,11 +88,11 @@ if __name__ == "__main__":
     for file in eelgs:
         for i in range(len(comp)):
             if file.startswith(comp[i]):
-                if comp[i] == '20366_cdfs_vary':
-                    pass
-                else:
-                    print(file)
-                    eelgs1.append(file)
+            #    if comp[i] == '20366_cdfs_vary':
+            #        pass
+            #    else:
+                print(file)
+                eelgs1.append(file)
     eelgs = eelgs1
     # END checking COMP
     print(len(eelgs))
@@ -111,10 +124,10 @@ if __name__ == "__main__":
             print(file)
     lbgs = []
     for i in range(len(lbgs1)):
-        if lbgs1[i] == '22919_cdfs_vary':
-            pass
-        else:
-            lbgs.append(lbgs1[i])
+        #if lbgs1[i] == '22919_cdfs_vary':
+        #    pass
+        #else:
+        lbgs.append(lbgs1[i])
 
     import get_mass_dust as gmd
     out = git + out_folds[0]
@@ -130,6 +143,7 @@ if __name__ == "__main__":
 
     print(len(eelgs))
     frac = np.zeros(shape=(len(eelgs), 10**3))
+    s_frac = frac
     frac2 = np.zeros(shape=(len(eelgs), 10**3))
     frac100 = np.zeros(shape=(len(eelgs), 10**3))
     for i in range(len(eelgs)):
@@ -141,19 +155,20 @@ if __name__ == "__main__":
             time = 10 ** 8
             if fifty:
                 time = .5 * 10 ** 8
+            s_frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))]
             frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))] * time / (10 ** get_e[np.random.randint(len(get_e))])
             frac2[i, k] = second[i][np.random.randint(len(second[i]))] * time /\
                           (10 ** get_e[np.random.randint(len(get_e))])
             frac100[i, k] = frac[i, k] + frac2[i, k]
+        print(np.percentile(s_frac[i], [16., 50., 84.]), 'sfr')
     frac_l = np.zeros(shape=(len(lbgs), 10**3))
     for i in range(len(lbgs)):
         print(i)
         get_l = gmd.printer(out_l + lbgs1[i], percs=False)
         for k in range(10**3):
-            # print((get_l[np.random.randint(len(get_l))]))
-            # print(sfh_l[i][np.random.randint(len(sfh_l[i]))])
             frac_l[i, k] = sfh_l[i][np.random.randint(len(sfh_l[i]))] * (10**8) / (10**get_l[np.random.randint(len(get_l))])
 
+    # Calculate (unitless) FRAC OF TOTAL MASS formed: = bootstrap SFH posterior * bin_length / bootstrap mass posterior
     all_fracs2 = []
     all_fracs = []
     all_fracs100 = []
@@ -170,11 +185,15 @@ if __name__ == "__main__":
     print(np.percentile(all_fracs_l, [16., 50., 84.]), 'lbgs most recent 100 Myr')  # 28.7% - 8.95%, 8.95% - 2.5%
     print('me')
 
-    print(np.percentile(sfr, [16, 50, 84]))  # / (10 ** 9.84233))
+    print(np.percentile(all_fracs, [85., 90., 99.]), 'EELGs top percs')
+    print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')
+    print(np.percentile(all_fracs_l, [85., 90., 99.]), 'lbgs top percs')  # 28.7% - 8.95%, 8.95% - 2.5%
+
+    print(np.percentile(sfr, [16, 50, 84]), 'SFR percentiles')  # / (10 ** 9.84233))
     print(np.percentile(sfr_l, [16, 50, 84]))  # / (10 ** 10.55351))
 
-    print(np.percentile(sfr, [16, 50, 84])[1] * 10 ** 8 / (10 ** 9.84233))
-    print(np.percentile(sfr_l, [16, 50, 84])[1] * 10 ** 8 / (10 ** 10.55351))
+    # print(np.percentile(sfr, [16, 50, 84])[1] * 10 ** 8 / (10 ** 9.84233))
+    # print(np.percentile(sfr_l, [16, 50, 84])[1] * 10 ** 8 / (10 ** 10.55351))
     '''
     ssfr = []
     ssfr_l = []
@@ -183,7 +202,7 @@ if __name__ == "__main__":
     for i in range(len(mass)):
         ssfr_l.append(sfr_l[i] / mass_l[i])
     '''
-    print(np.percentile(ssfr, [16., 50., 84.]))
+    print(np.percentile(ssfr, [16., 50., 84.]), 'SSFR percentiles')
     print(np.percentile(ssfr_l, [16., 50., 84.]))
 
 

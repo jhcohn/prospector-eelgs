@@ -16,8 +16,8 @@ def all_plots(fileset, objname, znames, field):
     scale = True
     if scale:
         # FILTERS SCALE FACTOR
-        filt_factor1 = 10**8.4  # 10**7.5  # 7. * 10 ** 7.5
-        filt_factor2 = 0.5 * filt_factor1  # 6. * filt_factor1  # 0.7 * filt_factor1
+        filt_factor1 = 10**8  # 10**7.5  # 7. * 10 ** 7.5
+        filt_factor2 = 5 * filt_factor1  # 6. * filt_factor1  # 0.7 * filt_factor1
 
         # AXIS LIMS
         ymin = 8*10**-2  # 5*10**-2
@@ -221,8 +221,16 @@ if __name__ == "__main__":
         field1 = 'uds'
         field2 = 'uds'
 
-    pre1 = 'pkl_efifty/' + obj1 + '_' + field1 + '_' + kwargs['base1']
-    pre2 = 'pkl_nvary/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    if kwargs['base1'] == 'fico':
+        pre1 = 'pkl_efico/' + obj1 + '_' + field1 + '_' + kwargs['base1']
+        pre2 = 'pkl_ncorr/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    elif kwargs['base1'] == 'corr':
+        pre1 = 'pkl_ecorr/' + obj1 + '_' + field1 + '_' + kwargs['base1']
+        pre2 = 'pkl_ncorr/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    # pre1 = 'pkl_efico/' + obj1 + '_' + field1 + '_' + kwargs['base1']  # pkl_efico (eelg fifty Myr, corrected)
+    # pre2 = 'pkl_ncorr/' + obj2 + '_' + field2 + '_' + kwargs['base2']
+    # pre1 = 'pkl_efifty/' + obj1 + '_' + field1 + '_' + kwargs['base1']
+    # pre2 = 'pkl_nvary/' + obj2 + '_' + field2 + '_' + kwargs['base2']
 
     base = '_out.pkl'
     extra1 = pre1 + '_extra' + base  # includes SFH *AND* rest of extra_output, so call it extra and not sfh
@@ -253,6 +261,8 @@ if __name__ == "__main__":
 
 '''
 Currently running with:
+python new_fig1.py --obj1=21442 --base1=fico --obj2=7817 --base2=corr --field=cdfs
+
 python new_fig1.py --obj1=21442 --base1=fifty --obj2=7817 --base2=vary --field=cdfs
 python new_fig1.py --obj1=12105 --base1=fifty --obj2=2729 --base2=vary --field=cosmos  # pretty good, deltafig 2xtreme
 python new_fig1.py --obj1=12105 --base1=fifty --obj2=3623 --base2=vary --field=cosmos  # pretty good, deltafig 2xtreme!!
