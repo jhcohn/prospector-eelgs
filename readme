@@ -78,6 +78,8 @@ output.py: improved output_all.py; creates all _out.pkl files needed for make_al
 output_all.py: combined quickgrab.py + sfh_output.py; creates all _out.pkl files needed for make_all_plots.py; defunct [functionally replaced by output.py]
 -Running with: python output_all.py --outname=1824_cosmos_decoupled_n1200_1495729287_mcmc.h5 --parfile=eelg_multirun_params.py
 
+overlay_seds.py: make plots of Prospector SEDs with emission lines, overlaid with Prospector SEDs from runs with emission masked out, overlaid wth FAST (see differences in SED shape from FAST vs regular Prospector runs vs Prospector runs with emission masked out)
+
 print_sfh.py: prints SFH from pickled file produced by output_all.py; also prints sSFR(t)
 -Running with: python print_sfh.py --obj=1824 --field=cosmos --base=_newbins
 

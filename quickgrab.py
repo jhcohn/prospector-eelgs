@@ -13,7 +13,7 @@ import glob
 np.errstate(invalid='ignore')
 
 
-def printer(out_file, cvg=600):
+def printer(out_file, cvg=-1000):
     objname = ''
     count = 0
     field = ''
@@ -34,12 +34,13 @@ def printer(out_file, cvg=600):
     # ''' #
 
     # PRINT TRACE SHOWING HOW ITERATIONS CONVERGE FOR EACH PARAMETER
-    tracefig, prob = bread.param_evol(res)  # print tracefig, store probability
+    bread.param_evol(res)  # print tracefig
     plt.show()
     # plt.savefig('delete' + '_tracefig2.png', bbox_inches='tight')
 
     # FIND WALKER, ITERATION THAT GIVE MAX (AND MIN) PROBABILITY
     # print(prob)
+    prob = res['lnprobability'][..., cvg:]
     print('max', prob.max())
     row = prob.argmax() / len(prob[0])
     col = prob.argmax() - row * len(prob[0])
@@ -170,6 +171,8 @@ if __name__ == "__main__":
     parser.add_argument('--parfile')
     parser.add_argument('--outname')
 
+    out_folder = 'out_efico/'
+
     args = vars(parser.parse_args())
     kwargs = {}
     for key in args.keys():
@@ -197,20 +200,21 @@ if __name__ == "__main__":
                     else:
                         e_objs.append(str(int(cols[0])))
                         e_fs.append('cdfs')
-        cvg = [1600, 1900, 1400, 1050, 900, 1400, 800, 1150, 875, 1250, 1300, 1250, 1150, 1300, 1200,
-               2150, 1600, 1050]
+        # cvg = [1600, 1900, 1400, 1050, 900, 1400, 800, 1150, 875, 1250, 1300, 1250, 1150, 1300, 1200,
+        #        2150, 1600, 1050]
+        cvg = []
         # 12105, 11462, 12533, 12552, 12903, 14808, 15124, 17189, 17342, 18561, 18742, 21076, 21442, 22768, 11063,
         # 17423, 8787, 15462
         for i in range(len(e_objs)):
             for infile in glob.glob(os.path.join('/home/jonathan/.conda/envs/snowflakes/lib/python2.7/' +
-                                                 'site-packages/prospector/git/out/out_evar/', e_objs[i] + '*.h5')):
+                                                 'site-packages/prospector/git/out/' + out_folder, e_objs[i] + '*.h5')):
                 out_file = infile
                 param_file = files['parfile']
                 print(param_file, out_file)
                 true_field = e_fs[i]
                 true_obj = e_objs[i]
 
-                objname, field, res, mod, walker, iteration = printer(out_file, cvg=cvg[i])
+                objname, field, res, mod, walker, iteration = printer(out_file)  # , cvg=cvg[i])
                 # sed(true_obj, true_field, res, mod, walker, iteration, param_file, **kwargs)
 
     else:
