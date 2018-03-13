@@ -16,6 +16,8 @@ dust_multirun_params.py: same as eelg_fixedmet_params.py, but with add_dust_emis
 
 eelg_5bins_params.py: same as eelg_emission_params.py, but tweak using different arrangements/numbers of SFH bins; defunct
 
+eelg_addmass_params.py: param file with no free params, made for generating photometry of an old burst from the age of the universe, for use in input_plot_test.py and eelg_masstest.py
+
 eelg_all_fields_params.py: same as eelg_emission_params.py, but can use for CDFS, COSMOS, and UDS galaxies, rather than just COSMOS; defunct
 
 eelg_emission_params.py: same as eelg_npSFH_params.py, now with nebular emission turned on; defunct
@@ -23,6 +25,8 @@ eelg_emission_params.py: same as eelg_npSFH_params.py, now with nebular emission
 eelg_fifty_params.py: same as eelg_multirun_params.py, but with agebins 0-50 Myr, 50-100 Myr, 100 Myr-1 Gyr, etc.
 
 eelg_fixedmet_params.py: same as eelg_multirun_params.py, but with logzsol fixed
+
+eelg_masstest_params.py: same as eelg_fifty_params.py, but with photometry including an extra 1e9 M_solar old population
 
 eelg_multirun_params.py: same as eelg_emission_params.py, but now with field and objname as command line arguments
 -Running from terminal: mpirun -n 4 python prospector.py --param_file=eelg_multirun_params.py --outfile=1969_uds_test --niter=2000 --field=uds --objname=1969
@@ -49,7 +53,7 @@ get_mass_dust.py: print out median and +/- 1sigma values for the varying paramet
 
 half_times.py: compare half-mass assembly times (calculated in output.py and stored in extra_output pickles) for EELG and LBG samples; plot as histograms; can also bootstrap and plot results of bootstrapped ages
 
-input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq; defunct
+input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq; defunct; un-defunct, now using to generate photometry at early times to see if we can recover an old stellar mass population
 
 make_all_plots.py: calls uvj.py, print_sfh.py, and then also prints SED and chi^2 on same plot from pickled files produced by output_all.py; can also call widths.py
 -Running with: python make_all_plots.py --obj=7730 --field=cosmos --base=_newbins
