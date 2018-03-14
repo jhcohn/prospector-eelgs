@@ -27,22 +27,30 @@ if __name__ == "__main__":
 
     git = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
     corr = 0
-    fico = 1
-    vary = 0
-    fifty = 0
-    fix = 0
+    fico = 0
+    newsfg = 1
     if corr:
         base = ['corr', 'corr']
         out_folds = ['out/out_ecorr/', 'out/out_ncorr/']
         folders = ['pkl_ecorr/', 'pkl_ncorr/']
         import eelg_varymet_params as e_params
         import eelg_varymet_params as n_params
+        normal = True
     elif fico:
-        base = ['fico', 'corr']
-        out_folds = ['out/out_efico/', 'out/out_ncorr/']
-        folders = ['pkl_efico/', 'pkl_ncorr/']
+        base = ['fico', 'fico']
+        out_folds = ['out/out_efico/', 'out/out_nfico/']
+        folders = ['pkl_efico/', 'pkl_nfico/']
         import eelg_fifty_params as e_params
-        import eelg_varymet_params as n_params
+        import eelg_fifty_params as n_params
+        normal = True
+    elif newsfg:
+        base = ['fico', 'newsfg']
+        out_folds = ['out/out_efico/', 'out/out_nnewsfg/']
+        folders = ['pkl_efico/', 'pkl_nnewsfg/']
+        import eelg_fifty_params as e_params
+        import eelg_fifty_params as n_params
+        normal = False
+    '''
     elif vary:
         base = ['vary', 'vary']
         out_folds = ['out/out_evar/', 'out/out_nvary/']
@@ -59,9 +67,9 @@ if __name__ == "__main__":
         base = ['fix', 'vary']
         out_folds = ['out/out_efix/', 'out/out_nvary/']
         folders = ['pkl_efix/', 'pkl_nvary/']
-
+    '''
     import stellar_ages as sa
-    eelgs, lbgs1 = sa.get_gal_lists(base)
+    eelgs, lbgs1 = sa.get_gal_lists(base, normal=normal)
     pkls = git + folders[0]
     l_pkls = git + folders[1]
 
@@ -88,9 +96,6 @@ if __name__ == "__main__":
     for file in eelgs:
         for i in range(len(comp)):
             if file.startswith(comp[i]):
-            #    if comp[i] == '20366_cdfs_vary':
-            #        pass
-            #    else:
                 print(file)
                 eelgs1.append(file)
     eelgs = eelgs1
@@ -124,10 +129,9 @@ if __name__ == "__main__":
             print(file)
     lbgs = []
     for i in range(len(lbgs1)):
-        #if lbgs1[i] == '22919_cdfs_vary':
-        #    pass
-        #else:
-        lbgs.append(lbgs1[i])
+        file = l_pkls + lbgs1[i] + '_extra_out.pkl'
+        if os.path.exists(file):
+            lbgs.append(lbgs1[i])
 
     import get_mass_dust as gmd
     out = git + out_folds[0]
@@ -153,7 +157,7 @@ if __name__ == "__main__":
             # print((get_e[np.random.randint(len(get_e))]))
             # print(sfh[i][np.random.randint(len(sfh[i]))])
             time = 10 ** 8
-            if fifty:
+            if fico:
                 time = .5 * 10 ** 8
             s_frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))]
             frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))] * time / (10 ** get_e[np.random.randint(len(get_e))])
@@ -179,17 +183,18 @@ if __name__ == "__main__":
     all_fracs_l = []
     for i in range(len(frac_l)):
         all_fracs_l.append(np.percentile(frac_l[i], [16., 50., 84.]))
-    print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')
-    print(np.percentile(all_fracs, [16., 50., 84.]), 'most recent bin')  # 86.7 - 26.1, 26.1 - 9.1
-    print(np.percentile(all_fracs2, [16., 50., 84.]), 'second bin')  # 21.3 - 5.1, 5.1 - 0.91
-    print(np.percentile(all_fracs_l, [16., 50., 84.]), 'lbgs most recent 100 Myr')  # 28.7% - 8.95%, 8.95% - 2.5%
-    print('me')
+    # print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')
+    print('fractions of mass formed')
+    print(np.percentile(all_fracs, [16., 50., 84.]), 'EELGs most recent bin')  # 86.7 - 26.1, 26.1 - 9.1
+    print(np.percentile(all_fracs2, [16., 50., 84.]), 'EELGs second bin')  # 21.3 - 5.1, 5.1 - 0.91
+    print(np.percentile(all_fracs_l, [16., 50., 84.]), 'sfgs most recent bin')  # 28.7% - 8.95%, 8.95% - 2.5%
 
-    print(np.percentile(all_fracs, [85., 90., 99.]), 'EELGs top percs')
-    print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')
-    print(np.percentile(all_fracs_l, [85., 90., 99.]), 'lbgs top percs')  # 28.7% - 8.95%, 8.95% - 2.5%
+    # print(np.percentile(all_fracs, [85., 90., 99.]), 'EELGs top 15 percs')
+    # print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')
+    # print(np.percentile(all_fracs_l, [85., 90., 99.]), 'SFGs top 15 percs')  # 28.7% - 8.95%, 8.95% - 2.5%
 
-    print(np.percentile(sfr, [16, 50, 84]), 'SFR percentiles')  # / (10 ** 9.84233))
+    print('SFR percentiles')
+    print(np.percentile(sfr, [16, 50, 84]))  # / (10 ** 9.84233))
     print(np.percentile(sfr_l, [16, 50, 84]))  # / (10 ** 10.55351))
 
     # print(np.percentile(sfr, [16, 50, 84])[1] * 10 ** 8 / (10 ** 9.84233))
@@ -202,7 +207,8 @@ if __name__ == "__main__":
     for i in range(len(mass)):
         ssfr_l.append(sfr_l[i] / mass_l[i])
     '''
-    print(np.percentile(ssfr, [16., 50., 84.]), 'SSFR percentiles')
+    print('SSFR percentiles')
+    print(np.percentile(ssfr, [16., 50., 84.]))
     print(np.percentile(ssfr_l, [16., 50., 84.]))
 
 

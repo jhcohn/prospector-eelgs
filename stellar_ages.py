@@ -110,7 +110,14 @@ def stellar_age(sfr, agebins):
     return age
 
 
-def get_gal_lists(base):
+def get_gal_lists(base, objlists=False, normal=True):
+    '''
+    Choose param file, then load lists of relevant EELGs and SFGs that were run with that param file
+
+    :param base: base name of param file for the run
+    :return: list of EELGs run with relevant param file, list of SFGs run with relevant pr file
+    '''
+    '''
     eelg_list = open('eelg_specz_ids', 'r')
     eelgs = []
     e_objs = []
@@ -124,41 +131,120 @@ def get_gal_lists(base):
             e_fields.append(cols[0])
             eelgs.append(cols[1] + '_' + cols[0] + '_' + base[0])  # base[0] = fixedmet (or otherbins)
     eelg_list.close()
-
-    lbg_list = open('lbg_ids', 'r')
-    flist = {}
-    lbgs = []
-    l_objs = []
-    l_fields = []
-    for line in lbg_list:
-        if int(line) - 200000 > 0:
-            flist[str(int(line) - 200000)] = 'uds'
-            lbgs.append(str(int(line) - 200000) + '_uds_' + base[1])  # base[1] = noelg (or nother)
-            l_objs.append(int(line) - 200000)
-            l_fields.append('uds')
-        elif int(line) - 100000 > 0:
-            flist[str(int(line) - 100000)] = 'cosmos'
-            lbgs.append(str(int(line) - 100000) + '_cosmos_' + base[1])
-            l_objs.append(int(line) - 100000)
-            l_fields.append('cosmos')
+    '''
+    eelg_list = open('Comp_10.dat', 'r')
+    eelgs = []
+    e_objs = []
+    e_fields = []
+    for line in eelg_list:
+        if line[0] == '#':
+            pass
         else:
-            flist[str(int(line))] = 'cdfs'
-            lbgs.append(str(int(line)) + '_cdfs_' + base[1])
-            l_objs.append(int(line))
-            l_fields.append('cdfs')
-    lbg_list.close()
+            cols = line.split()
+            if int(cols[0]) - 200000 > 0:
+                eelgs.append(str(int(cols[0]) - 200000) + '_uds_' + base[0])  # base[1] = noelg (or nother)
+                e_objs.append(int(cols[0]) - 200000)
+                e_fields.append('uds')
+            elif int(cols[0]) - 100000 > 0:
+                eelgs.append(str(int(cols[0]) - 100000) + '_cosmos_' + base[0])  # base[1] = noelg (or nother)
+                e_objs.append(int(cols[0]) - 100000)
+                e_fields.append('cosmos')
+            else:
+                eelgs.append(str(int(cols[0])) + '_cdfs_' + base[0])  # base[1] = noelg (or nother)
+                e_objs.append(int(cols[0]))
+                e_fields.append('cdfs')
+    eelg_list.close()
 
-    return eelgs, lbgs
+    if normal:
+        lbg_list = open('lbg_ids1', 'r')
+        flist = {}
+        lbgs = []
+        l_objs = []
+        l_fields = []
+        for line in lbg_list:
+            if int(line) - 200000 > 0:
+                flist[str(int(line) - 200000)] = 'uds'
+                lbgs.append(str(int(line) - 200000) + '_uds_' + base[1])  # base[1] = noelg (or nother)
+                l_objs.append(int(line) - 200000)
+                l_fields.append('uds')
+            elif int(line) - 100000 > 0:
+                flist[str(int(line) - 100000)] = 'cosmos'
+                lbgs.append(str(int(line) - 100000) + '_cosmos_' + base[1])
+                l_objs.append(int(line) - 100000)
+                l_fields.append('cosmos')
+            else:
+                flist[str(int(line))] = 'cdfs'
+                lbgs.append(str(int(line)) + '_cdfs_' + base[1])
+                l_objs.append(int(line))
+                l_fields.append('cdfs')
+        lbg_list.close()
+    else:
+        lbg_list = open('Comp_14_zm_EL_Z004.awk.dat', 'r')
+        flist = {}
+        lbgs = []
+        l_objs = []
+        l_fields = []
+        for line in lbg_list:
+            if line[0] != '#':
+                cols = line.split()
+                if int(cols[0]) - 200000 > 0:
+                    flist[str(int(cols[0]) - 200000)] = 'uds'
+                    lbgs.append(str(int(cols[0]) - 200000) + '_uds_' + base[1])  # base[1] = noelg (or nother)
+                    l_objs.append(int(cols[0]) - 200000)
+                    l_fields.append('uds')
+                elif int(cols[0]) - 100000 > 0:
+                    flist[str(int(cols[0]) - 100000)] = 'cosmos'
+                    lbgs.append(str(int(cols[0]) - 100000) + '_cosmos_' + base[1])
+                    l_objs.append(int(cols[0]) - 100000)
+                    l_fields.append('cosmos')
+                else:
+                    flist[str(int(cols[0]))] = 'cdfs'
+                    lbgs.append(str(int(cols[0])) + '_cdfs_' + base[1])
+                    l_objs.append(int(cols[0]))
+                    l_fields.append('cdfs')
+        lbg_list.close()
+
+    if objlists:
+        return e_objs, e_fields, l_objs, l_fields
+    else:
+        return eelgs, lbgs
 
 
 if __name__ == "__main__":
 
-    vary = True
-    short = True
-    if vary:
+    fico = 1
+    corr = 0
+
+    vary = 0
+    fifty = 0
+    fix = 0
+    newu = 0
+    short = 0
+    if fico:
+        folders = ['pkl_efico/', 'pkl_ncorr/']
+        base = ['fico', 'corr']
+        import eelg_fifty_params as param
+        import eelg_varymet_params as nparam
+    elif corr:
+        folders = ['pkl_ecorr/', 'pkl_ncorr/']
+        base = ['corr', 'corr']
+        import eelg_varymet_params as param
+    elif vary:
         folders = ['pkl_evar/', 'pkl_nvar/']
         base = ['vary', 'vary']
         import eelg_varymet_params as param
+    elif fix:
+        folders = ['pkl_efix/', 'pkl_nvary/']
+        base = ['fix', 'vary']
+        import eelg_fixedmet_params as param
+    elif newu:
+        folders = ['pkl_enewu/', 'pkl_nvary/']
+        base = ['newu', 'vary']
+        import eelg_newu_params as param
+    elif fifty:
+        folders = ['pkl_efifty/', 'pkl_nvary/']
+        base = ['fifty', 'vary']
+        import eelg_fifty_params as param
     elif short:
         folders = ['pkl_eshort/', 'pkl_nshort/']
         base = ['short', 'short']
@@ -166,7 +252,7 @@ if __name__ == "__main__":
     else:
         folders = ['pkls/', 'nmpkls/']
         base = ['fixedmet', 'noelg']
-        import eelg_fixedmet_params as param
+        import eelg_fixedmet_params_orig as param
 
     pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
     l_pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[1]
@@ -205,8 +291,11 @@ if __name__ == "__main__":
             print(file)  # print galaxy if pkls don't exist for it
     print('lnums', num_l, l_sample)
 
-    model = param.load_model(objname='1824', field='cosmos')
+    model = param.load_model(objname='21442', field='cdfs')
     agebins = model.params['agebins']
+    if fico:
+        nmodel = nparam.load_model(objname='7817', field='cdfs')
+        nagebins = nmodel.params['agebins']
 
     e_age = []
     for i in range(len(e_draws)):  # len(eelgs)
@@ -215,7 +304,10 @@ if __name__ == "__main__":
 
     l_age = []
     for i in range(len(l_draws)):  # len(eelgs)
-        l_age.append(stellar_age(l_draws[i], agebins) / 1e9)
+        if fico:
+            l_age.append(stellar_age(l_draws[i], nagebins) / 1e9)
+        else:
+            l_age.append(stellar_age(l_draws[i], agebins) / 1e9)
     l_age_percs = np.percentile(l_age, [16., 50., 84.])
 
     fig = plt.figure()
@@ -251,7 +343,16 @@ if __name__ == "__main__":
 (0.18668044750262114, 0.8719976513813491, 0.16742254424042702)
 (0.17024825284171152, 0.83524879157556775, 0.11934187725706735)
 
+# AGES (vary) - C 14, then C_04, then C_10
+(0.23099788101880292, 0.92203538712313915, 0.15938519673082208)  # C_14
+(0.15307990804784499, 0.85969159869973266, 0.16347328836410369)  # C_04
+(0.24644009000896339, 0.82414637217865405, 0.22501361212020365)  # C_10
+
 # AGES (short)
 (0.09660974411331974, 0.44348389790922788, 0.055033720340872394)
 (0.085011178245219421, 0.4455555097442836, 0.042534426024111394)
+
+# AGES (fix)
+(0.15090972221525728, 0.59494284124772501, 0.21548295765867065)
+(0.16691239230645616, 0.82298808510664001, 0.15309535095412585)
 '''

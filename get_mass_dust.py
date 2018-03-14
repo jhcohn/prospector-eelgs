@@ -70,22 +70,28 @@ def printer(out_file, percs=True):
 if __name__ == "__main__":
 
     corr = 0
-    fico = 1
+    fico = 0
+    news = 1
+    masstest = 0
 
-    vary = 0
-    fifty = 0
-    fix = 0
-    newu = 0
-    others = 0
-    short = 0
     if corr:
         folders = ['out_ecorr/', 'out_ncorr/']
         pars = ['eelg_varymet_params.py', 'eelg_varymet_params.py']
-        base = 'corr'
+        base = ['corr', 'corr']
     elif fico:
-        folders = ['out_efico/', 'out_ncorr/']
+        folders = ['out_efico/', 'out_nfico/']
         pars = ['eelg_fifty_params.py', 'eelg_fifty_params.py']
-        base = 'fico'
+        base = ['fico', 'fico']
+    elif news:
+        folders = ['out_efico/', 'out_nnewsfg/']
+        pars = ['eelg_fifty_params.py', 'eelg_fifty_params.py']
+        base = ['fico', 'newsfg']
+    elif masstest:
+        folders = ['out_masstest/', 'out_efico/']
+        pars = ['eelg_masstest_params.py', 'eelg_fifty_params.py']
+        base = ['masstest', 'fico']
+        obj = '12552'  # '12105'  # '21442'
+    '''
     elif vary:
         folders = ['out_evar/', 'out_nvary/']
         pars = ['eelg_varymet_params.py', 'eelg_varymet_params.py']
@@ -112,12 +118,19 @@ if __name__ == "__main__":
     else:
         folders = ['out_fixedmet/', 'out_noelg/']
         pars = ['eelg_fixedmet_params.py', 'noelg_multirun_params.py']
+    '''
 
     eelgs1 = []
-    oute = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + folders[0]
-    for file in os.listdir(oute):
-        if file.endswith(".h5"):
-            eelgs1.append(file)
+    if masstest:
+        oute = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + folders[0]
+        for file in os.listdir(oute):
+            if file.endswith(".h5") and file.startswith(obj):
+                eelgs1.append(file)
+    else:
+        oute = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + folders[0]
+        for file in os.listdir(oute):
+            if file.endswith(".h5"):
+                eelgs1.append(file)
 
     ### NEW COMP
     eelg_list = open('eelg_specz_ids1', 'r')
@@ -128,11 +141,11 @@ if __name__ == "__main__":
         else:
             cols = line.split()
             if int(cols[0]) - 200000 > 0:
-                comp.append(str(int(cols[0]) - 200000) + '_uds_' + base)  # base[1] = noelg (or nother)
+                comp.append(str(int(cols[0]) - 200000) + '_uds_' + base[0])  # base[1] = noelg (or nother)
             elif int(cols[0]) - 100000 > 0:
-                comp.append(str(int(cols[0]) - 100000) + '_cosmos_' + base)  # base[1] = noelg (or nother)
+                comp.append(str(int(cols[0]) - 100000) + '_cosmos_' + base[0])  # base[1] = noelg (or nother)
             else:
-                comp.append(str(int(cols[0])) + '_cdfs_' + base)  # base[1] = noelg (or nother)
+                comp.append(str(int(cols[0])) + '_cdfs_' + base[0])  # base[1] = noelg (or nother)
     eelg_list.close()
 
     eelgs = []
@@ -146,18 +159,26 @@ if __name__ == "__main__":
     print(count)
     ### END NEW COMP
 
-    countl = 0
     lbgs = []
     outl = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + folders[1]
-    for file in os.listdir(outl):
-        if file.endswith(".h5"):
-            lbgs.append(file)
-            countl += 1
+    countl = 0
+    if masstest:
+        for file in os.listdir(outl):
+            if file.endswith(".h5") and file.startswith(obj):
+                lbgs.append(file)
+                countl += 1
+    else:
+        for file in os.listdir(outl):
+            if file.endswith(".h5"):
+                lbgs.append(file)
+                countl += 1
     print(countl)
 
     get_e = np.zeros(shape=(4, len(eelgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as eelgs
     for i in range(len(eelgs)):
-        get_e[:, i] = printer(oute + eelgs[i])
+        if os.path.exists(oute + eelgs[i]):
+            get_e[:, i] = printer(oute + eelgs[i])
+            print(eelgs[i], get_e[0, i])
 
     masse = np.percentile(get_e[0], [16., 50., 84.])
     duste = np.percentile(get_e[1], [16., 50., 84.])
@@ -167,7 +188,8 @@ if __name__ == "__main__":
     # '''
     get_l = np.zeros(shape=(4, len(lbgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as lbgs
     for i in range(len(lbgs)):
-        get_l[:, i] = printer(outl + lbgs[i])
+        if os.path.exists(outl + lbgs[i]):
+            get_l[:, i] = printer(outl + lbgs[i])
 
     mass = np.percentile(get_l[0], [16., 50., 84.])
     dust = np.percentile(get_l[1], [16., 50., 84.])
@@ -191,6 +213,14 @@ RUNNING WITH:
 python get_mass_dust.py
 
 For dust2 values: convert to A_V by multiplying by 1.86
+
+# MASSTEST
+# 12105 --> less mass?!
+# 21442 --> slightly less mass, much more dust
+# 12552 --> 1e8.5 more mass, much more dust, higher metallicity
+
+
+
 
 # FIXEDMET:
 ('masse', array([  9.7307283 ,   9.98464298,  10.25774393]))

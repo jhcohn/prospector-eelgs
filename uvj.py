@@ -9,6 +9,14 @@ Photometric redshifts from zout catalog
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
+import matplotlib.colors as colors
+
+
+def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
+    new_cmap = colors.LinearSegmentedColormap.from_list(
+        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+        cmap(np.linspace(minval, maxval, n)))
+    return new_cmap
 
 
 def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, size=20, show=True, col='b',
@@ -114,9 +122,11 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
                 ax_vj.append(VJ[i])
                 table.append(main[i][0])  # ID in catalog = main[i][0]
 
-        # PLOT SCATTER OF REMAINING POINTS
+        # PLOT HIST OF REMAINING POINTS
         # plt.scatter(ax_vj, ax_uv, color='0.5', alpha=0.1, marker=".")  # x, y
-        plt.hist2d(ax_vj, ax_uv, bins=100, cmap='binary')  # x, y
+        cmap = plt.get_cmap('binary')
+        new_cmap = truncate_colormap(cmap, 0.0, 2.0)
+        plt.hist2d(ax_vj, ax_uv, bins=100, cmap=new_cmap, cmin=1)  # 'binary')  # x, y
 
         '''
         if objlist is not None:
@@ -152,8 +162,11 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
         print(nummy)
         print(len(special_vj), len(special_uv))
         if hist:
-            # plt.hist2d(special_vj, special_uv, bins=100, cmap='Blues')  # x, y
-            # plt.contourf(counts2, levels=levels, linewidths=3, cmap='Blues')
+            cmap2 = plt.get_cmap('Blues')
+            new_cmap2 = truncate_colormap(cmap2, 0.2, 2.0)
+            plt.hist2d(special_vj, special_uv, bins=10, cmap=new_cmap2, cmin=2)  # 'binary')  # x, y
+            # plt.hist2d(special_vj, special_uv, bins=10, cmap='Blues', cmin=2)#, alpha=0.75)  # x, y
+            '''
             from scipy import stats
 
             def density_estimation(m1, m2):
@@ -165,9 +178,10 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
                 return X, Y, Z
 
             X, Y, Z = density_estimation(special_vj, special_uv)
-            levels = np.arange(0.1, np.amax(Z), 0.02) + 0.02
+            levels = np.arange(0.5, np.amax(Z), 0.02) + 0.02
             plt.contourf(X, Y, Z, levels=levels, cmap='Blues', alpha=0.5)  # levels=levels  # [0.1, 0.2, 0.5, 1., 25.]
             # plt.contour(X, Y, Z, linewidths=3, cmap='Blues', alpha=0.5)  # levels=levels  # [0.1, 0.2, 0.5, 1., 25.]
+            '''
             plt.xlim(-1.5, 2.5)
             plt.xticks([-1, 0, 1, 2])
             plt.ylim(-1., 2.5)  # 3

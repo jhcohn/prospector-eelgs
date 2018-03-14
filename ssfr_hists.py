@@ -519,11 +519,11 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
 
 if __name__ == "__main__":
 
-    comp = 1
     boot = 0
 
     corr = 0
     fico = 1
+    newsfg = 0
 
     if corr:
         base = ['corr', 'corr']
@@ -531,12 +531,22 @@ if __name__ == "__main__":
         mass = [9.48, 10.12]
         import eelg_varymet_params as e_params
         import eelg_varymet_params as n_params
+        normal = True
     elif fico:
         base = ['fico', 'fico']
         folders = ['pkl_efico/', 'pkl_nfico/']
         mass = [9.42, 10.13]
         import eelg_fifty_params as e_params
         import eelg_fifty_params as n_params
+        normal = True
+    elif newsfg:
+        base = ['fico', 'newsfg']
+        folders = ['pkl_efico/', 'pkl_nnewsfg/']
+        mass = [9.42, 9.84]
+        import eelg_fifty_params as e_params
+        import eelg_fifty_params as n_params
+        normal = False
+
     '''
     elif vary:
         base = ['vary', 'vary']
@@ -594,7 +604,14 @@ if __name__ == "__main__":
         import noelg_multirun_params as n_params
     '''
 
+    import stellar_ages as sa
+    e_objs, e_fields, l_objs, l_fields = sa.get_gal_lists(base, objlists=True, normal=normal)
+    eelgs, lbgs = sa.get_gal_lists(base, objlists=False, normal=normal)
+
     pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
+    l_pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[1]
+
+    '''
     if comp == 0:
         eelg_list = open('eelg_specz_ids', 'r')
         eelgs = []
@@ -632,7 +649,9 @@ if __name__ == "__main__":
                     e_fields.append('cdfs')
                     eelgs.append(str(int(cols[0])) + '_cdfs_' + base[0])  # base[1] = noelg (or nother)
         eelg_list.close()
-        '''
+    '''
+
+    '''
         # CALCULATE redshifts of all galaxies in C_10
         zs = []
         ts = []
@@ -659,14 +678,13 @@ if __name__ == "__main__":
             zs.append(zred)
         print('ts', ts)
         print(np.median(ts))  # 1.88930392535 Gyr
-        '''
-
+    '''
+    '''
     lbg_list = open('lbg_ids1', 'r')  # lbg_ids1
     flist = {}
     lbgs = []
     l_objs = []
     l_fields = []
-    l_pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[1]
     for line in lbg_list:
         if int(line) - 200000 > 0:
             flist[str(int(line) - 200000)] = 'uds'
@@ -684,7 +702,7 @@ if __name__ == "__main__":
             l_objs.append(int(line))
             l_fields.append('cdfs')
     lbg_list.close()
-
+    '''
     tun = True
     if tun:  # flat ssfr prior = 1 / t_univ, based on perc of t_univ values for each population
         # pri = [0.41772065 * 1e-9, 0.50135904 * 1e-9, 0.55399038 * 1e-9]  # USE
