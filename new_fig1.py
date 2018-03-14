@@ -30,9 +30,10 @@ def all_plots(fileset, objname, znames, field):
         # LEGEND, TEXT LOCATION, FONT SIZE
         loc = 2  # loc=1 (up R), loc=2 (up L), loc=3 (low L), loc=4 (low R); loc=7 (center R)
         textx = 720  # 1.5 * 10 ** 3  # 10**4  # 700
-        texty1 = 30  # 20
+        texty1 = 10  # 30  # 20
         texty2 = texty1
         fs = 20
+        fs_ticks = 25
         fs_text = 30
         ylabel = r'Scaled F$_\nu$ [$1500 \rm \AA$]'
 
@@ -59,6 +60,7 @@ def all_plots(fileset, objname, znames, field):
         ylabel = r'Flux [$\mu$Jy]'
 
     ax1 = plt.subplot(2, 1, 1)  # number cols, number rows, which fig currently on
+    # ax1 = plt.subplot(1, 1, 1)  # number cols, number rows, which fig currently on
     ax1.set_yscale("log")
     ax1.set_xscale("log")
     ax1.set_xlim(xmin, xmax)
@@ -157,7 +159,15 @@ def all_plots(fileset, objname, znames, field):
             ax1.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
             # ax1.text(700, 3, 'z ~ ' + str(zred) + ', EELG', fontsize=20)
             ax1.text(textx, texty1, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', EELG',
-                     fontsize=fs_text)
+                     fontsize=fs_text)  # temp setting 100 instead of texty1
+
+            plt.tick_params(axis='y', which='minor')
+            # ax1.set_xticks([10**3, 2*10**3, 5*10**3, 10**4, 2*10**4])  # technically works
+            # ax1.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$', r'$2\times10^4$'],
+            # size=30)
+            ax1.set_yticks([10**-2, 10**-1, 10**0, 10**1, 10**2])  # technically works
+            ax1.set_yticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)
+
             plt.subplots_adjust(hspace=.0)
 
             # Redshift for each obj) (note: len(main[0] = 156; elements 153:155 = use, snr, use_nosnr, z_spec)
@@ -183,6 +193,13 @@ def all_plots(fileset, objname, znames, field):
                      fontsize=fs_text)
             plt.subplots_adjust(hspace=.0)
 
+            # hacking for Vy
+            plt.tick_params(axis='y', which='minor')
+            ax2.set_xticks([10**3, 2*10**3, 5*10**3, 10**4, 2*10**4])  # technically works
+            ax2.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$', r'$2\times10^4$'],
+                                size=fs_ticks)
+            ax2.set_yticks([10**-2, 10**-1, 10**0, 10**1, 10**2])  # technically works
+            ax2.set_yticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)
             widths.fig2(ax2, field[j], zred, scale=(phot.max() * filt_factor2), rest=True)  # WIDTHS
             plt.subplots_adjust(hspace=.0)
     print('show')

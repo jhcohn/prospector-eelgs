@@ -5,6 +5,9 @@ from prospect.io import write_results
 from prospect import fitting
 from prospect.likelihood import lnlike_spec, lnlike_phot, write_log
 
+obj = 21442
+field = 'cdfs'
+
 sargv = sys.argv
 argdict = {'param_file': 'eelg_addmass_params.py'}
 clargs = model_setup.parse_args(sargv, argdict=argdict)
@@ -74,23 +77,31 @@ plt.show()
 def get_names(field):
     photname = None
     zname = None
+    filters = None
 
     if field == 'cosmos':
         photname = '/home/jonathan/cosmos/cosmos.v1.3.8.cat'
         zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'
-
+        filters = ['B', 'G', 'I', 'IA427', 'IA484', 'IA505', 'IA527', 'IA624', 'IA709', 'IA738', 'R', 'U', 'V', 'Rp',
+                   'Z', 'Zp', 'Hl', 'Hs', 'J1', 'J2', 'J3', 'Ks', 'NB118', 'NB209', 'F125W', 'F140W', 'F160W', 'F606W',
+                   'F814W', 'UVISTA_J', 'UVISTA_H', 'UVISTA_Ks', 'UVISTA_Y', 'IRAC_36', 'IRAC_45', 'IRAC_58', 'IRAC_80']
     elif field == 'cdfs':
         photname = '/home/jonathan/cdfs/cdfs.v1.6.11.cat'
         zname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout'
-
+        filters = ['B', 'I', 'R', 'U', 'V', 'Z', 'Hs', 'Hl', 'J1', 'J2', 'J3', 'Ks', 'KsHI', 'NB118', 'NB209', 'F098M',
+                   'F105W', 'F125W', 'F140W', 'F160W', 'F814W', 'IA484', 'IA527', 'IA574', 'IA598', 'IA624', 'IA651',
+                   'IA679', 'IA738', 'IA767', 'IA797', 'IA856', 'WFI_V', 'WFI_Rc', 'WFI_U38', 'tenisK', 'IRAC_36',
+                   'IRAC_45', 'IRAC_58', 'IRAC_80']
     elif field == 'uds':
         photname = '/home/jonathan/uds/uds.v1.5.10.cat'
         zname = '/home/jonathan/uds/uds.v1.5.8.awk.zout'
+        filters = ['u', 'B', 'V', 'R', 'i', 'z', 'J1', 'J2', 'J3', 'Hs', 'Hl', 'Ks', 'J', 'H', 'K', 'KsHI', 'F125W',
+                   'F140W', 'F160W', 'F606W', 'F814W', 'Y', 'IRAC_36', 'IRAC_45', 'IRAC_58', 'IRAC_80']
 
-    return photname, zname
+    return photname, zname, filters
 
 
-photname, zname = get_names('cosmos')  # for 12105
+photname, zname, filters = get_names(field)  # FIELD
 
 # OPEN FILE, LOAD DATA
 with open(photname, 'r') as f:
@@ -99,30 +110,31 @@ dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
 dat = np.loadtxt(photname, comments='#', delimiter=' ', dtype=dtype)
 
 # EXTRACT FILTERS, FLUXES, ERRORS FOR OBJECT
-obj_idx = (dat['id'] == '12105')  # for 12105
-cos_filternames = ['B', 'G', 'I', 'IA427', 'IA484', 'IA505', 'IA527', 'IA624', 'IA709', 'IA738', 'R', 'U', 'V', 'Rp',
-                   'Z', 'Zp', 'Hl', 'Hs', 'J1', 'J2', 'J3', 'Ks', 'NB118', 'NB209', 'F125W', 'F140W', 'F160W', 'F606W',
-                   'F814W', 'UVISTA_J', 'UVISTA_H', 'UVISTA_Ks', 'UVISTA_Y', 'IRAC_36', 'IRAC_45', 'IRAC_58', 'IRAC_80']
+obj_idx = (dat['id'] == str(obj))  # OBJID
 
-flux = np.squeeze([dat[obj_idx]['f_' + f] for f in cos_filternames])
+flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filters])
 print(len(flux), len(phot))
 tot = []
 diff = []
 for j in range(len(flux)):
-    tot.append((float(flux[j]) * (10 ** - 0.44)) + phot[j])
+    tot.append((float(flux[j]) + phot[j] * 10 ** 0.44))
     diff.append(((float(flux[j]) * 10 ** -0.44) - phot[j]) / (float(flux[j]) * 10 ** -0.44))
 
 print(diff)
-newphot = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/newphot_21442'
+newphot = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/newphot_' + str(obj)
 with open(newphot, 'w+') as new:
     new.write('# id ')
-    for i in range(len(cos_filternames)):
-        new.write('f_' + cos_filternames[i] + ' ')
+    for i in range(len(filters)):
+        new.write('f_' + filters[i] + ' ')
     new.write('\n')
-    new.write('12105 ')
+    new.write(str(obj) + ' ')
     for k in range(len(tot)):
         new.write(str(tot[k]) + ' ')
     new.write('\n')
+
+print('tot', tot)
+print('generated phot', phot)
+print('cat flux', flux)
 
 phot2 = []
 with open(newphot, 'r') as newp:

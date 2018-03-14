@@ -147,6 +147,7 @@ if __name__ == "__main__":
     # LABEL STUFF
     fs_text = 30
     fs = 20
+    fs_ticks = 25
     ax1.set_ylabel(r'Flux Ratio (EELG / SFG)', fontsize=fs_text)
     ax1.set_xlabel(r'Wavelength (Rest) [$\rm \AA$]', fontsize=fs_text)
     # fig.text(0.5, 0.03, r'Wavelength (Rest) [$\rm \AA$]', ha='center', va='bottom', fontsize=fs_text)  # 30
@@ -182,9 +183,16 @@ if __name__ == "__main__":
     ax1.text(1.1*10**3, ymax * 0.94, str(field1).upper() + '-' + str(obj1) + ', EELG', fontsize=fs_text)
     ax1.text(1.1*10**3, ymax * 0.88, str(field2).upper() + '-' + str(obj2) + ', SFG', fontsize=fs_text)
 
+    ax1.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
+
     # TICK PARAMS
     ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)
     ax1.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
+    plt.tick_params(axis='y', which='minor')
+    ax1.set_xticks([10 ** 3, 2 * 10 ** 3, 5 * 10 ** 3, 10 ** 4, 2 * 10 ** 4])  # technically works
+    ax1.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$', r'$2\times10^4$'], size=fs_ticks)
+    ax1.set_yticks([0.5, 1.0, 1.5, 2.0, 2.5, 3.0])  # technically works
+    ax1.set_yticklabels([r'$0.5$', r'$1.0$', r'$1.5$', r'$2.0$', r'$2.5$', r'$3.0$'], size=fs_ticks)
 
     plt.show()
     objs = [obj1, obj2]

@@ -11,10 +11,14 @@ import matplotlib.pyplot as plt
 import argparse
 
 
-def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, size=20, show=True, col='b'):
+def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, size=20, show=True, col='b',
+             legend=None, hist=False):
     # UVJ plotter
     # Choose correct catalogs based on field name
     if objlist is not None:
+        # print(type(col))
+        # if type(col) == 'str':
+        #     col = [col] * len(objlist)
         objs = []
         fs = []
         for obj in objlist:
@@ -32,7 +36,7 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
                     pass
             objs.append(int(ob))
             fs.append(f)
-        print('lens', len(objs), len(fs))  # should be 132, 87?
+        print('lens', len(objs), len(fs))
 
     if field == 'cdfs':
         rest = ['/home/jonathan/cdfs/cdfs.v1.6.9.rest.v0.9.cat']
@@ -111,7 +115,8 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
                 table.append(main[i][0])  # ID in catalog = main[i][0]
 
         # PLOT SCATTER OF REMAINING POINTS
-        plt.scatter(ax_vj, ax_uv, color='0.5', alpha=0.1, marker=".")  # x, y
+        # plt.scatter(ax_vj, ax_uv, color='0.5', alpha=0.1, marker=".")  # x, y
+        plt.hist2d(ax_vj, ax_uv, bins=100, cmap='binary')  # x, y
 
         '''
         if objlist is not None:
@@ -146,8 +151,34 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
     if objlist is not None:
         print(nummy)
         print(len(special_vj), len(special_uv))
-        for i in range(len(special_vj)):
-            plt.scatter(special_vj[i], special_uv[i], color=col, marker="*", s=20)
+        if hist:
+            # plt.hist2d(special_vj, special_uv, bins=100, cmap='Blues')  # x, y
+            # plt.contourf(counts2, levels=levels, linewidths=3, cmap='Blues')
+            from scipy import stats
+
+            def density_estimation(m1, m2):
+                X, Y = np.mgrid[-1.5:2.5:100j, -1.:2.5:100j]
+                positions = np.vstack([X.ravel(), Y.ravel()])
+                values = np.vstack([m1, m2])
+                kernel = stats.gaussian_kde(values)
+                Z = np.reshape(kernel(positions).T, X.shape)
+                return X, Y, Z
+
+            X, Y, Z = density_estimation(special_vj, special_uv)
+            levels = np.arange(0.1, np.amax(Z), 0.02) + 0.02
+            plt.contourf(X, Y, Z, levels=levels, cmap='Blues', alpha=0.5)  # levels=levels  # [0.1, 0.2, 0.5, 1., 25.]
+            # plt.contour(X, Y, Z, linewidths=3, cmap='Blues', alpha=0.5)  # levels=levels  # [0.1, 0.2, 0.5, 1., 25.]
+            plt.xlim(-1.5, 2.5)
+            plt.xticks([-1, 0, 1, 2])
+            plt.ylim(-1., 2.5)  # 3
+            plt.yticks([-1., 0., 1., 2.])  # , 3.])
+        else:
+            for i in range(len(special_vj)):
+                if legend is None:
+                    plt.scatter(special_vj[i], special_uv[i], color=col[i], marker="*", s=200)
+                else:
+                    plt.scatter(special_vj[i], special_uv[i], color=col[i], marker="*", s=200, label=legend[i])
+                    plt.legend(scatterpoints=1, loc='upper left', prop={'size': 15})
     elif show:
         plt.show()
 

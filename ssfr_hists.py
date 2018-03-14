@@ -395,7 +395,7 @@ def stacker(gal_draws, sigma=1):
 
 
 def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, sigma=1, save=False, title=None,
-              priors=None, show=False, tpbs=None, tuniv=False):
+              priors=None, show=False, tpbs=None, tuniv=False, nums=[1., 1.]):
     """
     Plots SFH stacks for two different galaxy samples side-by-side
 
@@ -410,7 +410,7 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     x = [0.5e-8, 1e-8, 1.5e-8]  # , 2e-8]  # used if log=0
     # y = [0.0, 0.05, 0.10, 0.15]  # used regardless of log
     # y = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70]  # used regardless of log
-    y = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]
+    y = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40]
     # , 0.35]  # used regardless of log; max 0.35 for 1e-9 bin spacing
 
     fig = plt.figure()
@@ -418,8 +418,9 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     ax2 = plt.subplot(1, 2, 2, sharey=ax1, sharex=ax1)
     ax1.set_xlim(xmin=3*10**-14, xmax=1.75e-8)  # 2.25e-8)  # 3*10**-12, 7e-8
     ax1.xaxis.set_ticks(x)
-    ax1.set_ylim(ymin=0., ymax=0.34)  # 0.33)  # 0.28)  # 0.39)
+    ax1.set_ylim(ymin=0., ymax=0.42)  # 0.34)  # 0.33)  # 0.28)  # 0.39)
     ax1.yaxis.set_ticks(y)
+
     if not log:
         uvj_loc = 1  # 'upper right'
         labels = [5, 10, 15]  # , 20]
@@ -447,7 +448,8 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
         # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
         # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
         inset_axes(ax2, width=wd, height=ht, loc=uvj_loc)  # 20%
-        uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False, col=lcols)
+        uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False, col=lcols,
+                     hist=True)
 
     if priors is not None:
         ax1.axvline(x=priors[0][1], color='k', ls='--', label='Prior')  # median, +/- 1sigma for EELG prior
@@ -484,9 +486,9 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     # display_num = np.linspace(1e-12, 1e-7, num=30)
     fs = 20
     if not log:
-        ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[1./(19*3*10**3)]*len(draws[0]), color='purple',
-                 alpha=0.75, lw=2, label='EELGs')
-        ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(167*3*10**3)]*len(draws[1]), color='b',
+        ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[1./(nums[0]*3*10**3)]*len(draws[0]),
+                 color='purple', alpha=0.75, lw=2, label='EELGs')
+        ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(nums[1]*3*10**3)]*len(draws[1]), color='b',
                  alpha=0.75, lw=2, label='SFGs')
         fig.text(0.5, 0.04, r'sSFR (most recent bin) [Gyr$^{-1}$]', ha='center', fontsize=30)  # 30
         ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.88), prop={'size': fs})
@@ -502,6 +504,11 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
         ax1.legend(numpoints=1, loc='upper right', prop={'size': fs})
         ax2.legend(numpoints=1, loc='upper right', prop={'size': fs})
 
+    fs_ticks = 25
+    ax1.set_xticklabels([r'$5$', r'$10$', r'$15$'], size=fs_ticks)
+    ax2.set_xticklabels([r'$5$', r'$10$', r'$15$'], size=fs_ticks)
+    ax1.set_yticklabels([r'$0.00$', r'$0.05$', r'$0.10$', r'$0.15$', r'$0.20$', r'$0.25$', r'$0.30$', r'$0.35$',
+                         r'$0.40$'], size=fs_ticks)
     plt.setp(ax2.get_yticklabels(), visible=False)  # hide y-axis labels on right-hand subplot to prevent overlap
     plt.rc('xtick', labelsize=20)
     plt.rc('ytick', labelsize=20)
@@ -518,14 +525,6 @@ if __name__ == "__main__":
     corr = 0
     fico = 1
 
-    vary = 0
-    fifty = 0
-    fix = 0
-    newu = 0
-    thvary = 0
-    mask = 0
-    others = 0
-    short = 0
     if corr:
         base = ['corr', 'corr']
         folders = ['pkl_ecorr/', 'pkl_ncorr/']
@@ -533,11 +532,12 @@ if __name__ == "__main__":
         import eelg_varymet_params as e_params
         import eelg_varymet_params as n_params
     elif fico:
-        base = ['fico', 'corr']
-        folders = ['pkl_efico/', 'pkl_ncorr/']
-        mass = [9.42, 10.12]
-        import eelg_varymet_params as e_params
-        import eelg_varymet_params as n_params
+        base = ['fico', 'fico']
+        folders = ['pkl_efico/', 'pkl_nfico/']
+        mass = [9.42, 10.13]
+        import eelg_fifty_params as e_params
+        import eelg_fifty_params as n_params
+    '''
     elif vary:
         base = ['vary', 'vary']
         folders = ['pkl_evar/', 'pkl_nvary/']
@@ -592,6 +592,7 @@ if __name__ == "__main__":
         mass = [9.98, 10.26]
         import eelg_fixedmet_params as e_params
         import noelg_multirun_params as n_params
+    '''
 
     pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
     if comp == 0:
@@ -760,4 +761,5 @@ if __name__ == "__main__":
     print(numl, cl, 'numl')
     # smooth_percs = [smooth(perc1), smooth(perc2)]
 
-    plot_sfhs([new1, new2], t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l], tuniv=tun)
+    plot_sfhs([new1, new2], t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l], tuniv=tun,
+              nums=[nummy, numl])
