@@ -148,9 +148,9 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
 
         if lims:
             plt.xlim(-1.5, 2.5)
-            plt.xticks([-1, 0, 1, 2])
+            plt.xticks([-1, 0, 1, 2], size=size)
             plt.ylim(-1., 2.5)  # 3
-            plt.yticks([-1., 0., 1., 2.])  # , 3.])
+            plt.yticks([-1., 0., 1., 2.], size=size)  # , 3.])
 
         plt.xlabel(r'$V - J$', fontsize=size)  # (Rest)
         plt.ylabel(r'$U - V$', fontsize=size)  # (Rest)
@@ -183,9 +183,9 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
             # plt.contour(X, Y, Z, linewidths=3, cmap='Blues', alpha=0.5)  # levels=levels  # [0.1, 0.2, 0.5, 1., 25.]
             '''
             plt.xlim(-1.5, 2.5)
-            plt.xticks([-1, 0, 1, 2])
+            plt.xticks([-1, 0, 1, 2], size=size)
             plt.ylim(-1., 2.5)  # 3
-            plt.yticks([-1., 0., 1., 2.])  # , 3.])
+            plt.yticks([-1., 0., 1., 2.], size=size)  # , 3.])
         else:
             for i in range(len(special_vj)):
                 if legend is None:

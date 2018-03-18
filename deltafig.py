@@ -173,8 +173,9 @@ if __name__ == "__main__":
     # INSET UVJ (EELG)
     ax2 = fig.add_axes([0.741, 0.642, 0.218*0.7, 0.35*0.7])  # left edge, bottom edge, width, height
     objs = [obj1 + '_' + field1, obj2 + '_' + field2]
-    uvj.uvj_plot(-1, 'all', objlist=objs, title=False, labels=False, lims=True, size=25, show=False,
+    uvj.uvj_plot(-1, 'all', objlist=objs, title=False, labels=False, lims=True, size=20, show=False,
                  col=['purple', 'b'], legend=[r'EELG', r'SFG'])
+    #     uvj.uvj_plot(-1, 'all', objlist=objs, title=False, labels=False, lims=True, size=25, show=False,
 
     # EELG, SFG names
     # ax1.text(1.7*10**3, 2.82, str(field1).upper() + '-' + str(obj1) + ', EELG', fontsize=fs_text)
