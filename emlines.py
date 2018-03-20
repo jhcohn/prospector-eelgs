@@ -218,9 +218,8 @@ def ems(param_file, out_file, objname='21442', field='cdfs', enames=None):
         eflux *= 3.84*10**33  # erg/s (Lum, not flux)
 
         out[lines[jj]] = {'flux': eflux, 'eqw': eqw}
-        print(out)
 
-    return out
+    return out, fsps_name
 
 
 if __name__ == "__main__":
@@ -228,6 +227,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
     parser.add_argument('--parfile')
     parser.add_argument('--outname')
+
+    eels = 0  # 1 = EELGs, 0 = SFGs
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -239,8 +240,12 @@ if __name__ == "__main__":
         files[key] = kwargs[key]
 
     if files['outname'] == 'all':
-        data = 'Comp_10.dat'  # 'lbg_ids1'  # 'Comp_10.dat'
-        fold = 'out_efico/'  # 'out_nfico/'  # 'out_efico/'
+        if eels:
+            data = 'Comp_10.dat'  # 'lbg_ids1'  # 'Comp_10.dat'
+            fold = 'out_efico/'  # 'out_nfico/'  # 'out_efico/'
+        else:
+            data = 'lbg_ids1'  # 'lbg_ids1'  # 'Comp_10.dat'
+            fold = 'out_nfico/'  # 'out_nfico/'  # 'out_efico/'
         with open(data, 'r') as comp:
             e_objs = []
             e_fs = []
@@ -271,7 +276,7 @@ if __name__ == "__main__":
                 true_field = e_fs[i]
                 true_obj = e_objs[i]
 
-                out = ems(param_file, out_file, objname=true_obj, field=true_field)
+                out, line_names = ems(param_file, out_file, objname=true_obj, field=true_field)
                 print(out)
 
             fluxes = []
@@ -293,6 +298,37 @@ if __name__ == "__main__":
 
         print(ratio, 'ratio')
         print(np.percentile(ratio, [16., 50., 84.]))
+
+        fs_text = 15
+
+        fig = plt.figure()
+        ax1 = plt.subplot(3, 3, 1)
+        ax2 = plt.subplot(3, 3, 2)
+        ax3 = plt.subplot(3, 3, 3)
+        ax4 = plt.subplot(3, 3, 4)
+        ax5 = plt.subplot(3, 3, 5)
+        ax6 = plt.subplot(3, 3, 6)
+        ax7 = plt.subplot(3, 3, 7)
+        ax8 = plt.subplot(3, 3, 8)
+
+        axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]
+
+        names = ['[NII]6585', '[OII]3726', 'H alpha 6563', '[OII]3729', '[OIII]4960', '[OIII]5007', 'H beta 4861',
+                 'H delta 4102']
+        # names = ['[NII]', '[OII]1', 'Halpha', '[OII]2', '[OIII]1', '[OIII]2', 'Hbeta', 'Hdelta']
+        for i in range(len(names)):  # for each line
+            percs = np.percentile(width[:, i], [16., 50., 84.])
+            axes[i].hist(width[:, i], bins=10, histtype='step', weights=[1. / len(width[:, i])] * len(width[:, i]),
+                         normed=False, color='k', lw=2, label=names[i])  # plot hist: this line for all galaxies
+            axes[i].axvline(x=percs[1], color='k', linestyle='--', lw=2, label='Median')
+            axes[i].legend(numpoints=1, loc='upper right', prop={'size': fs_text})
+            axes[i].set_xlabel(r'Equivalent Width [$\rm \AA$]', fontsize=fs_text)
+            if i == 3:
+                axes[i].set_ylabel(r'Fraction', fontsize=fs_text)
+            axes[i].set_xlim(0., 10**3)
+            axes[i].set_ylim(0., 0.70)
+        plt.show()
+        plt.close()
 
     else:
         out_file = files['outname']
