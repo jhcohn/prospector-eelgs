@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 import one_stack as one
 import get_mass_dust as gmd
+import matplotlib.pyplot as plt
 
 
 def get_ssfr(file):
@@ -27,8 +28,8 @@ if __name__ == "__main__":
 
     git = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
     corr = 0
-    fico = 0
-    newsfg = 1
+    fico = 1
+    newsfg = 0
     if corr:
         base = ['corr', 'corr']
         out_folds = ['out/out_ecorr/', 'out/out_ncorr/']
@@ -103,14 +104,17 @@ if __name__ == "__main__":
     print(len(eelgs))
 
     second = []
+    temp = []
     for glxy in eelgs:
         file = pkls + glxy + '_extra_out.pkl'
         if os.path.exists(file):
             get = get_ssfr(file)
-            sfr.append(get[0])
-            ssfr.append(get[1])
-            sfh.append(get_sfh(file)[0])
-            second.append(get_sfh(file)[4])
+            sfr.append(get[0])  # sfr_100
+            ssfr.append(get[1])  # median ssfr
+            sfh.append(get_sfh(file)[0])  # 1st bin
+            hm = get_sfh(file)
+            temp.append((hm[0] + hm[1] + hm[2]) / 3)
+            second.append(get_sfh(file)[4])  # 2nd bin
         else:
             print(file)
 
@@ -146,19 +150,23 @@ if __name__ == "__main__":
             lbgs1.append(file)
 
     print(len(eelgs))
+    time = 10 ** 8
+    if fico or newsfg:
+        time = .5 * 10 ** 8
+    print(time, 'time')
     frac = np.zeros(shape=(len(eelgs), 10**3))
     s_frac = frac
     frac2 = np.zeros(shape=(len(eelgs), 10**3))
     frac100 = np.zeros(shape=(len(eelgs), 10**3))
+    regs = np.zeros(shape=(len(eelgs), 10**3))
     for i in range(len(eelgs)):
         print(i)
         get_e = gmd.printer(out + eelgs1[i], percs=False)
         for k in range(10**3):
             # print((get_e[np.random.randint(len(get_e))]))
             # print(sfh[i][np.random.randint(len(sfh[i]))])
-            time = 10 ** 8
-            if fico:
-                time = .5 * 10 ** 8
+            regs[i, k] = np.percentile(sfh[i], [16., 50., 84.])[1] * time /\
+                         (10 ** np.percentile(get_e, [16., 50., 84.])[1])
             s_frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))]
             frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))] * time / (10 ** get_e[np.random.randint(len(get_e))])
             frac2[i, k] = second[i][np.random.randint(len(second[i]))] * time /\
@@ -170,24 +178,38 @@ if __name__ == "__main__":
         print(i)
         get_l = gmd.printer(out_l + lbgs1[i], percs=False)
         for k in range(10**3):
-            frac_l[i, k] = sfh_l[i][np.random.randint(len(sfh_l[i]))] * (10**8) / (10**get_l[np.random.randint(len(get_l))])
+            frac_l[i, k] = sfh_l[i][np.random.randint(len(sfh_l[i]))] * time /\
+                           (10**get_l[np.random.randint(len(get_l))])
 
     # Calculate (unitless) FRAC OF TOTAL MASS formed: = bootstrap SFH posterior * bin_length / bootstrap mass posterior
     all_fracs2 = []
     all_fracs = []
     all_fracs100 = []
+    all_true = []
+    all_r = []
     for i in range(len(frac)):
         all_fracs.append(np.percentile(frac[i], [16., 50., 84.]))
         all_fracs2.append(np.percentile(frac2[i], [16., 50., 84.]))
         all_fracs100.append(np.percentile(frac100[i], [16., 50., 84.]))
+        for k in range(len(frac[i])):
+            all_true.append(frac[i, k])
+            all_r.append(regs[i, k])
     all_fracs_l = []
     for i in range(len(frac_l)):
         all_fracs_l.append(np.percentile(frac_l[i], [16., 50., 84.]))
     # print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')
     print('fractions of mass formed')
-    print(np.percentile(all_fracs, [16., 50., 84.]), 'EELGs most recent bin')  # 86.7 - 26.1, 26.1 - 9.1
+    print(all_fracs)
+    print(all_fracs[1])
+    print(np.percentile(all_true, [16., 50., 84., 86., 88., 90., 92., 95., 97.]), 'EELGs most recent bin')
+    # 85th percentile forms 50% of mass, 90th percentile forms 65% of mass, 93rd percentile forms 75% of mass,
+    # 95th percentile forms 82% of mass, 97th percentile forms 93% of mass
+    # print(np.percentile(all_r, [16., 50., 84.]), 'EELGs most recent bin')  # more peaked around center
+    e_percs = np.percentile(all_fracs, [16., 50., 84.])
+    l_percs = np.percentile(all_fracs_l, [16., 50., 84.])
+    # print(e_percs, 'EELGs most recent bin')  # 86.7 - 26.1, 26.1 - 9.1
     print(np.percentile(all_fracs2, [16., 50., 84.]), 'EELGs second bin')  # 21.3 - 5.1, 5.1 - 0.91
-    print(np.percentile(all_fracs_l, [16., 50., 84.]), 'sfgs most recent bin')  # 28.7% - 8.95%, 8.95% - 2.5%
+    print(l_percs, 'sfgs most recent bin')  # 28.7% - 8.95%, 8.95% - 2.5%
 
     # print(np.percentile(all_fracs, [85., 90., 99.]), 'EELGs top 15 percs')
     # print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')
@@ -211,6 +233,41 @@ if __name__ == "__main__":
     print(np.percentile(ssfr, [16., 50., 84.]))
     print(np.percentile(ssfr_l, [16., 50., 84.]))
 
+    print(len(all_fracs))
+    x1 = []
+    for l in range(len(all_fracs)):
+        x1.append(all_fracs[l][1])
+    x2 = []
+    for m in range(len(all_fracs_l)):
+        x2.append(all_fracs_l[m][1])
+    # print(x1)
+    print(np.median(x1))
+    # print(x2)
+    print(np.median(x2))
+
+    fig = plt.figure()
+    ax1 = plt.subplot(1, 1, 1)
+    ax1.hist(x1, bins=50, histtype="step", weights=[1. / len(eelgs1)] * len(x1), normed=False, color='purple', lw=2,
+             label='EELGs')
+    ax1.hist(x2, bins=50, histtype="step", weights=[1. / len(lbgs1)] * len(x2), normed=False, color='b', lw=2,
+             label='SFGs')
+
+    # plot median, +/-1sigma for both histograms
+    ax1.axvline(x=e_percs[1], color='purple', linestyle='--', lw=2)
+    ax1.axvline(x=l_percs[1], color='b', linestyle='--', lw=2)
+
+    # shade in +/-1sigma region
+    ax1.axvspan(e_percs[0], e_percs[2], color='purple', alpha=0.2)
+    ax1.axvspan(l_percs[0], l_percs[2], color='b', alpha=0.2)
+    ax1.set_ylim(0, 1.)
+    ax1.set_xlim(0, 1.)
+
+    # figure labels
+    fs = 20
+    ax1.legend(numpoints=1, loc='upper left', prop={'size': fs})
+    ax1.set_xlabel('Fraction of stellar mass [M$_{\odot}$] formed in most recent 50 Myr', ha='center', fontsize=fs)
+    ax1.set_ylabel(r'Fraction of galaxies', fontsize=fs)
+    plt.show()
 
     '''
     newpath = '/home/jonathan/'
