@@ -8,6 +8,7 @@ import uvj
 import widths  # WIDTHS
 from matplotlib import gridspec
 from mpl_toolkits.axes_grid.inset_locator import (inset_axes, InsetPosition, mark_inset)
+from matplotlib import rc
 
 
 if __name__ == "__main__":
@@ -17,6 +18,9 @@ if __name__ == "__main__":
     parser.add_argument('--base1')
     parser.add_argument('--base2')
     parser.add_argument('--field')
+
+    rc('font', **{'family': 'serif', 'serif': ['Times']})
+    rc('text', usetex=True)
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -148,8 +152,8 @@ if __name__ == "__main__":
     fs_text = 30
     fs = 20
     fs_ticks = 25
-    ax1.set_ylabel(r'Flux Ratio (EELG / SFG)', fontsize=fs_text)
-    ax1.set_xlabel(r'Wavelength (Rest) [$\rm \AA$]', fontsize=fs_text)
+    ax1.set_ylabel('Flux Ratio (EELG / SFG)', fontsize=fs_text)
+    ax1.set_xlabel('Wavelength (Rest) [\AA]', fontsize=fs_text)
     # fig.text(0.5, 0.03, r'Wavelength (Rest) [$\rm \AA$]', ha='center', va='bottom', fontsize=fs_text)  # 30
 
     # GET PLOTTING!

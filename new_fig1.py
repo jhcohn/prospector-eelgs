@@ -7,9 +7,10 @@ import uvj
 import widths  # WIDTHS
 from matplotlib import gridspec
 from mpl_toolkits.axes_grid.inset_locator import inset_axes
+from matplotlib import rc
 
 
-def all_plots(fileset, objname, znames, field):
+def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
     # FIGURES
     fig = plt.figure()
 
@@ -35,7 +36,7 @@ def all_plots(fileset, objname, znames, field):
         fs = 20
         fs_ticks = 25
         fs_text = 30
-        ylabel = r'Scaled F$_\nu$ [$1500 \rm \AA$]'
+        ylabel = r'Scaled F$_\nu$ [$1500$ \AA]'
 
     else:
         # FILTERS SCALE FACTOR
@@ -204,8 +205,8 @@ def all_plots(fileset, objname, znames, field):
             plt.subplots_adjust(hspace=.0)
     print('show')
 
-    fig.text(0.07, 0.5, ylabel, fontsize=fs_text, va='center', rotation='vertical')
-    plt.xlabel(r'Wavelength (Rest) [$\rm \AA$]', fontsize=fs_text)  # 20
+    fig.text(0.07, 0.5, ylabel, fontsize=fs_text, va='center', rotation='vertical', **font)
+    plt.xlabel('Wavelength (Rest) [\AA]', fontsize=fs_text, **font)  # 20
     plt.show()
 
 if __name__ == "__main__":
@@ -273,6 +274,9 @@ if __name__ == "__main__":
     fileset = [files1, files2]
     objs = [obj1, obj2]
     fields = [field1, field2]
+
+    rc('font', **{'family': 'serif', 'serif': ['Times']})
+    rc('text', usetex=True)
 
     all_plots(fileset, objs, znames, fields)
 

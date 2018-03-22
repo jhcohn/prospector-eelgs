@@ -9,6 +9,7 @@ import uvj
 from astropy.cosmology import WMAP9
 import scipy
 from matplotlib.ticker import MultipleLocator
+from matplotlib import rc
 
 
 def draw_sfrs(objs, flds, new_logmass=None, ndraw=1e4, alpha_sfh=1.0, pfile=None, show=True):
@@ -471,8 +472,8 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     num_bins = 100
     hi = np.histogram(draws[0], bins=num_bins, range=(10**-12, 10**-7))
     hey = np.histogram(draws[1], bins=num_bins, range=(10**-12, 10**-7))
-    # print(scipy.stats.ks_2samp(hi[0], hey[0]))  # (100: 0.19); (200: 0.03); (500: 1e-4); (1000: 1e-7)
-    print(scipy.stats.anderson_ksamp((hi[0], hey[0])))  # (15: 0.4); (50: 0.1); (75: 0.03); (100: 0.007); (200: 1e-4)
+    print('KS', scipy.stats.ks_2samp(hi[0], hey[0]))  # (100: 0.19); (200: 0.03); (500: 1e-4); (1000: 1e-7)
+    print('A-D', scipy.stats.anderson_ksamp((hi[0], hey[0])))  # (15: 0.4); (50: 0.1); (75: 0.03); (100: 0.007); (200: 1e-4)
     # NOTE: the above numbers changed WRONG: NOW CORRECT, for anderson-darling: (100: 0.043)
     print(min(draws[1]), max(draws[1]))  # ~4.7e-14, 21*1e-9
     print(np.percentile(draws[1], [16, 50, 84]))  # 4.08e-10, 1.38e-9, 2.89e-9
@@ -778,6 +779,10 @@ if __name__ == "__main__":
     print(nummy, c, 'nume')
     print(numl, cl, 'numl')
     # smooth_percs = [smooth(perc1), smooth(perc2)]
+
+
+    rc('font', **{'family': 'serif', 'serif': ['Times']})
+    rc('text', usetex=True)
 
     plot_sfhs([new1, new2], t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l], tuniv=tun,
               nums=[nummy, numl])
