@@ -30,6 +30,8 @@ if __name__ == "__main__":
     corr = 0
     fico = 1
     newsfg = 0
+    write = True
+
     if corr:
         base = ['corr', 'corr']
         out_folds = ['out/out_ecorr/', 'out/out_ncorr/']
@@ -105,32 +107,66 @@ if __name__ == "__main__":
 
     second = []
     temp = []
-    for glxy in eelgs:
-        file = pkls + glxy + '_extra_out.pkl'
-        if os.path.exists(file):
-            get = get_ssfr(file)
-            sfr.append(get[0])  # sfr_100
-            ssfr.append(get[1])  # median ssfr
-            sfh.append(get_sfh(file)[0])  # 1st bin
-            hm = get_sfh(file)
-            temp.append((hm[0] + hm[1] + hm[2]) / 3)
-            second.append(get_sfh(file)[4])  # 2nd bin
-        else:
-            print(file)
 
     sfh_l = []
     ssfr_l = []
     sfr_l = []
-    for glxy in lbgs1:
-        file = l_pkls + glxy + '_extra_out.pkl'
 
-        if os.path.exists(file):
-            get = get_ssfr(file)
-            sfr_l.append(get[0])
-            ssfr_l.append(get[1])
-            sfh_l.append(get_sfh(file)[0])
-        else:
-            print(file)
+    if write:
+        eel_file = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/eelg_ssfrs.txt'
+        sfg_file = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfg_ssfrs.txt'
+        with open(eel_file, 'w+') as eel_ssfr:
+            eel_ssfr.write('# ID\n\n')
+            for glxy in eelgs:
+                file = pkls + glxy + '_extra_out.pkl'
+                if os.path.exists(file):
+                    get = get_ssfr(file)
+                    sfr.append(get[0])  # sfr_100
+                    ssfr.append(get[1])  # median ssfr
+                    sfh.append(get_sfh(file)[0])  # 1st bin
+                    hm = get_sfh(file)
+                    temp.append((hm[0] + hm[1] + hm[2]) / 3)
+                    second.append(get_sfh(file)[4])  # 2nd bin
+                    eel_ssfr.write(glxy + ' ' + str(get[1]) + '\n')
+                else:
+                    print(file)
+        with open(sfg_file, 'w+') as sfg_ssfr:
+            sfg_ssfr.write('# ID\n\n')
+            for glxy in lbgs1:
+                file = l_pkls + glxy + '_extra_out.pkl'
+
+                if os.path.exists(file):
+                    get = get_ssfr(file)
+                    sfr_l.append(get[0])
+                    ssfr_l.append(get[1])
+                    sfh_l.append(get_sfh(file)[0])
+                    sfg_ssfr.write(glxy + ' ' + str(get[1]) + '\n')
+                else:
+                    print(file)
+
+    else:
+        for glxy in eelgs:
+            file = pkls + glxy + '_extra_out.pkl'
+            if os.path.exists(file):
+                get = get_ssfr(file)
+                sfr.append(get[0])  # sfr_100
+                ssfr.append(get[1])  # median ssfr
+                sfh.append(get_sfh(file)[0])  # 1st bin
+                hm = get_sfh(file)
+                temp.append((hm[0] + hm[1] + hm[2]) / 3)
+                second.append(get_sfh(file)[4])  # 2nd bin
+            else:
+                print(file)
+        for glxy in lbgs1:
+            file = l_pkls + glxy + '_extra_out.pkl'
+
+            if os.path.exists(file):
+                get = get_ssfr(file)
+                sfr_l.append(get[0])
+                ssfr_l.append(get[1])
+                sfh_l.append(get_sfh(file)[0])
+            else:
+                print(file)
     lbgs = []
     for i in range(len(lbgs1)):
         file = l_pkls + lbgs1[i] + '_extra_out.pkl'
@@ -159,27 +195,60 @@ if __name__ == "__main__":
     frac2 = np.zeros(shape=(len(eelgs), 10**3))
     frac100 = np.zeros(shape=(len(eelgs), 10**3))
     regs = np.zeros(shape=(len(eelgs), 10**3))
-    for i in range(len(eelgs)):
-        print(i)
-        get_e = gmd.printer(out + eelgs1[i], percs=False)
-        for k in range(10**3):
-            # print((get_e[np.random.randint(len(get_e))]))
-            # print(sfh[i][np.random.randint(len(sfh[i]))])
-            regs[i, k] = np.percentile(sfh[i], [16., 50., 84.])[1] * time /\
-                         (10 ** np.percentile(get_e, [16., 50., 84.])[1])
-            s_frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))]
-            frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))] * time / (10 ** get_e[np.random.randint(len(get_e))])
-            frac2[i, k] = second[i][np.random.randint(len(second[i]))] * time /\
-                          (10 ** get_e[np.random.randint(len(get_e))])
-            frac100[i, k] = frac[i, k] + frac2[i, k]
-        print(np.percentile(s_frac[i], [16., 50., 84.]), 'sfr')
-    frac_l = np.zeros(shape=(len(lbgs), 10**3))
-    for i in range(len(lbgs)):
-        print(i)
-        get_l = gmd.printer(out_l + lbgs1[i], percs=False)
-        for k in range(10**3):
-            frac_l[i, k] = sfh_l[i][np.random.randint(len(sfh_l[i]))] * time /\
-                           (10**get_l[np.random.randint(len(get_l))])
+
+    frac_l = np.zeros(shape=(len(lbgs), 10 ** 3))
+    if write:
+        eel_file = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/eelg_fracs.txt'
+        sfg_file = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfg_fracs.txt'
+        with open(eel_file, 'w+') as write_eel:
+            write_eel.write('# ID SSFR\n\n')
+            for i in range(len(eelgs)):
+                print(i)
+                get_e = gmd.printer(out + eelgs1[i], percs=False)
+                for k in range(10 ** 3):
+                    # print((get_e[np.random.randint(len(get_e))]))
+                    # print(sfh[i][np.random.randint(len(sfh[i]))])
+                    regs[i, k] = np.percentile(sfh[i], [16., 50., 84.])[1] * time / \
+                                 (10 ** np.percentile(get_e, [16., 50., 84.])[1])
+                    s_frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))]
+                    frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))] * time / (
+                    10 ** get_e[np.random.randint(len(get_e))])
+                    frac2[i, k] = second[i][np.random.randint(len(second[i]))] * time / \
+                                  (10 ** get_e[np.random.randint(len(get_e))])
+                    frac100[i, k] = frac[i, k] + frac2[i, k]
+                print(np.percentile(s_frac[i], [16., 50., 84.]), 'sfr')
+                write_eel.write(eelgs[i] + ' ' + str(np.percentile(frac[i], [16., 50., 84.])[1]) + '\n')
+        with open(sfg_file, 'w+') as write_sfg:
+            write_sfg.write('# ID SSFR\n\n')
+            for i in range(len(lbgs)):
+                print(i)
+                get_l = gmd.printer(out_l + lbgs1[i], percs=False)
+                for k in range(10 ** 3):
+                    frac_l[i, k] = sfh_l[i][np.random.randint(len(sfh_l[i]))] * time / \
+                                   (10 ** get_l[np.random.randint(len(get_l))])
+                write_sfg.write(lbgs[i] + ' ' + str(np.percentile(frac_l[i], [16., 50., 84.])[1]) + '\n')
+
+    else:  # IF NOT WRITE
+        for i in range(len(eelgs)):
+            print(i)
+            get_e = gmd.printer(out + eelgs1[i], percs=False)
+            for k in range(10**3):
+                # print((get_e[np.random.randint(len(get_e))]))
+                # print(sfh[i][np.random.randint(len(sfh[i]))])
+                regs[i, k] = np.percentile(sfh[i], [16., 50., 84.])[1] * time /\
+                             (10 ** np.percentile(get_e, [16., 50., 84.])[1])
+                s_frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))]
+                frac[i, k] = sfh[i][np.random.randint(len(sfh[i]))] * time / (10 ** get_e[np.random.randint(len(get_e))])
+                frac2[i, k] = second[i][np.random.randint(len(second[i]))] * time /\
+                              (10 ** get_e[np.random.randint(len(get_e))])
+                frac100[i, k] = frac[i, k] + frac2[i, k]
+            print(np.percentile(s_frac[i], [16., 50., 84.]), 'sfr')
+        for i in range(len(lbgs)):
+            print(i)
+            get_l = gmd.printer(out_l + lbgs1[i], percs=False)
+            for k in range(10**3):
+                frac_l[i, k] = sfh_l[i][np.random.randint(len(sfh_l[i]))] * time /\
+                               (10**get_l[np.random.randint(len(get_l))])
 
     # Calculate (unitless) FRAC OF TOTAL MASS formed: = bootstrap SFH posterior * bin_length / bootstrap mass posterior
     all_fracs2 = []
@@ -195,21 +264,27 @@ if __name__ == "__main__":
             all_true.append(frac[i, k])
             all_r.append(regs[i, k])
     all_fracs_l = []
+    all_l = []
     for i in range(len(frac_l)):
         all_fracs_l.append(np.percentile(frac_l[i], [16., 50., 84.]))
+        for k in range(len(frac_l)):
+            all_l.append(frac_l[i, k])
     # print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')
     print('fractions of mass formed')
     print(all_fracs)
     print(all_fracs[1])
-    print(np.percentile(all_true, [16., 50., 84., 86., 88., 90., 92., 95., 97.]), 'EELGs most recent bin')
-    # 85th percentile forms 50% of mass, 90th percentile forms 65% of mass, 93rd percentile forms 75% of mass,
-    # 95th percentile forms 82% of mass, 97th percentile forms 93% of mass
+    print(np.percentile(all_true, [16., 50., 84., 86., 87., 88., 89., 90., 91., 92., 93., 94., 95., 96., 97.]),
+          'EELGs most recent bin')
+    # 85th percentile forms 50% of mass, 86th -> 52%, 88th -> 60%, 90th -> 65% of mass, 91st -> 69%%, 92nd -> 71%,
+    # 93rd -> 75%, 94th -> 78%, 95th -> 82%, 96th -> 87%, 97th -> 94%
     # print(np.percentile(all_r, [16., 50., 84.]), 'EELGs most recent bin')  # more peaked around center
     e_percs = np.percentile(all_fracs, [16., 50., 84.])
     l_percs = np.percentile(all_fracs_l, [16., 50., 84.])
     # print(e_percs, 'EELGs most recent bin')  # 86.7 - 26.1, 26.1 - 9.1
     print(np.percentile(all_fracs2, [16., 50., 84.]), 'EELGs second bin')  # 21.3 - 5.1, 5.1 - 0.91
     print(l_percs, 'sfgs most recent bin')  # 28.7% - 8.95%, 8.95% - 2.5%
+    print(np.percentile(all_fracs_l, [16., 50., 84., 86., 87., 88., 89., 90., 91., 92., 93., 94., 95., 96., 97.]),
+          'SFGs all_l more percs')
 
     # print(np.percentile(all_fracs, [85., 90., 99.]), 'EELGs top 15 percs')
     # print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')

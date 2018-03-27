@@ -228,8 +228,6 @@ if __name__ == "__main__":
     parser.add_argument('--parfile')
     parser.add_argument('--outname')
 
-    eels = 0  # 1 = EELGs, 0 = SFGs
-
     args = vars(parser.parse_args())
     kwargs = {}
     for key in args.keys():
@@ -239,10 +237,117 @@ if __name__ == "__main__":
     for key in kwargs.keys():
         files[key] = kwargs[key]
 
-    if files['outname'] == 'all':
-        if eels:
+    if files['outname'] == 'eelgs' or files['outname'] == 'sfgs':
+        if files['outname'] == 'eelgs':
+            filename = 'ews_eelgs.txt'
             data = 'Comp_10.dat'  # 'lbg_ids1'  # 'Comp_10.dat'
             fold = 'out_efico/'  # 'out_nfico/'  # 'out_efico/'
+        else:
+            filename = 'ews_sfgs.txt'
+            data = 'lbg_ids1'  # 'lbg_ids1'  # 'Comp_10.dat'
+            fold = 'out_nfico/'  # 'out_nfico/'  # 'out_efico/'
+        with open(data, 'r') as comp:
+            e_objs = []
+            e_fs = []
+            for line in comp:
+                if line[0] == '#':
+                    pass
+                else:
+                    cols = line.split()
+                    if int(cols[0]) - 200000 > 0:
+                        e_objs.append(str(int(cols[0]) - 200000))
+                        e_fs.append('uds')
+                    elif int(cols[0]) - 100000 > 0:
+                        e_objs.append(str(int(cols[0]) - 100000))
+                        e_fs.append('cosmos')
+                    else:
+                        e_objs.append(str(int(cols[0])))
+                        e_fs.append('cdfs')
+        # 12105, 11462, 12533, 12552, 12903, 14808, 15124, 17189, 17342, 18561, 18742, 21076, 21442, 22768, 11063,
+        # 17423, 8787, 15462
+        lines = np.zeros(shape=(len(e_objs), 8))  # [OII]1, [OII]2, Hdelta, Hbeta, [OIII]1, [OIII]2, Halpha, [NII] = 8
+        width = np.zeros(shape=(len(e_objs), 8))
+        for i in range(len(e_objs)):
+            for infile in glob.glob(os.path.join('/home/jonathan/.conda/envs/snowflakes/lib/python2.7/' +
+                                                 'site-packages/prospector/git/out/' + fold, e_objs[i] + '*.h5')):
+                out_file = infile
+                param_file = files['parfile']
+                print(param_file, out_file)
+                true_field = e_fs[i]
+                true_obj = e_objs[i]
+
+                out, line_names = ems(param_file, out_file, objname=true_obj, field=true_field)
+                print(out)
+
+            fluxes = []
+            eqws = []
+            for idx in out:  # for each line in out
+                fluxes.append(out[idx]['flux'])  # that line's flux
+                print(fluxes[-1], out[idx], out[idx]['flux'])
+                eqws.append(out[idx]['eqw'])  # that line's eqw
+                print(eqws[-1])
+            lines[i, :] = fluxes
+            print('fluxes', fluxes)
+            width[i, :] = eqws
+            # print('lines', lines)
+        print('lines', lines)
+        print('width', width)
+        ratio = []
+        for i in range(len(e_objs)):
+            ratio.append((lines[i][4] + lines[i][5]) / (lines[i][0] + lines[i][1]))  # OIII doublet / OII doublet
+
+        print(ratio, 'ratio')
+        print(np.percentile(ratio, [16., 50., 84.]))
+
+        fs_text = 15
+
+        fig = plt.figure()
+        ax1 = plt.subplot(3, 3, 1)
+        ax2 = plt.subplot(3, 3, 2)
+        ax3 = plt.subplot(3, 3, 3)
+        ax4 = plt.subplot(3, 3, 4)
+        ax5 = plt.subplot(3, 3, 5)
+        ax6 = plt.subplot(3, 3, 6)
+        ax7 = plt.subplot(3, 3, 7)
+        ax8 = plt.subplot(3, 3, 8)
+
+        axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]
+
+        names = ['[NII]6585', '[OII]3726', 'H alpha 6563', '[OII]3729', '[OIII]4960', '[OIII]5007', 'H beta 4861',
+                 'H delta 4102']
+        # filename = 'ews_eelgs.txt'
+        git_path = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
+        newfile = git_path + filename
+        with open(newfile, 'w+') as write_file:
+            write_file.write('# ID ')
+            for i in range(len(names)):
+                write_file.write(names[i] + ' ')
+            write_file.write('\n\n')
+            for ee in range(len(e_objs)):
+                write_file.write(e_objs[ee])
+                for i in range(len(names)):
+                    print('look!', len(width), len(width[0]), width[ee, :])
+                    write_file.write(' ' + str(width[ee, i]))
+                write_file.write('\n')
+        # names = ['[NII]', '[OII]1', 'Halpha', '[OII]2', '[OIII]1', '[OIII]2', 'Hbeta', 'Hdelta']
+        for i in range(len(names)):  # for each line
+            percs = np.percentile(width[:, i], [16., 50., 84.])
+            axes[i].hist(width[:, i], bins=10, histtype='step', weights=[1. / len(width[:, i])] * len(width[:, i]),
+                         normed=False, color='k', lw=2, label=names[i])  # plot hist: this line for all galaxies
+            axes[i].axvline(x=percs[1], color='k', linestyle='--', lw=2, label='Median')
+            axes[i].legend(numpoints=1, loc='upper right', prop={'size': fs_text})
+            axes[i].set_xlabel(r'Equivalent Width [$\rm \AA$]', fontsize=fs_text)
+            if i == 3:
+                axes[i].set_ylabel(r'Fraction', fontsize=fs_text)
+            axes[i].set_xlim(0., 10**3)
+            axes[i].set_ylim(0., 0.70)
+        plt.show()
+        plt.close()
+
+    elif files['outname'] == 'all':
+        if eels:
+           data = 'Comp_10.dat'  # 'lbg_ids1'  # 'Comp_10.dat'
+           fold = 'out_efico/'  # 'out_nfico/'  # 'out_efico/'
         else:
             data = 'lbg_ids1'  # 'lbg_ids1'  # 'Comp_10.dat'
             fold = 'out_nfico/'  # 'out_nfico/'  # 'out_efico/'
