@@ -66,7 +66,7 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
         zname = ['/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout', '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout',
                  '/home/jonathan/uds/uds.v1.5.8.awk.zout']
     fields = ['cdfs', 'cosmos', 'uds']
-    special_uv, special_vj = [], []
+    special_uv, special_vj, new_obj_order = [], [], []
     nummy = 0
 
     for j in range(len(rest)):
@@ -101,10 +101,12 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
             if objlist is not None:
                 for j in range(len(objs)):
                     if fs[j] == fld and i == objs[j] - 1:
-                        # print(fs[j], objs[j])  # showed LOTS (including COSMOS 1824!)
+                        new_obj_order.append(str(objs[j]) + '_' + fs[j])
+                        print(new_obj_order)
                         nummy += 1
                         special_uv.append(-2.5 * np.log10(s[i][11] / s[i][15]))
                         special_vj.append(-2.5 * np.log10(s[i][15] / s[i][17]))
+                # print(new_obj_order)
 
             elif i == int(objname) - 1:
                 star = True
@@ -187,7 +189,12 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
             plt.ylim(-1., 2.5)  # 3
             plt.yticks([-1., 0., 1., 2.], size=size)  # , 3.])
         else:
+            if new_obj_order[::-1] == objlist:
+                special_uv = special_uv[::-1]
+                special_vj = special_vj[::-1]
             for i in range(len(special_vj)):
+                print(objlist[i], col[i])
+                print(new_obj_order)
                 if legend is None:
                     plt.scatter(special_vj[i], special_uv[i], color=col[i], marker="*", s=200)
                 else:
