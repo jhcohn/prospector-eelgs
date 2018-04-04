@@ -4,7 +4,7 @@ from sedpy import observate
 import matplotlib.pyplot as plt
 
 
-def plot_filts(field, zred, scale=1, rest=True):
+def plot_filts(ax, field, zred, scale=1, rest=True):
     filterset = []
     base = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/sedpy-0.1.0-py2.7.egg/sedpy/data/filters/'
 
@@ -30,8 +30,10 @@ def plot_filts(field, zred, scale=1, rest=True):
                         x.append(float(line.split()[1]) / (1 + zred))  # convert from observed to rest frame
                     else:
                         x.append(float(line.split()[1]))
-                    y.append(float(line.split()[2]) * scale)  # scale the height of the curves, default normalized to 1
-            plt.fill(x, y, alpha=0.25)
+                    # y.append(float(line.split()[2]) * scale)  # scale the height of curves, default normalized to 1
+                    y.append(float(line.split()[2]))  # scale the height of the curves, default normalized to 1
+            y = [0.2 * y[i] / max(y) for i in range(len(y))]
+            ax.fill(x, y, alpha=0.2)
     # plt.show()
 
 
@@ -118,5 +120,5 @@ def fig2(ax, field, zred, scale=1, rest=True):
                     else:
                         x.append(float(line.split()[1]))
                     y.append(float(line.split()[2]) * scale)  # scale the height of the curves, default normalized to 1
-            ax.fill(x, y, colors[i], alpha=0.25)
+            ax.fill(x, y, colors[i], alpha=0.2)  # .25
             i += 1

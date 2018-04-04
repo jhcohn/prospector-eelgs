@@ -178,7 +178,7 @@ if __name__ == "__main__":
     ax2 = fig.add_axes([0.696, 0.57, 0.218*0.9, 0.35*0.9])
     # fig.add_axes([0.741, 0.642, 0.218*0.7, 0.35*0.7])  # left edge, bottom edge, width, height
     objs = [obj1 + '_' + field1, obj2 + '_' + field2]
-    uvj.uvj_plot(-1, 'all', objlist=objs, title=False, labels=False, lims=True, size=20, show=False,
+    uvj.uvj_plot(-1, 'all', objlist=objs, title=False, labels=False, lims=True, size=20, show=False,  # 20
                  col=['purple', 'b'])  #  legend=[r'EELG', r'SFG'])
     #     uvj.uvj_plot(-1, 'all', objlist=objs, title=False, labels=False, lims=True, size=25, show=False,
 
@@ -188,8 +188,8 @@ if __name__ == "__main__":
     # 1.6*10**3 if legend, and legend only if include phot
     ax1.text(1.1*10**3, ymax * 0.94, str(field1).upper() + '-' + str(obj1) + ', EELG', fontsize=fs_text)
     ax1.text(1.1*10**3, ymax * 0.88, str(field2).upper() + '-' + str(obj2) + ', SFG', fontsize=fs_text)
-    ax1.scatter(x=2.1*10**3, y=ymax * 0.955, color='purple', marker='*', s=300)
-    ax1.scatter(x=2.1*10**3, y=ymax * 0.895, color='blue', marker='*', s=300)
+    ax1.scatter(x=2.1*10**3, y=ymax * 0.955, color='purple', marker='*', s=400)
+    ax1.scatter(x=2.1*10**3, y=ymax * 0.894, color='blue', marker='*', s=400)
 
     ax1.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
 

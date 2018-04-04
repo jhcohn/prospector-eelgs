@@ -196,9 +196,9 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
                 print(objlist[i], col[i])
                 print(new_obj_order)
                 if legend is None:
-                    plt.scatter(special_vj[i], special_uv[i], color=col[i], marker="*", s=200)
+                    plt.scatter(special_vj[i], special_uv[i], color=col[i], marker="*", s=200)  # 400
                 else:
-                    plt.scatter(special_vj[i], special_uv[i], color=col[i], marker="*", s=200, label=legend[i])
+                    plt.scatter(special_vj[i], special_uv[i], color=col[i], marker="*", s=200, label=legend[i])  # 400
                     plt.legend(scatterpoints=1, loc='upper left', prop={'size': 15})
     elif show:
         plt.show()
