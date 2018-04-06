@@ -17,6 +17,7 @@ import get_mass_dust as gmd
 import stellar_ages as sa
 from matplotlib import rc
 from scipy import stats
+import fast_compare as fc
 np.errstate(invalid='ignore')
 # NOTE: check if OIII / OII high for SFGs because OII essentially just noisy around 0?
 
@@ -125,23 +126,93 @@ def density_estimation(m1, m2):
     return X, Y, Z
 
 
-def plotter(x, y, color, fs_text=30, fs=20, font={'fontname': 'Times'}):
+def plotter(x, y, color, errs=True, fs_text=30, fs=20, font={'fontname': 'Times'}):
 
-    plt.scatter(x=x, y=y, color=color)
+    plt.scatter(x=x, y=y, color=color, s=fs * 2)
 
-    errx = np.percentile(x, [16., 50., 84.])
-    erry = np.percentile(y, [16., 50., 84.])
-    plt.errorbar(x=[errx[1]], y=[erry[1]], xerr=[[errx[1] - errx[0]], [errx[2] - errx[1]]],
-                 yerr=[[erry[1] - erry[0]], [erry[2] - erry[1]]], color=color, fmt='*')
+    if errs:
+        errx = np.percentile(x, [16., 50., 84.])
+        erry = np.percentile(y, [16., 50., 84.])
+        plt.errorbar(x=[errx[1]], y=[erry[1]], xerr=[[errx[1] - errx[0]], [errx[2] - errx[1]]],
+                     yerr=[[erry[1] - erry[0]], [erry[2] - erry[1]]], color=color, fmt='*')
 
-    X, Y, Z = density_estimation(x, y)
-    # levels = np.arange(0.5, np.amax(Z), 0.02) + 0.02
-    levels = np.arange(np.amax(Z) / 100., np.amax(Z), np.amax(Z) / 10.) + (np.amax(Z) / 10.)
-    if color == 'b':
-        cmap = 'Blues'
-    else:
-        cmap = 'Purples'
-    plt.contourf(X, Y, Z, levels=levels, cmap=cmap, alpha=0.5)  # levels=levels  # [0.1, 0.2, 0.5, 1., 25.]
+        X, Y, Z = density_estimation(x, y)
+        # levels = np.arange(0.5, np.amax(Z), 0.02) + 0.02
+        levels = np.arange(np.amax(Z) / 100., np.amax(Z), np.amax(Z) / 10.) + (np.amax(Z) / 10.)
+        if color == 'b':
+            cmap = 'Blues'
+        else:
+            cmap = 'Purples'
+        plt.contourf(X, Y, Z, levels=levels, cmap=cmap, alpha=0.5)  # levels=levels  # [0.1, 0.2, 0.5, 1., 25.]
+
+
+def dmass(obj_e, field_e, order, folders=['out_efico/', 'out_nfico/'], f_ind=0):
+    field_dict = {}
+    for i in range(len(obj_e)):
+        field_dict[obj_e[i]] = field_e[i]
+
+    home = '/home/jonathan/'
+    three_masses = [home + 'Comp_10_zm_EL_Z002.dat', home + 'Comp_10_zm_EL_Z004.dat', home + 'Comp_10_zm_ZFOURGE.dat']
+    three_labels = [r'FAST Z = Z$_{\odot}$, with emission lines', r'FAST Z = Z$_{\odot}/5$, with emission lines',
+                    r'FAST (ZFOURGE catalog parameters)']
+    colors = ['r', 'b', 'purple']
+    shapes = ['o', 's', 'v']
+
+    use_this = three_masses[f_ind]
+    use_lbl = three_labels[f_ind]
+
+    dictionary = fc.get_fast(use_this)
+    mass_dict = fc.compare_gmd(dictionary, folders[0])
+    # print(mass_dict)
+
+    fast, prosp, xratio, xfield, mratio = [], [], [], [], []
+    for key in mass_dict:  # mass_diff[key][0] is the FAST mass, mass_diff[key][1] is the Prospector mass
+        # print(mass_dict[key][0], mass_dict[key][1])
+        fast.append(float(mass_dict[key][0]))  # FAST
+        prosp.append(float(mass_dict[key][1]))  # Prospector
+        mratio.append((10 ** float(mass_dict[key][1])) / (10 ** float(mass_dict[key][0])))
+        xratio.append(key)
+        for f_key in field_dict:
+            if int(key) == int(f_key):
+                xfield.append(field_dict[f_key])
+
+    new_mass_order = []
+    for ln in range(len(order)):
+        for id in range(len(xratio)):
+            if xratio[id].startswith(str(order[ln])):
+                new_mass_order.append(mratio[id])
+    # PLOT!
+    print(len(xfield), len(mratio))
+    print(xfield)
+    '''
+    for l in range(len(xfield)):
+        if xfield[l] == 'cosmos':
+            xfield[l] = 'cos'
+    fs_text = 30  # 30
+    fs = 20
+    xlabs = []
+    for j in range(len(xratio)):
+        xlabs.append(str(xfield[j]).upper() + xratio[j])
+    # plt.axhline(y=np.median(mratio), color=colors[i])
+    # xspace = np.linspace(0, 19, len(ratio))
+    # plt.scatter(xspace, mratio, marker=shapes[i], color=colors[i], label=labels[i], s=fs)
+    # plt.xticks(xspace, xlabs, rotation=60)  # 'vertical')
+    print(xlabs)
+
+    plt.ylabel(r'Stellar mass ratio (Prospector / FAST)', fontsize=fs_text)
+    # plt.xlabel(r'Galaxy IDs', fontsize=fs_text)
+    plt.axhline(y=1., color='k', linestyle='--')
+    plt.ylim(0, 17)  # 37)
+    tick_f = 15
+    # plt.yscale('log')
+    plt.legend(numpoints=1, loc='upper left', prop={'size': 20})
+
+    plt.tick_params('x', length=3, width=1, which='both', labelsize=tick_f)
+    plt.tick_params('y', length=3, width=0.5, which='both', labelsize=tick_f)
+
+    plt.show()
+    '''
+    return new_mass_order, use_lbl
 
 
 if __name__ == "__main__":
@@ -182,8 +253,20 @@ if __name__ == "__main__":
     sew = sfg2_y
     print(len(eew), len(emass), len(sew), len(smass))
 
-    plotter(emass, eew, color=colors[0])
-    plotter(smass, sew, color=colors[1])
+    mass_ratio, mass_label = dmass(obj_e=ee_order, field_e=ee_fd, order=ee_order, f_ind=1)
+    # f_ind=1 --> FAST with Z = Z_sol / 5, with emission lines
+
+    do_mass = True
+    if do_mass:
+        plotter(eew, mass_ratio, color=colors[0], errs=False)
+        xmin, xmax = 0., 1.2 * max(eew)  # 25.
+        ymin, ymax = 0., 16.
+        labs = [labs[1], mass_label]
+    else:
+        xmin, xmax = 8.5, 11.5  # 1.2 * max([max(emass), max(smass)])  # 50.  # 10 ** 3  # 700.
+        ymin, ymax = 0., 1.2 * max([max(eew), max(sew)])  # 25.
+        plotter(emass, eew, color=colors[0])
+        plotter(smass, sew, color=colors[1])
 
     # PLOT PARAMS
     fs_text = 30
@@ -191,8 +274,6 @@ if __name__ == "__main__":
     rc('font', **{'family': 'serif', 'serif': ['Times']})
     rc('text', usetex=True)
     font = {'fontname': 'Times'}
-    xmin, xmax = 8.5, 11.5  # 1.2 * max([max(emass), max(smass)])  # 50.  # 10 ** 3  # 700.
-    ymin, ymax = 0., 1.2 * max([max(eew), max(sew)])  # 25.
     log = False
     if log:
         plt.yscale('log')
