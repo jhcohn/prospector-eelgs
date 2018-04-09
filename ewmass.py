@@ -153,7 +153,7 @@ def mass_match_plot(x1, y1, color, order, errs=True, outfold=None, ssfr_file=Non
     y = []
     do_these = []
     for i in range(len(x1)):
-        if 9.5 <= x1[i] <= 10.0:
+        if 9.55 <= x1[i] <= 9.9:  # 9.5 <= x1[i] <= 10.0:
             do_these.append(order[i])
             x.append(x1[i])
             y.append(y1[i])
@@ -193,7 +193,7 @@ def mass_match_plot(x1, y1, color, order, errs=True, outfold=None, ssfr_file=Non
         get = gmd.printer(out + gals[i], percs=True)  # median mass, dust, gasmet, metallicity
         mass.append(get[0])
         dust.append(get[1])
-        met.append(get[3])
+        met.append(get[2])
 
     ssfrs = []
     counter = 0
