@@ -151,7 +151,7 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
         print(zred)
         if j == 0:
             if scale:
-                scale_factor = res_jan[4]  # max(res_jan)
+                scale_factor = res_phot[2]  # res_jan[4]  # max(res_jan)
                 print(type(res_jan[4]))
                 spec_jan = spec_jan / scale_factor
                 sed_jan = sed_jan / scale_factor
@@ -159,6 +159,11 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
                 res_phot = res_phot / scale_factor
                 err_jan = err_jan / scale_factor
                 err_phot = err_phot / scale_factor
+            # ax1.axhline(y=1.)
+            # for i in range(len(p_wave)):
+            #     if 1425 < p_wave[i] < 1575:
+            #         print(i, 'look')
+            # ax1.plot(p_wave[2], res_phot[2], '*', markersize=20, color='purple')
             ax1.plot(sps_wave, spec_jan, color='k', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
             ax1.plot(wave_rest, sed_jan, 'D', color='k', markerfacecolor='None', markersize=10, markeredgewidth=1.25,
                      markeredgecolor='k', label=r'Model Photometry')  # plot best fit model
@@ -187,17 +192,19 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
 
             # Redshift for each obj) (note: len(main[0] = 156; elements 153:155 = use, snr, use_nosnr, z_spec)
             widths.fig2(ax1, field[j], zred, scale=(phot.max() * filt_factor1), rest=True)  # WIDTHS
-            # widths.plot_filts(ax1, field[j], zred, scale=(phot.max() * filt_factor1), rest=True)  # WIDTHS
+            # widths.plot_filts(ax1, field[j], zred, scale=(phot.max() * filt_factor1 / 2), rest=True)  # WIDTHS
 
         elif j == 1:
             if scale:
-                scale_factor = res_jan[4]  # max(res_jan)
+                scale_factor = res_phot[27]  # res_jan[4]  # max(res_jan)
                 spec_jan = spec_jan / scale_factor
                 sed_jan = sed_jan / scale_factor
                 res_jan = res_jan / scale_factor
                 res_phot = res_phot / scale_factor
                 err_jan = err_jan / scale_factor
                 err_phot = err_phot / scale_factor
+            # ax2.axhline(y=1.)
+            # ax2.plot(p_wave[27], res_phot[27], '*', markersize=20, color='blue')
             ax2.plot(sps_wave, spec_jan, color='k', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
             ax2.plot(wave_rest, sed_jan, 'D', color='k', markerfacecolor='None', markersize=10, markeredgewidth=1.25,
                      markeredgecolor='k', label=r'Model Photometry')  # plot best fit model
@@ -222,7 +229,7 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
             # ax2.set_yticks([10**-0.5, 10**0, 10**0.5, 10**1.])  # technically works
             # ax2.set_yticklabels([r'$10^{-0.5}$', r'$10^0$', r'$10^{0.5}$', r'$10^{1.}$'], size=fs_ticks)
             widths.fig2(ax2, field[j], zred, scale=(phot.max() * filt_factor2), rest=True)  # WIDTHS
-            # widths.plot_filts(ax2, field[j], zred, scale=(phot.max() * filt_factor2), rest=True)  # WIDTHS
+            # widths.plot_filts(ax2, field[j], zred, scale=(phot.max() * filt_factor2 / 10**4), rest=True)  # WIDTHS
             plt.subplots_adjust(hspace=.0)
     print('show')
 

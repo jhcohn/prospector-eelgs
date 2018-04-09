@@ -20,20 +20,29 @@ def plot_filts(ax, field, zred, scale=1, rest=True):
 
     filterset = np.array(filterset)
 
+    idx = 0
     for curve in filterset:  # for each filter in filterset
-        with open(curve, 'r') as file:
-            x = []
-            y = []
-            for line in file:
-                if line[0] == 'K':  # only care about lines starting with 'KFILTER' (this skips over comments etc.)
-                    if rest:  # if want rest-frame instead of observed frame
-                        x.append(float(line.split()[1]) / (1 + zred))  # convert from observed to rest frame
-                    else:
-                        x.append(float(line.split()[1]))
-                    # y.append(float(line.split()[2]) * scale)  # scale the height of curves, default normalized to 1
-                    y.append(float(line.split()[2]))  # scale the height of the curves, default normalized to 1
-            y = [0.2 * y[i] / max(y) for i in range(len(y))]
-            ax.fill(x, y, alpha=0.2)
+        doit = True
+        list1 = [0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 14, -4, -3, -2, -1]  # BIVZ, Hs Hl J1 J2 J3 Ks Nb209, IRACx4
+        for id1 in range(len(list1)):
+            if idx == id1:
+                doit = False
+        if doit:
+            with open(curve, 'r') as file:
+                x = []
+                y = []
+                for line in file:
+                    if line[0] == 'K':  # only care about lines starting with 'KFILTER' (this skips over comments etc.)
+                        if rest:  # if want rest-frame instead of observed frame
+                            x.append(float(line.split()[1]) / (1 + zred))  # convert from observed to rest frame
+                        else:
+                            x.append(float(line.split()[1]))
+                        # y.append(float(line.split()[2]) * scale)  # scale the height of curves, default normalized to 1
+                        y.append(float(line.split()[2]))  # scale the height of the curves, default normalized to 1
+                y = [0.05 * y[i] / max(y) for i in range(len(y))]  # [0.2 * y[i] / max(y) for i in range(len(y))]
+
+                ax.fill(x, y, alpha=0.2)
+        idx += 1
     # plt.show()
 
 
