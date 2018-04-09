@@ -50,11 +50,13 @@ def list_ewflux(file, line_idx, ratio=False):
     '''
     galaxies = []
     counter = 0
+    ids = []
     with open(file, 'r') as ewflux:
         for line in ewflux:
             if line[0] != '#':
                 cols = line.split()
                 # print(cols[0])
+                ids.append(cols[0])
                 if not ratio:
                     galaxies.append(float(cols[line_idx + 1]))  # 0th line_idx is ID
                 else:
@@ -63,7 +65,7 @@ def list_ewflux(file, line_idx, ratio=False):
                     galaxies.append(float(cols[line_idx[0] + 1]) / float(cols[line_idx[1] + 1]))
                 counter += 1
 
-    return galaxies
+    return galaxies, ids
 
 
 def preplot(order=None, keys='e', file=None, line_idx=5, line_idx2=[5, 3], ratio=[False, False], outfold=None,
@@ -85,10 +87,8 @@ def preplot(order=None, keys='e', file=None, line_idx=5, line_idx2=[5, 3], ratio
              r'H$\delta$4102']
     # names = '[NII]6585', '[OII]3726', 'Halpha6563', '[OII]3729', '[OIII]4960', '[OIII]5007', 'Hbeta4861', 'Hdelta4102'
 
-    labels = [None, None]
-    ew = []
     if keys != 's':
-        ew = list_ewflux(file, line_idx=line_idx, ratio=ratio[0])  # line1
+        ew, ew_order = list_ewflux(file, line_idx=line_idx, ratio=ratio[0])  # line1
         # xy[1] = list_ewflux(files[1], line_idx=line_idx2, ratio=ratio[1])  # line2
         labels = [r'Stellar Mass [$\log_{10}(\textrm{M} / \textrm{M}_\odot$)]',
                   lines[line_idx] + r' Equivalent Width [\AA]']
@@ -102,17 +102,16 @@ def preplot(order=None, keys='e', file=None, line_idx=5, line_idx2=[5, 3], ratio
     for file in os.listdir(out):
         if file.endswith(".h5"):
             gals1.append(file)
-    print(gals1, order)
     gals = []
     for ln in range(len(order)):
         for id in range(len(gals1)):
             if gals1[id].startswith(str(order[ln])):
                 gals.append(gals1[id])
-    print(gals, order)
+    # print('1', gals)  # print('2', order)  # print('3', ew_order)  # yay is good!
 
     mass = []
-    for i in range(len(gals1)):
-        mass.append(gmd.printer(out + gals1[i], percs=True)[0])  # median mass
+    for i in range(len(gals)):
+        mass.append(gmd.printer(out + gals[i], percs=True)[0])  # median mass
 
     return ew, mass, labels
 
@@ -131,14 +130,15 @@ def plotter(x, y, color, errs=True, fs_text=30, fs=20, font={'fontname': 'Times'
     plt.scatter(x=x, y=y, color=color, s=fs * 2)
 
     if errs:
+        '''
         errx = np.percentile(x, [16., 50., 84.])
         erry = np.percentile(y, [16., 50., 84.])
         plt.errorbar(x=[errx[1]], y=[erry[1]], xerr=[[errx[1] - errx[0]], [errx[2] - errx[1]]],
                      yerr=[[erry[1] - erry[0]], [erry[2] - erry[1]]], color=color, fmt='*')
-
+        '''
         X, Y, Z = density_estimation(x, y)
         # levels = np.arange(0.5, np.amax(Z), 0.02) + 0.02
-        levels = np.arange(np.amax(Z) / 100., np.amax(Z), np.amax(Z) / 10.) + (np.amax(Z) / 10.)
+        levels = np.arange(np.amax(Z) / 7., np.amax(Z), np.amax(Z) / 7.) + (np.amax(Z) / 7.)
         if color == 'b':
             cmap = 'Blues'
         else:
@@ -146,13 +146,76 @@ def plotter(x, y, color, errs=True, fs_text=30, fs=20, font={'fontname': 'Times'
         plt.contourf(X, Y, Z, levels=levels, cmap=cmap, alpha=0.5)  # levels=levels  # [0.1, 0.2, 0.5, 1., 25.]
 
 
-def dmass(obj_e, field_e, order, folders=['out_efico/', 'out_nfico/'], f_ind=0):
+def mass_match_plot(x1, y1, color, order, errs=True, outfold=None, ssfr_file=None, fs_text=30, fs=20,
+                    font={'fontname': 'Times'}):
+
+    x = []
+    y = []
+    do_these = []
+    for i in range(len(x1)):
+        if 9.5 <= x1[i] <= 10.0:
+            do_these.append(order[i])
+            x.append(x1[i])
+            y.append(y1[i])
+
+    plt.scatter(x=x, y=y, color=color, s=fs * 2)
+
+    if errs:
+        '''
+        errx = np.percentile(x, [16., 50., 84.])
+        erry = np.percentile(y, [16., 50., 84.])
+        plt.errorbar(x=[errx[1]], y=[erry[1]], xerr=[[errx[1] - errx[0]], [errx[2] - errx[1]]],
+                     yerr=[[erry[1] - erry[0]], [erry[2] - erry[1]]], color=color, fmt='*')
+        '''
+        X, Y, Z = density_estimation(x, y)
+        # levels = np.arange(0.5, np.amax(Z), 0.02) + 0.02
+        levels = np.arange(np.amax(Z) / 7., np.amax(Z), np.amax(Z) / 7.) + (np.amax(Z) / 7.)
+        if color == 'b':
+            cmap = 'Blues'
+        else:
+            cmap = 'Purples'
+        plt.contourf(X, Y, Z, levels=levels, cmap=cmap, alpha=0.5)  # levels=levels  # [0.1, 0.2, 0.5, 1., 25.]
+
+    out = outfold
+    gals1 = []
+    for file in os.listdir(out):
+        if file.endswith(".h5"):
+            gals1.append(file)
+    gals = []
+    for ln in range(len(do_these)):
+        for id in range(len(gals1)):
+            if gals1[id].startswith(str(do_these[ln])):
+                gals.append(gals1[id])
+    mass = []
+    dust = []
+    met = []
+    for i in range(len(gals)):
+        get = gmd.printer(out + gals[i], percs=True)  # median mass, dust, gasmet, metallicity
+        mass.append(get[0])
+        dust.append(get[1])
+        met.append(get[3])
+
+    ssfrs = []
+    counter = 0
+    with open(ssfr_file, 'r') as ssfr:
+        for line in ssfr:
+            print(line)
+            if line[0] != '#':
+                cols = line.split()
+                print(cols)
+                for dt in range(len(do_these)):
+                    if cols[0].startswith(str(do_these[dt])):
+                        ssfrs.append(float(cols[1]) * 10 ** 9)  # ssfrs are stored in 2nd column in file; convert to Gyr^-1
+                        counter += 1
+
+    return mass, dust, met, ssfrs
+
+
+def dmass(obj_e, field_e, order, three_masses, folder='out_efico/', f_ind=0):
     field_dict = {}
     for i in range(len(obj_e)):
         field_dict[obj_e[i]] = field_e[i]
 
-    home = '/home/jonathan/'
-    three_masses = [home + 'Comp_10_zm_EL_Z002.dat', home + 'Comp_10_zm_EL_Z004.dat', home + 'Comp_10_zm_ZFOURGE.dat']
     three_labels = [r'FAST Z = Z$_{\odot}$, with emission lines', r'FAST Z = Z$_{\odot}/5$, with emission lines',
                     r'FAST (ZFOURGE catalog parameters)']
     colors = ['r', 'b', 'purple']
@@ -162,7 +225,7 @@ def dmass(obj_e, field_e, order, folders=['out_efico/', 'out_nfico/'], f_ind=0):
     use_lbl = three_labels[f_ind]
 
     dictionary = fc.get_fast(use_this)
-    mass_dict = fc.compare_gmd(dictionary, folders[0])
+    mass_dict = fc.compare_gmd(dictionary, folder)
     # print(mass_dict)
 
     fast, prosp, xratio, xfield, mratio = [], [], [], [], []
@@ -217,6 +280,9 @@ def dmass(obj_e, field_e, order, folders=['out_efico/', 'out_nfico/'], f_ind=0):
 
 if __name__ == "__main__":
 
+    do_mass = 0  # do_mass --> dMass_v_ew, else ew_v_mass\
+    mass_match = 1
+
     path = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
     e_out = path + 'out/out_efico/'
     s_out = path + 'out/out_nfico/'
@@ -240,28 +306,61 @@ if __name__ == "__main__":
     sew, smass, labs = preplot(order=sf_order, keys=key, file=sfg_file, line_idx=idx, ratio=ratio, outfold=s_out)
     print(len(eew), len(emass), len(sew), len(smass))
 
-    sfg2_x = []
-    sfg2_y = []
+    sfg_x = []
+    sfg_y = []
     for thing in range(len(smass)):
         if sew[thing] <= 10**-16 or smass[thing] <= 10**-16:
             # print('me')
             pass
         else:
-            sfg2_x.append(smass[thing])
-            sfg2_y.append(sew[thing])
-    smass = sfg2_x
-    sew = sfg2_y
+            sfg_x.append(smass[thing])
+            sfg_y.append(sew[thing])
+    smass = sfg_x
+    sew = sfg_y
     print(len(eew), len(emass), len(sew), len(smass))
 
-    mass_ratio, mass_label = dmass(obj_e=ee_order, field_e=ee_fd, order=ee_order, f_ind=1)
-    # f_ind=1 --> FAST with Z = Z_sol / 5, with emission lines
-
-    do_mass = True
     if do_mass:
+        # f_ind=1 --> FAST with Z = Z_sol / 5, with emission lines
+        home = '/home/jonathan/mz_files/'
+        three_masses = [home + 'Comp_10_zm_EL_Z002.dat', home + 'Comp_10_zm_EL_Z004.dat',
+                        home + 'Comp_10_zm_ZFOURGE.dat']
+        three_smasses = [home + 'Comp_00_zm_EL_Z002.dat', home + 'Comp_00_zm_EL_Z004.dat',
+                         home + 'Comp_00_zm_ZFOURGE.dat']
+
+        mass_ratio, mass_label = dmass(obj_e=ee_order, field_e=ee_fd, order=ee_order, three_masses=three_masses,
+                                       folder='out_efico/', f_ind=1)
+
+        smass_ratio, smass_label = dmass(obj_e=sf_order, field_e=sf_fd, order=sf_order, three_masses=three_smasses,
+                                         folder='out_nfico/', f_ind=1)
         plotter(eew, mass_ratio, color=colors[0], errs=False)
-        xmin, xmax = 0., 1.2 * max(eew)  # 25.
+        plotter(sew, smass_ratio, color=colors[1], errs=False)
+        xmin, xmax = 0., 1.2 * max([max(eew), max(sew)])  # 25.
         ymin, ymax = 0., 16.
         labs = [labs[1], mass_label]
+
+    elif mass_match:
+        xmin, xmax = 9.4, 10.1  # 1.2 * max([max(emass), max(smass)])  # 50.  # 10 ** 3  # 700.
+        ymin, ymax = 0., 1.2 * max([max(eew), max(sew)])  # 25.
+        ethese = mass_match_plot(emass, eew, color=colors[0], order=ee_order, outfold=e_out, ssfr_file=e_fs['s'])
+        sthese = mass_match_plot(smass, sew, color=colors[1], order=sf_order, outfold=s_out, ssfr_file=s_fs['s'])
+        print(len(ethese))
+        print(len(sthese))
+        mass_percs = np.percentile(ethese[0], [16., 50, 84.])
+        print(mass_percs, 'e-mass-matched-mass')
+        smass_percs = np.percentile(sthese[0], [16., 50, 84.])
+        print(smass_percs, 's-mass-matched-mass')
+        dust_percs = np.percentile(ethese[1], [16., 50, 84.])
+        print(dust_percs, 'e-mass-matched-dust')
+        sdust_percs = np.percentile(sthese[1], [16., 50, 84.])
+        print(sdust_percs, 's-mass-matched-dust')
+        met_percs = np.percentile(ethese[2], [16., 50, 84.])
+        print(met_percs, 'e-mass-matched-met')
+        smet_percs = np.percentile(sthese[2], [16., 50, 84.])
+        print(smet_percs, 's-mass-matched-met')
+        ssfr_percs = np.percentile(ethese[3], [16., 50, 84.])
+        print(ssfr_percs, 'e-mass-matched-ssfr')
+        sssfr_percs = np.percentile(sthese[3], [16., 50, 84.])
+        print(sssfr_percs, 's-mass-matched-ssfr')
     else:
         xmin, xmax = 8.5, 11.5  # 1.2 * max([max(emass), max(smass)])  # 50.  # 10 ** 3  # 700.
         ymin, ymax = 0., 1.2 * max([max(eew), max(sew)])  # 25.
@@ -288,158 +387,14 @@ if __name__ == "__main__":
     plt.ylabel(labs[1], fontsize=fs_text, **font)  # 20
     plt.show()
 
-    '''
-    line_idx = 6  # Hbeta  # 2  # Halpha  # 5  # OIII_5007
-    lines = ['[NII]6585', '[OII]3726', r'H$\alpha$6563', '[OII]3729', '[OIII]4960', '[OIII]5007', r'H$\beta$4861',
-             r'H$\delta$4102']
-    # names = '[NII]6585', '[OII]3726', 'Halpha6563', '[OII]3729', '[OIII]4960', '[OIII]5007', 'Hbeta4861', 'Hdelta4102'
 
-    rc('font', **{'family': 'serif', 'serif': ['Times']})
-    rc('text', usetex=True)
-    font = {'fontname': 'Times'}
-    fs_text = 30
-    fs = 20
-
-    eelgs = np.zeros(shape=(19, 2))  # 19 galaxies, ews & ssfrs
-    sfgs = np.zeros(shape=(167, 2))
-    r32_e = []  # [OIII] / [OII]
-    r32_s = []
-    rOb_e = []  # [OIII]5007 / Hbeta
-    rOb_s = []
-    counter = 0
-    counter2 = 0
-    with open(path + 'ews_eelgs.txt', 'r') as eelg_ews:
-        for line in eelg_ews:
-            if line[0] != '#':
-                cols = line.split()
-                # print(cols[0])
-                eelgs[counter, 0] = float(cols[line_idx + 1])  # 0th line_idx is ID
-                counter += 1
-                r32_e.append((float(cols[5+1]) + float(cols[4+1])) / (float(cols[3+1]) + float(cols[1+1])))
-                rOb_e.append(float(cols[5 + 1]) / float(cols[6 + 1]))
-    with open(path + 'eelg_ssfrs.txt', 'r') as eelg_ssfr:
-        counter = 0
-        for line in eelg_ssfr:
-            if line[0] != '#':
-                cols = line.split()
-                # print(cols[0])
-                eelgs[counter, 1] = float(cols[1])  # ssfrs are stored in second column
-                counter += 1
-    print(eelgs)
-
-    with open(path + 'ews_sfgs.txt', 'r') as sfg_ews:
-        for line in sfg_ews:
-            if line[0] != '#':
-                cols = line.split()
-                # print(cols[0])
-                sfgs[counter2, 0] = float(cols[line_idx + 1])  # 0th line_idx is ID
-                counter2 += 1
-                r32_s.append((float(cols[5+1]) + float(cols[4+1])) / (float(cols[3+1]) + float(cols[1+1])))
-                rOb_s.append(float(cols[5 + 1]) / float(cols[6 + 1]))
-    with open(path + 'sfg_ssfrs.txt', 'r') as sfg_ssfr:
-        counter2 = 0
-        for line in sfg_ssfr:
-            if line[0] != '#':
-                cols = line.split()
-                sfgs[counter2, 1] = float(cols[1])  # ssfrs are stored in second column
-                counter2 += 1
-    print(sfgs)
-
-    sfgs2 = np.zeros(shape=(127, 2))
-    r32_s2 = []
-    rOb_s2 = []
-    for i in range(len(sfgs)):
-        if sfgs[i, 1] <= 10**-16:
-            # print('me')
-            pass
-        else:
-            sfgs2[i, :] = sfgs[i, :]
-            r32_s2.append(r32_s[i])
-            rOb_s2.append(rOb_s[i])
-    sfgs = sfgs2
-    r32_s = np.asarray(r32_s2)
-    rOb_s = rOb_s2
-    print(sfgs)
-
-    r32 = False
-    Ob = True
-    fig = plt.figure()
-    x_e = eelgs[:, 0]
-    y_e = eelgs[:, 1] * 10 ** 9
-    x_s = sfgs[:, 0]
-    y_s = sfgs[:, 1] * 10 ** 9
-    cut = False
-    if cut:  # gets messy below EWs of 100 Angstroms, so fit line only to data > 100 Angstroms
-        x = []
-        y = []
-        for i in range(len(x_e)):
-            if x_e[i] > 100.:
-                x.append(x_e[i])
-                y.append(y_e[i])
-        x2 = []
-        y2 = []
-        for i in range(len(x_s)):
-            if x_s[i] > 100.:
-                x2.append(x_s[i])
-                y2.append(y_s[i])
-        plt.plot(np.unique(x), np.poly1d(np.polyfit(x, y, 1))(np.unique(x)), color='purple', linestyle=':')
-
-    if r32:
-        print(len(r32_e), len(y_e), len(r32_s), len(y_s))
-        plt.scatter(x=r32_e, y=y_e, color='purple')
-        plt.scatter(x=r32_s, y=y_s, color='b')
-
-        e_r = np.percentile(r32_e, [16., 50., 84.])
-        e_ssfr = np.percentile(y_e, [16., 50., 84.])
-        plt.errorbar(x=[e_r[1]], y=[e_ssfr[1]], xerr=[[e_r[1] - e_r[0]], [e_r[2] - e_r[1]]],
-                     yerr=[[e_ssfr[1] - e_ssfr[0]], [e_ssfr[2] - e_ssfr[1]]], color='purple', fmt='*')
-
-        s_r = np.percentile(r32_s, [16., 50., 84.])
-        s_ssfr = np.percentile(y_s, [16., 50., 84.])
-        plt.errorbar(x=[s_r[1]], y=[s_ssfr[1]], xerr=[[s_r[1] - s_r[0]], [s_r[2] - s_r[1]]],
-                     yerr=[[s_ssfr[1] - s_ssfr[0]], [s_ssfr[2] - s_ssfr[1]]], color='b', fmt='*')
-        xmin, xmax = 0., 50.  # 10 ** 3  # 700.
-        ymin, ymax = 0., 25.
-        ylabel = 'SSFR [Gyr$^{-1}$]'
-        label = r'[OIII] / [OII]'
-        # label = lines[line_idx] + ' Equivalent Width [\AA]'
-    elif Ob:
-        print(len(r32_e), len(y_e), len(r32_s), len(y_s))
-        plt.scatter(x=x_e, y=rOb_e, color='purple')
-        plt.scatter(x=x_s, y=rOb_s, color='b')
-
-        e_r = np.percentile(x_e, [16., 50., 84.])
-        e_ssfr = np.percentile(rOb_e, [16., 50., 84.])
-        plt.errorbar(x=[e_r[1]], y=[e_ssfr[1]], xerr=[[e_r[1] - e_r[0]], [e_r[2] - e_r[1]]],
-                     yerr=[[e_ssfr[1] - e_ssfr[0]], [e_ssfr[2] - e_ssfr[1]]], color='purple', fmt='*')
-
-        s_r = np.percentile(x_s, [16., 50., 84.])
-        s_ssfr = np.percentile(rOb_s, [16., 50., 84.])
-        plt.errorbar(x=[s_r[1]], y=[s_ssfr[1]], xerr=[[s_r[1] - s_r[0]], [s_r[2] - s_r[1]]],
-                     yerr=[[s_ssfr[1] - s_ssfr[0]], [s_ssfr[2] - s_ssfr[1]]], color='b', fmt='*')
-        xmin, xmax = 0., 150.  # 10 ** 3  # 700.
-        ymin, ymax = 0., 6.
-        ylabel = r'[OIII] / H$\beta$'
-        label = lines[line_idx] + ' Equivalent Width [\AA]'
-    else:
-        plt.plot(np.unique(x_e), np.poly1d(np.polyfit(x_e, y_e, 1))(np.unique(x_e)), color='purple', linestyle='--')
-        # plt.plot(np.unique(x2), np.poly1d(np.polyfit(x2, y2, 1))(np.unique(x2)), color='b', linestyle=':')
-        plt.plot(np.unique(x_s), np.poly1d(np.polyfit(x_s, y_s, 1))(np.unique(x_s)), color='b', linestyle='--')
-
-        plt.scatter(x=x_e, y=y_e, color='purple')  # x=EW, y=ssfrs
-        plt.scatter(x=x_s, y=y_s, color='b')
-        e_ew = np.percentile(x_e, [16., 50., 84.])
-        e_ssfr = np.percentile(y_e, [16., 50., 84.])
-        plt.errorbar(x=[e_ew[1]], y=[e_ssfr[1]], xerr=[[e_ew[1] - e_ew[0]], [e_ew[2] - e_ew[1]]],
-                     yerr=[[e_ssfr[1] - e_ssfr[0]], [e_ssfr[2] - e_ssfr[1]]], color='purple', fmt='*')
-        s_ew = np.percentile(x_s, [16., 50., 84.])
-        # print(s_ew)
-        s_ssfr = np.percentile(y_s, [16., 50., 84.])
-        # print(s_ssfr)
-        plt.errorbar(x=[s_ew[1]], y=[s_ssfr[1]], xerr=[[s_ew[1] - s_ew[0]], [s_ew[2] - s_ew[1]]],
-                     yerr=[[s_ssfr[1] - s_ssfr[0]], [s_ssfr[2] - s_ssfr[1]]], color='b', fmt='*')
-        xmin, xmax = 0., 200.  # 200 [Hbeta]  # 10**3 [Ha]  # 700. [OIII]
-        ymin, ymax = 0., 20.
-        ylabel = 'SSFR [Gyr$^{-1}$]'
-        label = lines[line_idx] + ' Equivalent Width [\AA]'
-    '''
+'''
+(array([ 9.57749403,  9.76314425,  9.87482784]), 'e-mass-matched-mass')
+(array([  9.77374964,   9.92011118,  10.03033199]), 's-mass-matched-mass')
+(array([ 0.11200133,  0.29464107,  0.38801465]), 'e-mass-matched-dust')
+(array([ 0.3373157 ,  0.57326892,  0.78298057]), 's-mass-matched-dust')
+(array([-0.34760772, -0.30852319, -0.2841036 ]), 'e-mass-matched-met')
+(array([-1.32048439, -0.68648973, -0.15814167]), 's-mass-matched-met')
+(array([ 1.57868734,  2.86966937,  3.06445666]), 'e-mass-matched-ssfr')
+(array([ 0.50228701,  1.20524879,  2.77549461]), 's-mass-matched-ssfr')
+'''
