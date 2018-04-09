@@ -65,6 +65,7 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
     ax1.set_yscale("log")
     ax1.set_xscale("log")
     ax1.set_xlim(xmin, xmax)
+    # ax1.set_ylim(10**-0.6, 10**1.3)
     ax1.set_ylim(ymin, ymax)
     # 'axis_name' ('both' is an option), which='both' --> major & minor ticks!
     ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)
@@ -74,6 +75,7 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
     ax2.set_yscale("log")
     ax2.set_xscale("log")
     ax2.set_xlim(xmin, xmax)
+    # ax2.set_ylim(10**-0.6, 10**1.3)
     ax2.set_ylim(ymin2, ymax2)
     ax2.tick_params('x', length=3, width=1, which='both', labelsize=fs)
     ax2.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
@@ -108,16 +110,20 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
         # mask[ly_mask] = False  # combine the masks!
 
         # apply mask
-        phot = results['obs']['maggies'][mask]
-        unc = results['obs']['maggies_unc'][mask]
+        phot = results['obs']['maggies']# [mask]
+        unc = results['obs']['maggies_unc']# [mask]
+        p_wave = wave_rest
         sed = sed[mask]
         wave_rest = wave_rest[mask]
+        print(len(phot), len(p_wave), 'meeee')
 
         # CONVERTING TO microjansky
         factor = 3631 * 10 ** 6
         res_jan = []
         err_jan = []
         sed_jan = []
+        res_phot = []
+        err_phot = []
         for i in range(len(wave_rest)):
             res_jan.append(phot[i] * factor)
             err_jan.append(unc[i] * factor)
@@ -125,6 +131,9 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
         spec_jan = []
         for i in range(len(spec)):
             spec_jan.append(spec[i] * 3631 * 10 ** 6)
+        for i in range(len(p_wave)):
+            res_phot.append(phot[i] * factor)
+            err_phot.append(unc[i] * factor)
 
         zname = znames[j]
         zred = 0
@@ -147,11 +156,14 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
                 spec_jan = spec_jan / scale_factor
                 sed_jan = sed_jan / scale_factor
                 res_jan = res_jan / scale_factor
+                res_phot = res_phot / scale_factor
                 err_jan = err_jan / scale_factor
+                err_phot = err_phot / scale_factor
             ax1.plot(sps_wave, spec_jan, color='k', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
             ax1.plot(wave_rest, sed_jan, 'D', color='k', markerfacecolor='None', markersize=10, markeredgewidth=1.25,
                      markeredgecolor='k', label=r'Model Photometry')  # plot best fit model
-            ax1.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='purple',
+            # ax1.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='purple',
+            ax1.errorbar(p_wave, res_phot, yerr=err_phot, marker='o', linestyle='', color='purple',
                          label=r'Observations')  # plot observations
             # ax1.set_ylabel(ylabel, fontsize=fs_text)
             ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
@@ -168,11 +180,14 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
             # size=30)
             ax1.set_yticks([10**-2, 10**-1, 10**0, 10**1, 10**2])  # technically works
             ax1.set_yticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)
+            # ax1.set_yticks([10**-0.5, 10**0, 10**0.5, 10**1.])  # technically works
+            # ax1.set_yticklabels([r'$10^{-0.5}$', r'$10^0$', r'$10^{0.5}$', r'$10^{1.}$'], size=fs_ticks)
 
             plt.subplots_adjust(hspace=.0)
 
             # Redshift for each obj) (note: len(main[0] = 156; elements 153:155 = use, snr, use_nosnr, z_spec)
             widths.fig2(ax1, field[j], zred, scale=(phot.max() * filt_factor1), rest=True)  # WIDTHS
+            # widths.plot_filts(ax1, field[j], zred, scale=(phot.max() * filt_factor1), rest=True)  # WIDTHS
 
         elif j == 1:
             if scale:
@@ -180,11 +195,14 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
                 spec_jan = spec_jan / scale_factor
                 sed_jan = sed_jan / scale_factor
                 res_jan = res_jan / scale_factor
+                res_phot = res_phot / scale_factor
                 err_jan = err_jan / scale_factor
+                err_phot = err_phot / scale_factor
             ax2.plot(sps_wave, spec_jan, color='k', alpha=0.5)  # , label=r'Model Spectrum')  # plot spectrum
             ax2.plot(wave_rest, sed_jan, 'D', color='k', markerfacecolor='None', markersize=10, markeredgewidth=1.25,
                      markeredgecolor='k', label=r'Model Photometry')  # plot best fit model
-            ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='b',
+            # ax2.errorbar(wave_rest, res_jan, yerr=err_jan, marker='o', linestyle='', color='b',
+            ax2.errorbar(p_wave, res_phot, yerr=err_phot, marker='o', linestyle='', color='b',
                          label=r'Observations')  # plot observations
             # ax2.set_ylabel(ylabel, fontsize=fs_text)  # 30
             ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
@@ -201,7 +219,10 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
                                 size=fs_ticks)
             ax2.set_yticks([10**-2, 10**-1, 10**0, 10**1, 10**2])  # technically works
             ax2.set_yticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)
+            # ax2.set_yticks([10**-0.5, 10**0, 10**0.5, 10**1.])  # technically works
+            # ax2.set_yticklabels([r'$10^{-0.5}$', r'$10^0$', r'$10^{0.5}$', r'$10^{1.}$'], size=fs_ticks)
             widths.fig2(ax2, field[j], zred, scale=(phot.max() * filt_factor2), rest=True)  # WIDTHS
+            # widths.plot_filts(ax2, field[j], zred, scale=(phot.max() * filt_factor2), rest=True)  # WIDTHS
             plt.subplots_adjust(hspace=.0)
     print('show')
 
