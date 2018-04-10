@@ -146,14 +146,14 @@ def plotter(x, y, color, errs=True, fs_text=30, fs=20, font={'fontname': 'Times'
         plt.contourf(X, Y, Z, levels=levels, cmap=cmap, alpha=0.5)  # levels=levels  # [0.1, 0.2, 0.5, 1., 25.]
 
 
-def mass_match_plot(x1, y1, color, order, errs=True, outfold=None, ssfr_file=None, fs_text=30, fs=20,
+def mass_match_plot(x1, y1, color, order, lims=[9.5, 10.], errs=True, outfold=None, ssfr_file=None, fs_text=30, fs=20,
                     font={'fontname': 'Times'}):
 
     x = []
     y = []
     do_these = []
     for i in range(len(x1)):
-        if 9.55 <= x1[i] <= 9.9:  # 9.5 <= x1[i] <= 10.0:
+        if lims[0] <= x1[i] <= lims[1]:  # 9.55 <= x1[i] <= 9.9:
             do_these.append(order[i])
             x.append(x1[i])
             y.append(y1[i])
@@ -211,13 +211,15 @@ def mass_match_plot(x1, y1, color, order, errs=True, outfold=None, ssfr_file=Non
     return mass, dust, met, ssfrs
 
 
-def dmass(obj_e, field_e, order, three_masses, folder='out_efico/', f_ind=0):
+def dmass(obj_e, field_e, order, three_masses, folder='out_efico/', f_ind=0, v_met=False):
     field_dict = {}
     for i in range(len(obj_e)):
         field_dict[obj_e[i]] = field_e[i]
 
-    three_labels = [r'FAST Z = Z$_{\odot}$, with emission lines', r'FAST Z = Z$_{\odot}/5$, with emission lines',
-                    r'FAST (ZFOURGE catalog parameters)']
+    base_lab = r'M$_{\rm P}$ / M$_{\rm F}$ '
+    three_labels = [base_lab + r'(Z$_{\rm F}$ = Z$_{\odot}$, with emission lines)',
+                    base_lab + r'(Z$_{\rm F}$ = Z$_{\odot}/5$, with emission lines)',
+                    base_lab + r'(FAST with ZFOURGE catalog parameters)']
     colors = ['r', 'b', 'purple']
     shapes = ['o', 's', 'v']
 
@@ -225,25 +227,33 @@ def dmass(obj_e, field_e, order, three_masses, folder='out_efico/', f_ind=0):
     use_lbl = three_labels[f_ind]
 
     dictionary = fc.get_fast(use_this)
-    mass_dict = fc.compare_gmd(dictionary, folder)
+    if v_met:
+        mass_dict, met_dict = fc.compare_gmd(dictionary, folder, include_met=v_met)
+    else:
+        mass_dict = fc.compare_gmd(dictionary, folder)
     # print(mass_dict)
 
-    fast, prosp, xratio, xfield, mratio = [], [], [], [], []
+    fast, prosp, xratio, xfield, mratio, mets = [], [], [], [], [], []
     for key in mass_dict:  # mass_diff[key][0] is the FAST mass, mass_diff[key][1] is the Prospector mass
         # print(mass_dict[key][0], mass_dict[key][1])
         fast.append(float(mass_dict[key][0]))  # FAST
         prosp.append(float(mass_dict[key][1]))  # Prospector
         mratio.append((10 ** float(mass_dict[key][1])) / (10 ** float(mass_dict[key][0])))
         xratio.append(key)
+        if v_met:
+            mets.append(met_dict[key])
         for f_key in field_dict:
             if int(key) == int(f_key):
                 xfield.append(field_dict[f_key])
 
+    new_met_order = []
     new_mass_order = []
     for ln in range(len(order)):
         for id in range(len(xratio)):
             if xratio[id].startswith(str(order[ln])):
                 new_mass_order.append(mratio[id])
+                if v_met:
+                    new_met_order.append(mets[id])
     # PLOT!
     print(len(xfield), len(mratio))
     print(xfield)
@@ -275,13 +285,17 @@ def dmass(obj_e, field_e, order, three_masses, folder='out_efico/', f_ind=0):
 
     plt.show()
     '''
-    return new_mass_order, use_lbl
+    if v_met:
+        return new_mass_order, use_lbl, new_met_order
+    else:
+        return new_mass_order, use_lbl
 
 
 if __name__ == "__main__":
 
     do_mass = 0  # do_mass --> dMass_v_ew, else ew_v_mass\
-    mass_match = 1
+    mass_match = 0
+    dm_met = 1
 
     path = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
     e_out = path + 'out/out_efico/'
@@ -337,6 +351,35 @@ if __name__ == "__main__":
         xmin, xmax = 0., 1.2 * max([max(eew), max(sew)])  # 25.
         ymin, ymax = 0., 16.
         labs = [labs[1], mass_label]
+
+    elif dm_met:
+        # f_ind=1 --> FAST with Z = Z_sol / 5, with emission lines
+        home = '/home/jonathan/mz_files/'
+        three_masses = [home + 'Comp_10_zm_EL_Z002.dat', home + 'Comp_10_zm_EL_Z004.dat',
+                        home + 'Comp_10_zm_ZFOURGE.dat']
+        three_smasses = [home + 'Comp_00_zm_EL_Z002.dat', home + 'Comp_00_zm_EL_Z004.dat',
+                         home + 'Comp_00_zm_ZFOURGE.dat']
+
+        mass_ratio, mass_label, mets = dmass(obj_e=ee_order, field_e=ee_fd, order=ee_order, three_masses=three_masses,
+                                             folder='out_efico/', f_ind=1, v_met=True)
+
+        smass_ratio, smass_label, smets = dmass(obj_e=sf_order, field_e=sf_fd, order=sf_order,
+                                                three_masses=three_smasses, folder='out_nfico/', f_ind=1, v_met=True)
+
+        print(max(mets), min(mets), max(smets), min(smets), 'look!')
+        plotter(mets, mass_ratio, color=colors[0], errs=False)
+        plotter(smets, smass_ratio, color=colors[1], errs=False)
+        # allx = np.concatenate((mets, smets), axis=0)
+        # ally = np.concatenate((mass_ratio, smass_ratio), axis=0)
+        # plt.plot(np.unique(mets), np.poly1d(np.polyfit(mets, mass_ratio, 2))(np.unique(mets)), color='purple',
+        #          linestyle='--')
+        # plt.plot(np.unique(smets), np.poly1d(np.polyfit(allx, ally, 1))(np.unique(smets)), color='blue',
+        #          linestyle='--')
+
+        xmin, xmax = -2., 0.5  #  1.2 * max([max(eew), max(sew)])  # 25.
+        ymin, ymax = 0., 14.
+        labs = ['$\log_{10}$(Z / Z$_{\odot}$)', mass_label]
+        # plt.xscale('log')
 
     elif mass_match:
         xmin, xmax = 9.4, 10.1  # 1.2 * max([max(emass), max(smass)])  # 50.  # 10 ** 3  # 700.
