@@ -116,8 +116,8 @@ def preplot(order=None, keys='e', file=None, line_idx=5, line_idx2=[5, 3], ratio
     return ew, mass, labels
 
 
-def density_estimation(m1, m2):
-    X, Y = np.mgrid[8.5:11.5:100j, 0.:700.:100j]
+def density_estimation(m1, m2, xs=[8.5, 11.5], ys=[0., 700.]):
+    X, Y = np.mgrid[xs[0]:xs[1]:100j, ys[0]:ys[1]:100j]
     positions = np.vstack([X.ravel(), Y.ravel()])
     values = np.vstack([m1, m2])
     kernel = stats.gaussian_kde(values)
@@ -125,9 +125,10 @@ def density_estimation(m1, m2):
     return X, Y, Z
 
 
-def plotter(x, y, color, errs=True, fs_text=30, fs=20, font={'fontname': 'Times'}):
-
-    plt.scatter(x=x, y=y, color=color, s=fs * 2)
+def plotter(x, y, color, errs=True, fs_text=30, fs=20, norm=7., xs=[8.5, 11.5], ys=[0., 700.], scat=True):
+    # font={'fontname': 'Times'},
+    if scat:
+        plt.scatter(x=x, y=y, color=color, s=fs * 2)
 
     if errs:
         '''
@@ -136,14 +137,15 @@ def plotter(x, y, color, errs=True, fs_text=30, fs=20, font={'fontname': 'Times'
         plt.errorbar(x=[errx[1]], y=[erry[1]], xerr=[[errx[1] - errx[0]], [errx[2] - errx[1]]],
                      yerr=[[erry[1] - erry[0]], [erry[2] - erry[1]]], color=color, fmt='*')
         '''
-        X, Y, Z = density_estimation(x, y)
+        X, Y, Z = density_estimation(x, y, xs=xs, ys=ys)
         # levels = np.arange(0.5, np.amax(Z), 0.02) + 0.02
-        levels = np.arange(np.amax(Z) / 7., np.amax(Z), np.amax(Z) / 7.) + (np.amax(Z) / 7.)
+        levels = np.arange(np.amax(Z) / norm, np.amax(Z), np.amax(Z) / norm) + (np.amax(Z) / norm)
         if color == 'b':
             cmap = 'Blues'
         else:
             cmap = 'Purples'
-        plt.contourf(X, Y, Z, levels=levels, cmap=cmap, alpha=0.5)  # levels=levels  # [0.1, 0.2, 0.5, 1., 25.]
+        plt.contourf(X, Y, Z, levels=levels, cmap=cmap, alpha=0.5)  # [0.1, 0.2, 0.5, 1., 25.]
+        # plt.contour(X, Y, Z, levels=levels, cmap=cmap, lw=3)#, alpha=0.5)  # [0.1, 0.2, 0.5, 1., 25.]
 
 
 def mass_match_plot(x1, y1, color, order, lims=[9.5, 10.], errs=True, outfold=None, ssfr_file=None, fs_text=30, fs=20,
@@ -367,8 +369,8 @@ if __name__ == "__main__":
                                                 three_masses=three_smasses, folder='out_nfico/', f_ind=1, v_met=True)
 
         print(max(mets), min(mets), max(smets), min(smets), 'look!')
-        plotter(mets, mass_ratio, color=colors[0], errs=False)
-        plotter(smets, smass_ratio, color=colors[1], errs=False)
+        plotter(smets, smass_ratio, color=colors[1], errs=True, xs=[-2, 0.5], ys=[0., 14.], norm=10.)
+        plotter(mets, mass_ratio, color=colors[0], errs=True, xs=[-2., 0.5], ys=[0., 14.], norm=10.)
         # allx = np.concatenate((mets, smets), axis=0)
         # ally = np.concatenate((mass_ratio, smass_ratio), axis=0)
         # plt.plot(np.unique(mets), np.poly1d(np.polyfit(mets, mass_ratio, 2))(np.unique(mets)), color='purple',
