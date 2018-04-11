@@ -293,11 +293,59 @@ def dmass(obj_e, field_e, order, three_masses, folder='out_efico/', f_ind=0, v_m
         return new_mass_order, use_lbl
 
 
+def agewrite(gal_order, fields, name1='eelg', base='fico', pfolder='pkl_efico/'):
+    pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + pfolder
+    agelist = None
+
+    with open(name1 + '_ages.txt', 'w+') as write_ages:
+        write_ages.write('# ID Age[Gyr]\n')
+
+        for gl in range(len(gal_order)):
+            agelist = []
+            file = pkls + str(gal_order[gl]) + '_' + fields[gl] + '_' + base + '_extra_out.pkl'
+            if os.path.exists(file):
+                import eelg_fifty_params as params
+                model = params.load_model(objname=str(gal_order[gl]), field=fields[gl])
+                agebins = model.params['agebins']
+                # temp[0] lists the num=1000 random posterior samples; temp[1] = time vector
+                temp = sa.randraw_sfr_perc(file)
+                temp_draw = sa.smooth(temp[0])
+                this_age = sa.stellar_age(temp_draw, agebins) / 1e9
+                agelist.append(this_age)
+                print(str(gal_order[gl]) + ' ' + str(this_age) + '\n')
+                write_ages.write(str(gal_order[gl]) + ' ' + str(this_age) + '\n')
+            else:
+                print('missing ' + file)  # print galaxy if pkls don't exist for it
+
+    return agelist
+
+
+def ageread(gal_order, agefile='eelg_ages.txt'):
+    agefile = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + agefile
+
+    agelist = []
+    gals = []
+    with open(agefile, 'r') as read_ages:
+        for line in read_ages:
+            if line[0] != '#':
+                cols = line.split()
+                gals.append(cols[0])
+                agelist.append(cols[1])
+
+    new_age_order = []
+    for ga in range(len(gals)):
+        if int(gals[ga]) == int(gal_order[ga]):
+            new_age_order.append(agelist[ga])
+
+    return new_age_order
+
+
 if __name__ == "__main__":
 
     do_mass = 0  # do_mass --> dMass_v_ew, else ew_v_mass\
     mass_match = 0
-    dm_met = 1
+    dm_met = 0
+    dm_age = 1
 
     path = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
     e_out = path + 'out/out_efico/'
@@ -382,6 +430,38 @@ if __name__ == "__main__":
         ymin, ymax = 0., 14.
         labs = ['$\log_{10}$(Z / Z$_{\odot}$)', mass_label]
         # plt.xscale('log')
+
+    elif dm_age:
+        # agelist = agewrite(ee_order, ee_fd, name1='eelg', base='fico', pfolder='pkl_efico/')
+        # sagelist = agewrite(sf_order, sf_fd, name1='sfg', base='fico', pfolder='pkl_nfico/')
+        agelist = ageread(ee_order, agefile='eelg_ages.txt')
+        sagelist = ageread(sf_order, agefile='sfg_ages.txt')
+
+        home = '/home/jonathan/mz_files/'
+        three_masses = [home + 'Comp_10_zm_EL_Z002.dat', home + 'Comp_10_zm_EL_Z004.dat',
+                        home + 'Comp_10_zm_ZFOURGE.dat']
+        three_smasses = [home + 'Comp_00_zm_EL_Z002.dat', home + 'Comp_00_zm_EL_Z004.dat',
+                         home + 'Comp_00_zm_ZFOURGE.dat']
+
+        mass_ratio, mass_label = dmass(obj_e=ee_order, field_e=ee_fd, order=ee_order, three_masses=three_masses,
+                                       folder='out_efico/', f_ind=1, v_met=False)
+
+        smass_ratio, smass_label = dmass(obj_e=sf_order, field_e=sf_fd, order=sf_order,
+                                         three_masses=three_smasses, folder='out_nfico/', f_ind=1, v_met=False)
+
+        print(max(agelist), max(sagelist), min(agelist), min(sagelist))
+        plotter(agelist, mass_ratio, color=colors[1], errs=True, xs=[0., 3.], ys=[0., 14.], norm=10.)
+        plotter(sagelist, smass_ratio, color=colors[0], errs=True, xs=[0., 3.], ys=[0., 14.], norm=10.)
+        # allx = np.concatenate((mets, smets), axis=0)
+        # ally = np.concatenate((mass_ratio, smass_ratio), axis=0)
+        # plt.plot(np.unique(mets), np.poly1d(np.polyfit(mets, mass_ratio, 2))(np.unique(mets)), color='purple',
+        #          linestyle='--')
+        # plt.plot(np.unique(smets), np.poly1d(np.polyfit(allx, ally, 1))(np.unique(smets)), color='blue',
+        #          linestyle='--')
+
+        xmin, xmax = 0., 3.0  #  1.2 * max([max(eew), max(sew)])  # 25.
+        ymin, ymax = 0., 14.
+        labs = ['Stellar age [Gyr]', mass_label]
 
     elif mass_match:
         xmin, xmax = 9.4, 10.1  # 1.2 * max([max(emass), max(smass)])  # 50.  # 10 ** 3  # 700.
