@@ -45,6 +45,8 @@ eelg_varymet_params.py: eelg_fixedmet_params.py, but with metallicity allowed to
 
 emlines.py: using to get emission line fluxes & equivalent widths
 
+ewmass.py: make plots of EW vs mass, or Prosp/FAST mass offset vs metallicity, or Prosp/FAST mass offset vs age, or mass-matched EW vs mass
+
 fast_compare.py: plot comparisons of FAST-derived stellar masses vs Prospector-derived stellar masses for galaxies
 
 fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector; defunct
@@ -130,6 +132,7 @@ Note: Currently using...
 *eelg_fifty_params.py		same as eelg_varymet_params.py, but with different agebins
 *eelg_varymet_params.py		to generate prospector output with emission lines, with logzsol varying
 *emlines.py			to calculate emission line fluxes and line ratios
+*ewmass.py			to run a lot of diagnostics
 *get_mass_dust.py		to display mass, dust, and metallicity values for a given sample output from prospector
 *make_all_plots.py		to produce SFH and sSFR plots, as well as SED with chi and uvj plot (calling print_sfh.py, uvj.py, and, if including overlain filter curves, widths.py)
 *new_fig1.py			to produce plot of SEDs with filterwidths overlain

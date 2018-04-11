@@ -333,9 +333,10 @@ def ageread(gal_order, agefile='eelg_ages.txt'):
                 agelist.append(cols[1])
 
     new_age_order = []
-    for ga in range(len(gals)):
-        if int(gals[ga]) == int(gal_order[ga]):
-            new_age_order.append(agelist[ga])
+    for go in range(len(gal_order)):
+        for ga in range(len(gals)):
+            if int(gals[ga]) == int(gal_order[go]):
+                new_age_order.append(float(agelist[ga]))
 
     return new_age_order
 
@@ -449,9 +450,11 @@ if __name__ == "__main__":
         smass_ratio, smass_label = dmass(obj_e=sf_order, field_e=sf_fd, order=sf_order,
                                          three_masses=three_smasses, folder='out_nfico/', f_ind=1, v_met=False)
 
-        print(max(agelist), max(sagelist), min(agelist), min(sagelist))
-        plotter(agelist, mass_ratio, color=colors[1], errs=True, xs=[0., 3.], ys=[0., 14.], norm=10.)
-        plotter(sagelist, smass_ratio, color=colors[0], errs=True, xs=[0., 3.], ys=[0., 14.], norm=10.)
+        print(len(sagelist), len(smass_ratio))  # 128, 128
+        print(len(agelist), len(mass_ratio))  # 19, 19
+        # print(max(agelist), max(sagelist), min(agelist), min(sagelist))
+        plotter(sagelist, smass_ratio, color=colors[1], errs=True, xs=[0., 3.], ys=[0., 14.], norm=10.)
+        plotter(agelist, mass_ratio, color=colors[0], errs=True, xs=[0., 3.], ys=[0., 14.], norm=10.)
         # allx = np.concatenate((mets, smets), axis=0)
         # ally = np.concatenate((mass_ratio, smass_ratio), axis=0)
         # plt.plot(np.unique(mets), np.poly1d(np.polyfit(mets, mass_ratio, 2))(np.unique(mets)), color='purple',
