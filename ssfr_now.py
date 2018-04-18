@@ -30,7 +30,7 @@ if __name__ == "__main__":
     corr = 0
     fico = 1
     newsfg = 0
-    write = True
+    write = False
 
     if corr:
         base = ['corr', 'corr']
@@ -271,8 +271,9 @@ if __name__ == "__main__":
             all_l.append(frac_l[i, k])
     # print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')
     print('fractions of mass formed')
-    print(all_fracs)
-    print(all_fracs[1])
+    print(all_fracs, eelgs)  # indices 1, 11, 12 are those with >60%
+    print(all_fracs[1], eelgs[1], all_fracs[11], eelgs[11], all_fracs[12], eelgs[12])
+    # print(all_fracs[1])
     print(np.percentile(all_true, [16., 50., 84., 86., 87., 88., 89., 90., 91., 92., 93., 94., 95., 96., 97.]),
           'EELGs most recent bin')
     # 85th percentile forms 50% of mass, 86th -> 52%, 88th -> 60%, 90th -> 65% of mass, 91st -> 69%%, 92nd -> 71%,
@@ -322,10 +323,10 @@ if __name__ == "__main__":
 
     fig = plt.figure()
     ax1 = plt.subplot(1, 1, 1)
-    ax1.hist(x1, bins=50, histtype="step", weights=[1. / len(eelgs1)] * len(x1), normed=False, color='purple', lw=2,
-             label='EELGs')
-    ax1.hist(x2, bins=50, histtype="step", weights=[1. / len(lbgs1)] * len(x2), normed=False, color='b', lw=2,
-             label='SFGs')
+    ax1.hist(x1, bins=50, histtype="step", weights=[1.] * len(x1), normed=False, color='purple', lw=2,
+             label='EELGs')  # [1. / len(eelgs1)] * len(x1)
+    ax1.hist(x2, bins=50, histtype="step", weights=[1.] * len(x2), normed=False, color='b', lw=2,
+             label='SFGs')  # [19. / len(lbgs1)] * len(x2)
 
     # plot median, +/-1sigma for both histograms
     ax1.axvline(x=e_percs[1], color='purple', linestyle='--', lw=2)
@@ -334,14 +335,14 @@ if __name__ == "__main__":
     # shade in +/-1sigma region
     ax1.axvspan(e_percs[0], e_percs[2], color='purple', alpha=0.2)
     ax1.axvspan(l_percs[0], l_percs[2], color='b', alpha=0.2)
-    ax1.set_ylim(0, 1.)
+    ax1.set_ylim(0, 70.)
     ax1.set_xlim(0, 1.)
 
     # figure labels
-    fs = 20
-    ax1.legend(numpoints=1, loc='upper left', prop={'size': fs})
+    fs = 30
+    ax1.legend(numpoints=1, loc='upper right', prop={'size': fs})
     ax1.set_xlabel('Fraction of stellar mass [M$_{\odot}$] formed in most recent 50 Myr', ha='center', fontsize=fs)
-    ax1.set_ylabel(r'Fraction of galaxies', fontsize=fs)
+    ax1.set_ylabel(r'Number of galaxies', fontsize=fs)
     plt.show()
 
     '''

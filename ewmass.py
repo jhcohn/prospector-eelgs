@@ -18,6 +18,7 @@ import stellar_ages as sa
 from matplotlib import rc
 from scipy import stats
 import fast_compare as fc
+from astropy.table import Table
 np.errstate(invalid='ignore')
 # NOTE: check if OIII / OII high for SFGs because OII essentially just noisy around 0?
 
@@ -69,7 +70,7 @@ def list_ewflux(file, line_idx, ratio=False):
 
 
 def preplot(order=None, keys='e', file=None, line_idx=5, line_idx2=[5, 3], ratio=[False, False], outfold=None,
-            fs_text=30, fs=20, color='purple', font={'fontname': 'Times'}):
+            fs_text=30, fs=20, color='purple', font={'fontname': 'Times'}, types=False):
     '''
 
     :param keys:
@@ -103,9 +104,12 @@ def preplot(order=None, keys='e', file=None, line_idx=5, line_idx2=[5, 3], ratio
         if file.endswith(".h5"):
             gals1.append(file)
     gals = []
+    relevent_idcs = []
     for ln in range(len(order)):
         for id in range(len(gals1)):
             if gals1[id].startswith(str(order[ln])):
+                if order[ln] == 11462 or order[ln] == 21076 or order[ln] == 21442:
+                    relevent_idcs.append(ln)
                 gals.append(gals1[id])
     # print('1', gals)  # print('2', order)  # print('3', ew_order)  # yay is good!
 
@@ -113,7 +117,10 @@ def preplot(order=None, keys='e', file=None, line_idx=5, line_idx2=[5, 3], ratio
     for i in range(len(gals)):
         mass.append(gmd.printer(out + gals[i], percs=True)[0])  # median mass
 
-    return ew, mass, labels
+    if types:
+        return ew, mass, labels, relevent_idcs
+    else:
+        return ew, mass, labels
 
 
 def density_estimation(m1, m2, xs=[8.5, 11.5], ys=[0., 700.]):
@@ -148,9 +155,34 @@ def plotter(x, y, color, errs=True, fs_text=30, fs=20, norm=7., xs=[8.5, 11.5], 
         # plt.contour(X, Y, Z, levels=levels, cmap=cmap, lw=3)#, alpha=0.5)  # [0.1, 0.2, 0.5, 1., 25.]
 
 
+def plotter_temp(x, y, color, types=None, errs=True, fs_text=30, fs=20, norm=7., xs=[8.5, 11.5], ys=[0., 700.], scat=True):
+    # font={'fontname': 'Times'},
+    if scat:
+        if types is not None:
+            plt.scatter(x=x, y=y, color=color, marker=types, s=fs * 8)
+        else:
+            plt.scatter(x=x, y=y, color=color, s=fs * 2)
+
+    if errs:
+        '''
+        errx = np.percentile(x, [16., 50., 84.])
+        erry = np.percentile(y, [16., 50., 84.])
+        plt.errorbar(x=[errx[1]], y=[erry[1]], xerr=[[errx[1] - errx[0]], [errx[2] - errx[1]]],
+                     yerr=[[erry[1] - erry[0]], [erry[2] - erry[1]]], color=color, fmt='*')
+        '''
+        X, Y, Z = density_estimation(x, y, xs=xs, ys=ys)
+        # levels = np.arange(0.5, np.amax(Z), 0.02) + 0.02
+        levels = np.arange(np.amax(Z) / norm, np.amax(Z), np.amax(Z) / norm) + (np.amax(Z) / norm)
+        if color == 'b':
+            cmap = 'Blues'
+        else:
+            cmap = 'Purples'
+        plt.contourf(X, Y, Z, levels=levels, cmap=cmap, alpha=0.5)  # [0.1, 0.2, 0.5, 1., 25.]
+        # plt.contour(X, Y, Z, levels=levels, cmap=cmap, lw=3)#, alpha=0.5)  # [0.1, 0.2, 0.5, 1., 25.]
+
+
 def mass_match_plot(x1, y1, color, order, lims=[9.5, 10.], errs=True, outfold=None, ssfr_file=None, fs_text=30, fs=20,
                     font={'fontname': 'Times'}):
-
     x = []
     y = []
     do_these = []
@@ -210,7 +242,67 @@ def mass_match_plot(x1, y1, color, order, lims=[9.5, 10.], errs=True, outfold=No
                         ssfrs.append(float(cols[1]) * 10 ** 9)  # ssfrs are stored in 2nd column in file; convert to Gyr^-1
                         counter += 1
 
-    return mass, dust, met, ssfrs
+    return mass, dust, met, ssfrs, do_these
+
+
+def return_fracs(gals, order, pklfolder='pkl_efico/', outfold='out_efico/', base='fico', ls=False):
+    import ssfr_now as sfnow
+    eelgs, lbgs1 = sa.get_gal_lists(base=[base, base], normal=True)
+    git = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
+    out = git + 'out/' + outfold
+    f_folder = git + pklfolder
+    gals1 = gals
+    if ls:
+        gals1 = []
+        for i in range(len(lbgs1)):
+            file = f_folder + lbgs1[i] + '_extra_out.pkl'
+            if os.path.exists(file):
+                for ga in gals:
+                    print(str(ga))
+                    if file.startswith(f_folder + str(ga)):
+                        gals1.append(lbgs1[i])
+    # print(lbgs1)
+    print(len(gals1), 'look')
+
+    '''
+    ordered = []
+    for go in range(len(order)):
+        for ga in range(len(gals1)):
+            if gals1[ga].startswith(order[go]):
+                ordered.append(gals1[ga])
+    '''
+    ordered = gals1
+
+    time = 0.5 * 10 ** 8
+    sfh = []
+    highfracs = []
+    # print('masses', masses)
+    frac = np.zeros(shape=(len(ordered), 10**3))
+    for ord in range(len(ordered)):
+        # print(ordered[ord])
+        # file = f_folder + str(glxy) + '*_extra_out.pkl'
+        for pkls in os.listdir(f_folder):
+            if pkls.startswith(str(ordered[ord])) and pkls.endswith('_extra_out.pkl'):
+                file = f_folder + pkls
+                sfh.append(sfnow.get_sfh(file)[0])  # 1st bin
+    # for i in range(len(ordered)):
+        # print(ord)
+        file_i = None
+        for outs in os.listdir(out):
+            if outs.startswith(str(ordered[ord])) and outs.endswith('.h5'):
+                file_i = out + outs
+        get_e = gmd.printer(file_i, percs=False, quiet=True)
+        for k in range(10 ** 3):
+            frac[ord, k] = sfh[ord][np.random.randint(len(sfh[ord]))] * time / (10 ** get_e[np.random.randint(len(get_e))])
+
+    # print(frac)
+    all_true = []
+    for fr in range(len(frac)):
+        for k in range(10**3):
+            all_true.append(frac[fr, k])
+    # print(all_fracs)
+
+    return np.percentile(all_true, [16., 50., 84.])
 
 
 def dmass(obj_e, field_e, order, three_masses, folder='out_efico/', f_ind=0, v_met=False):
@@ -346,7 +438,7 @@ if __name__ == "__main__":
     do_mass = 0  # do_mass --> dMass_v_ew, else ew_v_mass\
     mass_match = 0
     dm_met = 0
-    dm_age = 1
+    dm_age = 0
 
     path = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
     e_out = path + 'out/out_efico/'
@@ -366,7 +458,9 @@ if __name__ == "__main__":
     eelg_file = e_fs[key]
     sfg_file = s_fs[key]
 
-    eew, emass, labs = preplot(order=ee_order, keys=key, file=eelg_file, line_idx=idx, ratio=ratio, outfold=e_out)
+    # eew, emass, labs = preplot(order=ee_order, keys=key, file=eelg_file, line_idx=idx, ratio=ratio, outfold=e_out)
+    eew, emass, labs, r_idcs = preplot(order=ee_order, keys=key, file=eelg_file, line_idx=idx, ratio=ratio,
+                                       outfold=e_out, types=True)
     print('hi')
     sew, smass, labs = preplot(order=sf_order, keys=key, file=sfg_file, line_idx=idx, ratio=ratio, outfold=s_out)
     print(len(eew), len(emass), len(sew), len(smass))
@@ -417,6 +511,8 @@ if __name__ == "__main__":
         smass_ratio, smass_label, smets = dmass(obj_e=sf_order, field_e=sf_fd, order=sf_order,
                                                 three_masses=three_smasses, folder='out_nfico/', f_ind=1, v_met=True)
 
+        print('mass ratio', np.percentile(mass_ratio, [16., 50., 84.]))
+        print('smass ratio', np.percentile(smass_ratio, [16., 50., 84.]))
         print(max(mets), min(mets), max(smets), min(smets), 'look!')
         plotter(smets, smass_ratio, color=colors[1], errs=True, xs=[-2, 0.5], ys=[0., 14.], norm=10.)
         plotter(mets, mass_ratio, color=colors[0], errs=True, xs=[-2., 0.5], ys=[0., 14.], norm=10.)
@@ -453,6 +549,16 @@ if __name__ == "__main__":
         print(len(sagelist), len(smass_ratio))  # 128, 128
         print(len(agelist), len(mass_ratio))  # 19, 19
         # print(max(agelist), max(sagelist), min(agelist), min(sagelist))
+        fastfits = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'\
+                   + 'fast_fits_properties/'
+
+        events = Table.read(fastfits + 'cdfs_Z004_EL/cdfs.v1.6.9_' + '21442' + '.fit', format='fits')
+        print(events)
+        for line in events:
+            print(line)
+            cs = line.split()
+            print(cs)
+
         plotter(sagelist, smass_ratio, color=colors[1], errs=True, xs=[0., 3.], ys=[0., 14.], norm=10.)
         plotter(agelist, mass_ratio, color=colors[0], errs=True, xs=[0., 3.], ys=[0., 14.], norm=10.)
         # allx = np.concatenate((mets, smets), axis=0)
@@ -471,6 +577,15 @@ if __name__ == "__main__":
         ymin, ymax = 0., 1.2 * max([max(eew), max(sew)])  # 25.
         ethese = mass_match_plot(emass, eew, color=colors[0], order=ee_order, outfold=e_out, ssfr_file=e_fs['s'])
         sthese = mass_match_plot(smass, sew, color=colors[1], order=sf_order, outfold=s_out, ssfr_file=s_fs['s'])
+
+        do_these = ethese[4]
+        sdo_these = sthese[4]
+
+        efrac = return_fracs(do_these, ee_order, pklfolder='pkl_efico/', outfold='out_efico/', ls=False)
+        sfrac = return_fracs(sdo_these, sf_order, pklfolder='pkl_nfico/', outfold='out_nfico/', ls=True)
+        print('efrac', efrac)
+        print('sfrac', sfrac)
+
         print(len(ethese))
         print(len(sthese))
         mass_percs = np.percentile(ethese[0], [16., 50, 84.])
@@ -492,8 +607,25 @@ if __name__ == "__main__":
     else:
         xmin, xmax = 8.5, 11.5  # 1.2 * max([max(emass), max(smass)])  # 50.  # 10 ** 3  # 700.
         ymin, ymax = 0., 1.2 * max([max(eew), max(sew)])  # 25.
+        # plotter(emass, eew, color=colors[0])
+        # plotter(smass, sew, color=colors[1])
+
+        fmts = 'o'
+        x1 = []
+        y1 = []
+        for r_idc in r_idcs:
+            x1.append(emass[r_idc])
+            y1.append(eew[r_idc])
+            fmt1 = '*'
+
         plotter(emass, eew, color=colors[0])
         plotter(smass, sew, color=colors[1])
+        plotter_temp(x1, y1, color=colors[0], types=fmt1, errs=False)
+
+        sfrac = return_fracs(sf_order, sf_order, pklfolder='pkl_nfico/', outfold='out_nfico/', ls=True)
+        efrac = return_fracs(ee_order, ee_order, pklfolder='pkl_efico/', outfold='out_efico/', ls=False)
+        print('efrac', efrac)
+        print('sfrac', sfrac)
 
     # PLOT PARAMS
     fs_text = 30

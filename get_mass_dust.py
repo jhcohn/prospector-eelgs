@@ -12,7 +12,7 @@ import os
 np.errstate(invalid='ignore')
 
 
-def md(sample_results, start=0, thin=1, percs=True):
+def md(sample_results, start=0, thin=1, percs=True, masstest=False, quiet=False):
     """Make a triangle plot of the (thinned, latter) samples of the posterior
     parameter space.  Optionally make the plot only for a supplied subset of
     the parameters.
@@ -44,9 +44,23 @@ def md(sample_results, start=0, thin=1, percs=True):
         if parnames[7] == u'logzsol':
             metal = np.percentile(flatchain[:, 7], [16, 50, 84])[1]
         ret = [mass, dust, metal, gasmet]
+    elif masstest:
+        mass = np.percentile(flatchain[:, 0], [16, 50, 84])[1]
+        dust = np.percentile(flatchain[:, 6], [16, 50, 84])[1]
+        gasmet = np.percentile(flatchain[:, -1], [16, 50, 84])[1]
+        metal = np.percentile(flatchain[:, 7], [16, 50, 84])[1]
+        sfh = []
+        ret = [mass]
+        for i in [1, 2, 3, 4, 5]:
+            sfh.append(np.percentile(flatchain[:, i], [16, 50, 84])[1])
+            ret.append(sfh[i - 1])
+        ret.append(dust)
+        ret.append(metal)
+        ret.append(gasmet)
     else:
         mass = flatchain[:, 0]
-        print(len(mass), 'mass')
+        if not quiet:
+            print(len(mass), 'mass')
         dust = flatchain[:, 6]
         gasmet = flatchain[:, -1]
         metal = None
@@ -56,14 +70,15 @@ def md(sample_results, start=0, thin=1, percs=True):
     return ret
 
 
-def printer(out_file, percs=True):
-    print(out_file)
-
+def printer(out_file, percs=True, masstest=False, quiet=False):
+    if not quiet:
+        print(out_file)
+        print(masstest)
     res, pr, mod = bread.results_from(out_file)
     # ''' #
 
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
-    return md(res, start=-1000, thin=5, percs=percs)  # -650
+    return md(res, start=-1000, thin=5, percs=percs, masstest=masstest, quiet=quiet)  # -650
     # set start by when kl converges!  # returns mass, dust, stellar Z, gas Z
 
 
@@ -71,8 +86,8 @@ if __name__ == "__main__":
 
     corr = 0
     fico = 0
-    news = 1
-    masstest = 0
+    news = 0
+    masstest = 1
 
     if corr:
         folders = ['out_ecorr/', 'out_ncorr/']
@@ -90,7 +105,7 @@ if __name__ == "__main__":
         folders = ['out_masstest/', 'out_efico/']
         pars = ['eelg_masstest_params.py', 'eelg_fifty_params.py']
         base = ['masstest', 'fico']
-        obj = '12552'  # '12105'  # '21442'
+        obj = '12105'  # '12552'  # '12105'  # '21442'
     '''
     elif vary:
         folders = ['out_evar/', 'out_nvary/']
