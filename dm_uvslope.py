@@ -70,15 +70,15 @@ def calc_uv_slope(fileset, plot=False):
     sorted_fluxes = []
     idx = 0
     while idx < len(sorted_waves):
-        print('hm', idx, len(sorted_waves))
+        # print('hm', idx, len(sorted_waves))
         for j in range(len(slope_waves)):
             if slope_waves[j] == sorted_waves[idx]:
                 sorted_fluxes.append(slope_flux[j])
                 idx += 1
                 if idx >= len(sorted_waves):
                     break
-    print(slope_waves, sorted_waves)
-    print(slope_flux, sorted_fluxes)
+    # print(slope_waves, sorted_waves)
+    # print(slope_flux, sorted_fluxes)
 
     if len(slope_waves) <= 2:
         return [99., 99., 99.]
@@ -121,19 +121,42 @@ def dmass(obj_e, field_e, order, three_masses, folder='out_efico/', f_ind=0, v_m
         prosp.append(float(mass_dict[key][1]))  # Prospector
         mratio.append((10 ** float(mass_dict[key][1])) / (10 ** float(mass_dict[key][0])))
         xratio.append(key)
-        if v_met:
-            mets.append(met_dict[key])
         for f_key in field_dict:
             if int(key) == int(f_key):
                 xfield.append(field_dict[f_key])
 
+    from collections import OrderedDict
     new_mass_order = []
     for ln in range(len(order)):
         for id in range(len(xratio)):
             if xratio[id] == str(order[ln]):
                 new_mass_order.append(mratio[id])
+    print(new_mass_order)
+    new_mass_order = list(OrderedDict.fromkeys(new_mass_order))
+    print(new_mass_order)
 
     return new_mass_order, use_lbl, mass_dict, len(new_mass_order), len(xratio)
+
+
+def density_estimation(m1, m2, xs=[8.5, 11.5], ys=[0., 700.]):
+    X, Y = np.mgrid[xs[0]:xs[1]:100j, ys[0]:ys[1]:100j]
+    positions = np.vstack([X.ravel(), Y.ravel()])
+    values = np.vstack([m1, m2])
+    kernel = stats.gaussian_kde(values)
+    Z = np.reshape(kernel(positions).T, X.shape)
+    return X, Y, Z
+
+
+def plotter(x, y, color, norm=7., xs=[8.5, 11.5], ys=[0., 700.], scat=True):
+    X, Y, Z = density_estimation(x, y, xs=xs, ys=ys)
+    # levels = np.arange(0.5, np.amax(Z), 0.02) + 0.02
+    levels = np.arange(np.amax(Z) / norm, np.amax(Z), np.amax(Z) / norm) + (np.amax(Z) / norm)
+    if color == 'b':
+        cmap = 'Blues'
+    else:
+        cmap = 'Purples'
+    plt.contourf(X, Y, Z, levels=levels, cmap=cmap, alpha=0.5)  # [0.1, 0.2, 0.5, 1., 25.]
+    # plt.contour(X, Y, Z, levels=levels, cmap=cmap, lw=3)#, alpha=0.5)  # [0.1, 0.2, 0.5, 1., 25.]
 
 
 if __name__ == "__main__":
@@ -186,9 +209,9 @@ if __name__ == "__main__":
         chisq1 = pre + '_chisq' + base
         justchi1 = pre + '_justchi' + base
         fileset = [extra1, res1, sed1, restwave1, spec1, spswave1, chisq1, justchi1]
-        print(path + pre)
+        # print(path + pre)
         if os.path.exists(path + extra1):
-            print('me!')
+            # print('me!')
             popt = calc_uv_slope(fileset)
             print(popt[0])
             slopes.append(popt[0])
@@ -213,7 +236,7 @@ if __name__ == "__main__":
         if os.path.exists(path + extra1):
             num += 1
             sgals.append(obj)
-            print('sme!')
+            # print('sme!')
             popt = calc_uv_slope(fileset)
             print(popt[0])
             sslopes.append(popt[0])
@@ -230,21 +253,39 @@ if __name__ == "__main__":
             print(key, 'no match')
     print(sorted(sgs))
 
+    new_sslopes = []
+    new_smr = []
+    for slp in range(len(sslopes)):
+        if -3. <= sslopes[slp] <= 0.5:
+            new_sslopes.append(sslopes[slp])
+            new_smr.append(smass_ratio[slp])
+    smass_ratio = new_smr
+    sslopes = new_sslopes
+
     print(len(sslopes), len(smass_ratio))
     print(len(slopes), len(mass_ratio))
     print(num)
     print(snmo, sxr)
     print(np.percentile(slopes, [16., 50., 84.]))
     print(np.percentile(sslopes, [16., 50., 84.]))
+    print(np.percentile(mass_ratio, [16., 50., 84.]))
+    print(np.percentile(smass_ratio, [16., 50., 84.]))
     # PLOT PARAMS
-    plt.scatter(slopes, mass_ratio, color='purple')
-    plt.scatter(sslopes, smass_ratio, color='b')
+    contours = True
+
+    if contours:
+        plotter(sslopes, smass_ratio, 'b', xs=[-3., -1.0], ys=[1., 10.])
+        plotter(slopes, mass_ratio, 'purple', xs=[-3, -1.5], ys=[1., 14.])
+        print(min(sslopes), max(sslopes), max(slopes), min(slopes))
+    else:
+        plt.scatter(sslopes, smass_ratio, color='b')
+        plt.scatter(slopes, mass_ratio, color='purple')
     fs_text = 30
     fs = 20
     rc('font', **{'family': 'serif', 'serif': ['Times']})
     rc('text', usetex=True)
     font = {'fontname': 'Times'}
-    xmin, xmax = -4., 4.  # 1.2 * max([max(slope), max(sslope)])  # 25.
+    xmin, xmax = -2.5, -1.  # 1.2 * max([max(slope), max(sslope)])  # 25.
     ymin, ymax = 0., 16.
     plt.xlim(xmin, xmax)
     plt.ylim(ymin, ymax)
