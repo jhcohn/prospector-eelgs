@@ -433,12 +433,43 @@ def ageread(gal_order, agefile='eelg_ages.txt'):
     return new_age_order
 
 
+def d_age(gal_order, field_order, agefile='eelg_ages.txt'):
+    new_age_order = ageread(gal_order, agefile)
+
+    home = '/home/jonathan/'
+    field_files = [home + 'cdfs/cdfs.v1.6.9_EL_Z004.awk.fout', home + 'cosmos/cosmos.v1.3.6_EL_Z004.awk.fout',
+                   home + 'uds/uds.v1.5.8_EL_Z004.awk.fout']
+
+    fast_ages = []
+    for fld in range(len(field_order)):
+        if field_order[fld] == 'cdfs':
+            field_file = field_files[0]
+        elif field_order[fld] == 'cosmos':
+            field_file = field_files[1]
+        else:
+            field_file = field_files[2]
+
+        with open(field_file, 'r') as ffile:
+            for line in ffile:
+                cols = line.split()
+                if cols[0] == str(gal_order[fld]):
+                    fast_ages.append(10**float(cols[4])/ 10**9)
+
+    print(len(fast_ages), len(field_order), len(new_age_order))
+    age_ratio = []
+    for na in range(len(new_age_order)):
+        age_ratio.append(new_age_order[na] / fast_ages[na])
+
+    return age_ratio
+
+
 if __name__ == "__main__":
 
     do_mass = 0  # do_mass --> dMass_v_ew, else ew_v_mass\
     mass_match = 0
     dm_met = 0
     dm_age = 0
+    dm_dage = 1
 
     path = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
     e_out = path + 'out/out_efico/'
@@ -552,12 +583,8 @@ if __name__ == "__main__":
         fastfits = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'\
                    + 'fast_fits_properties/'
 
-        events = Table.read(fastfits + 'cdfs_Z004_EL/cdfs.v1.6.9_' + '21442' + '.fit', format='fits')
-        print(events)
-        for line in events:
-            print(line)
-            cs = line.split()
-            print(cs)
+        print('smass', np.percentile(smass_ratio, [16., 50., 84.]))
+        print('mass', np.percentile(mass_ratio, [16., 50., 84.]))
 
         plotter(sagelist, smass_ratio, color=colors[1], errs=True, xs=[0., 3.], ys=[0., 14.], norm=10.)
         plotter(agelist, mass_ratio, color=colors[0], errs=True, xs=[0., 3.], ys=[0., 14.], norm=10.)
@@ -571,6 +598,55 @@ if __name__ == "__main__":
         xmin, xmax = 0., 3.0  #  1.2 * max([max(eew), max(sew)])  # 25.
         ymin, ymax = 0., 14.
         labs = ['Stellar age [Gyr]', mass_label]
+
+    elif dm_dage:
+        # agelist = agewrite(ee_order, ee_fd, name1='eelg', base='fico', pfolder='pkl_efico/')
+        # sagelist = agewrite(sf_order, sf_fd, name1='sfg', base='fico', pfolder='pkl_nfico/')
+        ageratio = d_age(ee_order, ee_fd, agefile='eelg_ages.txt')
+        sageratio = d_age(sf_order, sf_fd, agefile='sfg_ages.txt')
+
+        home = '/home/jonathan/mz_files/'
+        three_masses = [home + 'Comp_10_zm_EL_Z002.dat', home + 'Comp_10_zm_EL_Z004.dat',
+                        home + 'Comp_10_zm_ZFOURGE.dat']
+        three_smasses = [home + 'Comp_00_zm_EL_Z002.dat', home + 'Comp_00_zm_EL_Z004.dat',
+                         home + 'Comp_00_zm_ZFOURGE.dat']
+
+        mass_ratio, mass_label = dmass(obj_e=ee_order, field_e=ee_fd, order=ee_order, three_masses=three_masses,
+                                       folder='out_efico/', f_ind=1, v_met=False)
+
+        smass_ratio, smass_label = dmass(obj_e=sf_order, field_e=sf_fd, order=sf_order,
+                                         three_masses=three_smasses, folder='out_nfico/', f_ind=1, v_met=False)
+
+        print(len(sageratio), len(smass_ratio))  # 128, 128
+        print(len(ageratio), len(mass_ratio))  # 19, 19
+        # print(max(agelist), max(sagelist), min(agelist), min(sagelist))
+        fastfits = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'\
+                   + 'fast_fits_properties/'
+
+        print('smass', np.percentile(smass_ratio, [16., 50., 84.]))
+        print('mass', np.percentile(mass_ratio, [16., 50., 84.]))
+        xs_age = [0., 200.]
+        ys_age = [0., 14.]
+        xmin, xmax = 0., 1.2 * max([max(ageratio), max(sageratio)])  # 25.
+        ymin, ymax = 0., 14.
+
+        logify = False
+        if logify:
+            sageratio = [np.log10(x) for x in sageratio]
+            ageratio = [np.log10(x) for x in ageratio]
+            smass_ratio = [np.log10(x) for x in smass_ratio]
+            mass_ratio = [np.log10(x) for x in mass_ratio]
+            xs_age = [-1., 2.5]
+            ys_age = [-1., 1.5]
+            xmin, xmax = 0.5, 2.5  # 1.2 * max([max(ageratio), max(sageratio)])  # 25.
+            ymin, ymax = 0.2, 1.2  # 1.2 * max([max(mass_ratio), max(smass_ratio)])
+
+        plotter(sageratio, smass_ratio, color=colors[1], errs=True, xs=xs_age, ys=ys_age, norm=7., scat=False)
+        plotter(ageratio, mass_ratio, color=colors[0], errs=True, xs=xs_age, ys=ys_age, norm=7., scat=False)
+        print(np.percentile(ageratio, [16., 50., 84.]))
+        print(np.percentile(mass_ratio, [16., 50., 84.]))
+
+        labs = ['Prospector age / Fast age', mass_label]
 
     elif mass_match:
         xmin, xmax = 9.4, 10.1  # 1.2 * max([max(emass), max(smass)])  # 50.  # 10 ** 3  # 700.
@@ -637,8 +713,8 @@ if __name__ == "__main__":
     if log:
         plt.yscale('log')
         plt.xscale('log')
-        xmin, xmax = 10**-2, 10**3
-        ymin, ymax = 3*10**-2, 3*10
+        xmin, xmax = 2., 2*10**2  # 10**3
+        ymin, ymax = 1., 20  # 3*10
     plt.xlim(xmin, xmax)
     plt.ylim(ymin, ymax)
     plt.tick_params('x', length=3, width=1, which='both', labelsize=fs)
