@@ -463,13 +463,68 @@ def d_age(gal_order, field_order, agefile='eelg_ages.txt'):
     return age_ratio
 
 
+def d_halftime(ordered, field_order, pklfolder='pkl_efico/'):
+    # eelgs, lbgs1 = sa.get_gal_lists(base=[base, base], normal=True)
+    git = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
+    f_folder = git + pklfolder
+    halftimes = []
+    for ord in range(len(ordered)):
+        # print(ordered[ord])
+        # file = f_folder + str(glxy) + '*_extra_out.pkl'
+        for pkls in os.listdir(f_folder):
+            if pkls.startswith(str(ordered[ord])) and pkls.endswith('_extra_out.pkl'):
+                file = f_folder + pkls
+                with open(file, 'rb') as f:
+                    extra_output = pickle.load(f)
+                # select half_time from extra_output
+                halftimes.append(extra_output['bfit']['half_time'])
+    # Prospector done! Now FAST:
+
+    home = '/home/jonathan/'
+    field_files = [home + 'cdfs/cdfs.v1.6.9_EL_Z004.awk.fout', home + 'cosmos/cosmos.v1.3.6_EL_Z004.awk.fout',
+                   home + 'uds/uds.v1.5.8_EL_Z004.awk.fout']
+
+    # tages = []
+    # taus = []
+    fast_ht = []
+    for fld in range(len(field_order)):
+        if field_order[fld] == 'cdfs':
+            field_file = field_files[0]
+        elif field_order[fld] == 'cosmos':
+            field_file = field_files[1]
+        else:
+            field_file = field_files[2]
+
+        with open(field_file, 'r') as ffile:
+            for line in ffile:
+                cols = line.split()
+                if cols[0] == str(ordered[fld]):
+                    tage = 10**float(cols[4]) / 10**9
+                    tau = 10**float(cols[2]) / 10**9
+                    fast_ht.append(exp_decl_sfh_half_time(tage, tau))
+
+    ht_ratio = []
+    for hal in range(len(halftimes)):
+        ht_ratio.append(halftimes[hal] / fast_ht[hal])
+    return ht_ratio
+
+
+def exp_decl_sfh_half_time(tage, tau):
+    ''' integrate SFR = Ae^(-t/tau)
+    note that this returns YEARS AGO that the half mass was reached
+    so a larger half-mass time is an OLDER galaxy
+    '''
+    return tage-tau*np.log(2./(1+np.exp(-tage/tau)))
+
+
 if __name__ == "__main__":
 
     do_mass = 0  # do_mass --> dMass_v_ew, else ew_v_mass\
     mass_match = 0
     dm_met = 0
     dm_age = 0
-    dm_dage = 1
+    dm_dage = 0
+    dm_dht = 1
 
     path = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
     e_out = path + 'out/out_efico/'
@@ -641,12 +696,98 @@ if __name__ == "__main__":
             xmin, xmax = 0.5, 2.5  # 1.2 * max([max(ageratio), max(sageratio)])  # 25.
             ymin, ymax = 0.2, 1.2  # 1.2 * max([max(mass_ratio), max(smass_ratio)])
 
-        plotter(sageratio, smass_ratio, color=colors[1], errs=True, xs=xs_age, ys=ys_age, norm=7., scat=False)
-        plotter(ageratio, mass_ratio, color=colors[0], errs=True, xs=xs_age, ys=ys_age, norm=7., scat=False)
+        plotter(sageratio, smass_ratio, color=colors[1], errs=True, xs=xs_age, ys=ys_age, norm=10., scat=False)
+        plotter(ageratio, mass_ratio, color=colors[0], errs=True, xs=xs_age, ys=ys_age, norm=10., scat=False)
         print(np.percentile(ageratio, [16., 50., 84.]))
         print(np.percentile(mass_ratio, [16., 50., 84.]))
 
         labs = ['Prospector age / Fast age', mass_label]
+
+    elif dm_dht:
+        ageratio = d_halftime(ee_order, ee_fd, pklfolder='pkl_efico/')
+        sageratio = d_halftime(sf_order, sf_fd, pklfolder='pkl_nfico/')
+
+        home = '/home/jonathan/mz_files/'
+        three_masses = [home + 'Comp_10_zm_EL_Z002.dat', home + 'Comp_10_zm_EL_Z004.dat',
+                        home + 'Comp_10_zm_ZFOURGE.dat']
+        three_smasses = [home + 'Comp_00_zm_EL_Z002.dat', home + 'Comp_00_zm_EL_Z004.dat',
+                         home + 'Comp_00_zm_ZFOURGE.dat']
+
+        mass_ratio, mass_label = dmass(obj_e=ee_order, field_e=ee_fd, order=ee_order, three_masses=three_masses,
+                                       folder='out_efico/', f_ind=1, v_met=False)
+
+        smass_ratio, smass_label = dmass(obj_e=sf_order, field_e=sf_fd, order=sf_order,
+                                         three_masses=three_smasses, folder='out_nfico/', f_ind=1, v_met=False)
+
+        print(len(sageratio), len(smass_ratio))  # 128, 128
+        print(len(ageratio), len(mass_ratio))  # 19, 19
+        # print(max(agelist), max(sagelist), min(agelist), min(sagelist))
+        fastfits = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' \
+                   + 'fast_fits_properties/'
+
+        print('smass', np.percentile(smass_ratio, [16., 50., 84.]))
+        print('mass', np.percentile(mass_ratio, [16., 50., 84.]))
+        xs_age = [0., 200.]
+        ys_age = [0., 14.]
+        xmin, xmax = 0., 1.2 * max([max(ageratio), max(sageratio)])  # 25.
+        ymin, ymax = 0., 14.
+        age_label = 'Prospector age / Fast age'
+
+        logify = True
+        if logify:
+            sageratio = [np.log10(x) for x in sageratio]
+            ageratio = [np.log10(x) for x in ageratio]
+            smass_ratio = [np.log10(x) for x in smass_ratio]
+            mass_ratio = [np.log10(x) for x in mass_ratio]
+            xs_age = [-1., 2.5]
+            ys_age = [-1., 1.5]
+            xmin, xmax = 0.0, 2.5  # 1.2 * max([max(ageratio), max(sageratio)])  # 25.
+            ymin, ymax = 0.1, 1.2  # 1.2 * max([max(mass_ratio), max(smass_ratio)])
+            age_label = r'log$_{10}$(t$_{\rm half, P}$ / t$_{\rm half, F}$)'
+            mass_label = r'log$_{10}$(M$_{\rm P}$ / M$_{\rm F}$) (Z$_{\rm F}$ = Z$_{\odot}$, with emission lines)'
+
+        bothmass = np.concatenate((mass_ratio, smass_ratio), axis=0)
+        bothage = np.concatenate((ageratio, sageratio), axis=0)
+        sorted_mass = [x for _, x in sorted(zip(bothage, bothmass))]
+        sorted_age = sorted(bothage)
+
+        # sorted_mass = [x for _, x in sorted(zip(ageratio, mass_ratio))]
+        # sorted_age = sorted(ageratio)
+        med = []
+        id_rat = 0
+        medx = []
+        while id_rat <= (len(sorted_age) - 20):  # 4
+            newbin = sorted_age[id_rat:id_rat+20]  # 4
+            medx.append(np.mean(newbin))
+            med.append(np.mean(sorted_mass[id_rat:id_rat+20]))  # 4
+            id_rat += 15  # 3
+            if id_rat >= (len(sorted_age) - 20):
+                newbin = sorted_age[id_rat:]
+                medx.append(np.mean(newbin))
+                med.append(np.mean(sorted_mass[id_rat:]))
+        '''
+        sorted_smass = [x for _, x in sorted(zip(sageratio, smass_ratio))]
+        sorted_sage = sorted(sageratio)
+        smed = []
+        sid_rat = 0
+        smedx = []
+        for srat in range(len(sorted_sage) - 8):
+            snewbin = sorted_sage[sid_rat:sid_rat+8]
+            smedx.append(np.mean(snewbin))
+            smed.append(np.mean(sorted_smass[sid_rat:sid_rat+8]))
+            sid_rat += 6
+        '''
+        print(max(smass_ratio), min(smass_ratio), max(mass_ratio), min(mass_ratio))
+        print(max(sageratio), min(sageratio), max(ageratio), min(ageratio))
+        plt.plot(medx, med, 'k-')
+        # plt.plot(smedx, smed, '-', color='blue')
+
+        plotter(sageratio, smass_ratio, color=colors[1], errs=False, xs=xs_age, ys=ys_age, norm=7., scat=True)
+        plotter(ageratio, mass_ratio, color=colors[0], errs=False, xs=xs_age, ys=ys_age, norm=7., scat=True)
+        print(np.percentile(ageratio, [16., 50., 84.]))
+        print(np.percentile(mass_ratio, [16., 50., 84.]))
+
+        labs = [age_label, mass_label]
 
     elif mass_match:
         xmin, xmax = 9.4, 10.1  # 1.2 * max([max(emass), max(smass)])  # 50.  # 10 ** 3  # 700.
