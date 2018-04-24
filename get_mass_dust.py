@@ -12,7 +12,7 @@ import os
 np.errstate(invalid='ignore')
 
 
-def md(sample_results, start=0, thin=1, percs=True, masstest=False, quiet=False):
+def md(sample_results, start=0, thin=1, percs=True, masstest=False, quiet=False, draw1=False):
     """Make a triangle plot of the (thinned, latter) samples of the posterior
     parameter space.  Optionally make the plot only for a supplied subset of
     the parameters.
@@ -57,6 +57,12 @@ def md(sample_results, start=0, thin=1, percs=True, masstest=False, quiet=False)
         ret.append(dust)
         ret.append(metal)
         ret.append(gasmet)
+    elif draw1:
+        mass = np.random.choice(flatchain[:, 0], size=(10**3))
+        dust = np.random.choice(flatchain[:, 6], size=(10**3))
+        gasmet = np.random.choice(flatchain[:, -1], size=(10**3))
+        metal = np.random.choice(flatchain[:, 7], size=(10**3))
+        ret = np.asarray([mass, dust, metal, gasmet])
     else:
         mass = flatchain[:, 0]
         if not quiet:
@@ -70,7 +76,7 @@ def md(sample_results, start=0, thin=1, percs=True, masstest=False, quiet=False)
     return ret
 
 
-def printer(out_file, percs=True, masstest=False, quiet=False):
+def printer(out_file, percs=True, masstest=False, quiet=False, draw1=False):
     if not quiet:
         print(out_file)
         print(masstest)
@@ -78,16 +84,16 @@ def printer(out_file, percs=True, masstest=False, quiet=False):
     # ''' #
 
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
-    return md(res, start=-1000, thin=5, percs=percs, masstest=masstest, quiet=quiet)  # -650
+    return md(res, start=-1000, thin=5, percs=percs, masstest=masstest, quiet=quiet, draw1=draw1)  # -650
     # set start by when kl converges!  # returns mass, dust, stellar Z, gas Z
 
 
 if __name__ == "__main__":
 
     corr = 0
-    fico = 0
+    fico = 1
     news = 0
-    masstest = 1
+    masstest = 0
 
     if corr:
         folders = ['out_ecorr/', 'out_ncorr/']
@@ -190,10 +196,13 @@ if __name__ == "__main__":
     print(countl)
 
     get_e = np.zeros(shape=(4, len(eelgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as eelgs
+    onedraw = np.zeros(shape=(4, len(eelgs), 10**3))  # *10**3))
     for i in range(len(eelgs)):
         if os.path.exists(oute + eelgs[i]):
             get_e[:, i] = printer(oute + eelgs[i])
             print(eelgs[i], get_e[0, i])
+            # for k in range(10**3):
+            onedraw[:, i, :] = printer(oute + eelgs[i], percs=False, draw1=True)
 
     masse = np.percentile(get_e[0], [16., 50., 84.])
     duste = np.percentile(get_e[1], [16., 50., 84.])
@@ -202,9 +211,21 @@ if __name__ == "__main__":
 
     # '''
     get_l = np.zeros(shape=(4, len(lbgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as lbgs
+    onedraw_l = np.zeros(shape=(4, len(lbgs), 10**3))  # * 10**3))
     for i in range(len(lbgs)):
         if os.path.exists(outl + lbgs[i]):
             get_l[:, i] = printer(outl + lbgs[i])
+            # for k in range(10**3):
+            onedraw_l[:, i, :] = printer(outl + lbgs[i], percs=False, draw1=True)
+
+    means = np.zeros(shape=(4, 10**3))
+    for m in range(4):
+        for k in range(10**3):
+            means[m, k] = np.mean(onedraw[m, :, k])
+    means_l = np.zeros(shape=(4, 10**3))
+    for m in range(4):
+        for k in range(10**3):
+            means_l[m, k] = np.mean(onedraw_l[m, :, k])
 
     mass = np.percentile(get_l[0], [16., 50., 84.])
     dust = np.percentile(get_l[1], [16., 50., 84.])
@@ -222,6 +243,22 @@ if __name__ == "__main__":
     print('met', np.percentile(get_l[2], [16., 50., 84.]))
     print('gasmet', np.percentile(get_l[3], [16., 50., 84.]))
     # '''
+
+    print('errors on means:')
+    params = ['mass', 'dust', 'met', 'gasmet']
+    for eom in range(4):
+        print(params[eom] + 'e', np.percentile(means[eom, :], [16., 50., 84.]))
+    for eoml in range(4):
+        print(params[eoml] + 'l', np.percentile(means_l[eoml, :], [16., 50., 84.]))
+    #print('masse', np.percentile(onedraw[0,:,:], [16., 50., 84.]))
+    #print('duste', np.percentile(onedraw[1,:,:], [16., 50., 84.]))
+    #print('mete', np.percentile(onedraw[2,:,:], [16., 50., 84.]))
+    #print('gasmete', np.percentile(onedraw[3,:,:], [16., 50., 84.]))
+    #e_on_mean = np.zeros(shape=(4, len(eelgs), 3))
+    #print('massl', np.percentile(onedraw_l[0,:,:], [16., 50., 84.]))
+    #print('dustl', np.percentile(onedraw_l[1,:,:], [16., 50., 84.]))
+    #print('metl', np.percentile(onedraw_l[2,:,:], [16., 50., 84.]))
+    #print('gasmetl', np.percentile(onedraw_l[3,:,:], [16., 50., 84.]))
 
 '''
 RUNNING WITH:
@@ -309,6 +346,18 @@ For dust2 values: convert to A_V by multiplying by 1.86
 ('dust', array([ 0.33653897,  0.55233464,  0.74976853]))
 ('met', array([-1.82982044, -1.64881372, -1.2083779 ]))
 ('gasmet', array([-1.26446749, -0.59641001, -0.02850388]))
+'''
+
+'''
+FICO errors on means:
+('masse', array([ 9.37587193,  9.39738364,  9.42036556]))
+('duste', array([ 0.30516629,  0.31939399,  0.33271809]))
+('mete', array([-1.61562099, -1.55379575, -1.49063667]))
+('gasmete', array([-0.37862442, -0.33522604, -0.29446069]))
+('massl', array([ 10.10920348,  10.11635971,  10.12342247]))
+('dustl', array([ 0.54547819,  0.5549387 ,  0.56425811]))
+('metl', array([-1.56044648, -1.53799786, -1.51428261]))
+('gasmetl', array([-0.72025215, -0.67690548, -0.63743182]))
 '''
 
 '''

@@ -604,6 +604,7 @@ if __name__ == "__main__":
         import eelg_fixedmet_params as e_params
         import noelg_multirun_params as n_params
     '''
+    write = True
 
     import stellar_ages as sa
     e_objs, e_fields, l_objs, l_fields = sa.get_gal_lists(base, objlists=True, normal=normal)
@@ -612,98 +613,6 @@ if __name__ == "__main__":
     pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
     l_pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[1]
 
-    '''
-    if comp == 0:
-        eelg_list = open('eelg_specz_ids', 'r')
-        eelgs = []
-        e_objs = []
-        e_fields = []
-        for line in eelg_list:
-            if line[0] == '#':
-                pass
-            else:
-                cols = line.split()
-                e_objs.append(cols[1])
-                e_fields.append(cols[0])
-                eelgs.append(cols[1] + '_' + cols[0] + '_' + base[0])  # base[0] = fixedmet (or otherbins)
-        eelg_list.close()
-    else:
-        eelg_list = open('Comp_10.dat', 'r')
-        eelgs = []
-        e_objs = []
-        e_fields = []
-        for line in eelg_list:
-            if line[0] == '#':
-                pass
-            else:
-                cols = line.split()
-                if int(cols[0]) - 200000 > 0:
-                    e_objs.append(str(int(cols[0]) - 200000))
-                    e_fields.append('uds')
-                    eelgs.append(str(int(cols[0]) - 200000) + '_uds_' + base[0])  # base[1] = noelg (or nother)
-                elif int(cols[0]) - 100000 > 0:
-                    e_objs.append(str(int(cols[0]) - 100000))
-                    e_fields.append('cosmos')
-                    eelgs.append(str(int(cols[0]) - 100000) + '_cosmos_' + base[0])  # base[1] = noelg (or nother)
-                else:
-                    e_objs.append(str(int(cols[0])))
-                    e_fields.append('cdfs')
-                    eelgs.append(str(int(cols[0])) + '_cdfs_' + base[0])  # base[1] = noelg (or nother)
-        eelg_list.close()
-    '''
-
-    '''
-        # CALCULATE redshifts of all galaxies in C_10
-        zs = []
-        ts = []
-        from astropy.cosmology import WMAP9
-        for i in range(len(eelgs)):
-            print(e_fields[i])
-            if e_fields[i] == 'cosmos':
-                zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'
-            elif e_fields[i] == 'cdfs':
-                zname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout'
-            elif e_fields[i] == 'uds':
-                zname = '/home/jonathan/uds/uds.v1.5.8.awk.zout'
-            with open(zname, 'r') as fz:
-                hdr_z = fz.readline().split()
-            dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
-            zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
-
-            idx = zout['id'] == e_objs[i]  # creates array of True/False: True when dat[id] = objname
-            zred = zout['z_spec'][idx][0]  # use z_spec
-            if zred == -99:  # if z_spec doesn't exist
-                zred = zout['z_peak'][idx][0]  # use z_phot
-            tuniv = WMAP9.age(zred).value
-            ts.append(tuniv)
-            zs.append(zred)
-        print('ts', ts)
-        print(np.median(ts))  # 1.88930392535 Gyr
-    '''
-    '''
-    lbg_list = open('lbg_ids1', 'r')  # lbg_ids1
-    flist = {}
-    lbgs = []
-    l_objs = []
-    l_fields = []
-    for line in lbg_list:
-        if int(line) - 200000 > 0:
-            flist[str(int(line) - 200000)] = 'uds'
-            lbgs.append(str(int(line) - 200000) + '_uds_' + base[1])  # base[1] = noelg (or nother)
-            l_objs.append(int(line) - 200000)
-            l_fields.append('uds')
-        elif int(line) - 100000 > 0:
-            flist[str(int(line) - 100000)] = 'cosmos'
-            lbgs.append(str(int(line) - 100000) + '_cosmos_' + base[1])
-            l_objs.append(int(line) - 100000)
-            l_fields.append('cosmos')
-        else:
-            flist[str(int(line))] = 'cdfs'
-            lbgs.append(str(int(line)) + '_cdfs_' + base[1])
-            l_objs.append(int(line))
-            l_fields.append('cdfs')
-    lbg_list.close()
-    '''
     tun = True
     if tun:  # flat ssfr prior = 1 / t_univ, based on perc of t_univ values for each population
         # pri = [0.41772065 * 1e-9, 0.50135904 * 1e-9, 0.55399038 * 1e-9]  # USE
@@ -725,45 +634,102 @@ if __name__ == "__main__":
     boots = []
     nummy = 0
     c = 0
-    for glxy in eelgs:
-        c += 1
-        # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
-        file = pkls + glxy + '_extra_out.pkl'
-        if os.path.exists(file):
-            nummy += 1
-            # temp = randraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
-            temp = randraw(file, mass[0])  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
-            # temp = bootdraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
-            draws.append(temp[0])
-            # boots.append(bootstrap(temp[0]))
-            t1.append(temp[1])
-        else:
-            print(file)
-
-    # stacker2(draws, t1)
-    sig = 1  # what sigma error to show on plot
-    all1 = stacker(draws, sigma=sig)
 
     draws2 = []
     numl = 0
     cl = 0
     # t2 = []
-    for glxy in lbgs:
-        cl += 1
-        # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
-        file = l_pkls + glxy + '_extra_out.pkl'
+    if write:
+        file_loc = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/eelg_ssfrs'
+        with open(file_loc, 'w+') as write_eelgs:
+            write_eelgs.write('# ID SSFR\n\n')
+            for glxy in eelgs:
+                c += 1
+                # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
+                file = pkls + glxy + '_extra_out.pkl'
+                if os.path.exists(file):
+                    nummy += 1
+                    # temp = randraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
+                    temp = randraw(file, mass[0])  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
+                    # temp = bootdraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
+                    draws.append(temp[0])  # append random draw of ssfr
+                    # boots.append(bootstrap(temp[0]))
+                    t1.append(temp[1])
+                    write_eelgs.write(glxy + ' ' + str(np.percentile(temp[0], [16., 50., 84.])[1]) + '\n')
+                    print(len(temp[0]))  # 22, 1000
+                else:
+                    print(file)
 
-        if os.path.exists(file):
-            numl += 1
-            # temp = randraw(file)
-            temp = randraw(file, mass[1])
-            # temp = bootdraw(file)
-            draws2.append(temp[0])
-            # t2.append(temp[1])
-        else:
-            print(file)
+        lfile_loc = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfg_ssfrs'
+        with open(lfile_loc, 'w+') as write_sfgs:
+            write_sfgs.write('# ID SSFR\n\n')
+            for glxy in lbgs:
+                cl += 1
+                # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
+                file = l_pkls + glxy + '_extra_out.pkl'
 
+                if os.path.exists(file):
+                    numl += 1
+                    # temp = randraw(file)
+                    temp = randraw(file, mass[1])
+                    # temp = bootdraw(file)
+                    draws2.append(temp[0])
+                    write_sfgs.write(glxy + ' ' + str(np.percentile(temp[0], [16., 50., 84.])[1]) + '\n')
+                    # t2.append(temp[1])
+                else:
+                    print(file)
+
+    else:
+        for glxy in eelgs:
+            c += 1
+            # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
+            file = pkls + glxy + '_extra_out.pkl'
+            if os.path.exists(file):
+                nummy += 1
+                # temp = randraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
+                temp = randraw(file, mass[0])  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
+                # temp = bootdraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
+                draws.append(temp[0])  # append random draw of ssfr
+                # boots.append(bootstrap(temp[0]))
+                t1.append(temp[1])
+                print(len(temp[0]))  # 22, 1000
+            else:
+                print(file)
+
+        lfile_loc = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfg_ssfrs'
+        for glxy in lbgs:
+            cl += 1
+            # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
+            file = l_pkls + glxy + '_extra_out.pkl'
+
+            if os.path.exists(file):
+                numl += 1
+                # temp = randraw(file)
+                temp = randraw(file, mass[1])
+                # temp = bootdraw(file)
+                draws2.append(temp[0])
+                # t2.append(temp[1])
+            else:
+                print(file)
+
+    # stacker2(draws, t1)
+    sig = 1  # what sigma error to show on plot
+    all1 = stacker(draws, sigma=sig)
     all2 = stacker(draws2, sigma=sig)
+
+    means1 = np.zeros(shape=(10**3))
+    means2 = np.zeros(shape=(10**3))
+    # len(gal_draws) = number of galaxies in stack; len(gal_draws[0]) = 22, len(gal_draws[0][0]) = num (1000)
+    # print(len(draws), len(draws[0]), len(draws[0][0]))  # 19, 22, 1000
+    for nu in range(1000):
+        each = []
+        each2 = []
+        for gal in range(len(draws)):
+            each.append(draws[gal][0][nu])
+        for gal2 in range(len(draws2)):
+            each2.append(draws2[gal2][0][nu])
+        means1[nu] = np.mean(each)
+        means2[nu] = np.mean(each2)
 
     new1 = []
     for i in range(len(all1[0])):
@@ -780,9 +746,11 @@ if __name__ == "__main__":
     print(numl, cl, 'numl')
     # smooth_percs = [smooth(perc1), smooth(perc2)]
 
-
     rc('font', **{'family': 'serif', 'serif': ['Times']})
     rc('text', usetex=True)
 
     plot_sfhs([new1, new2], t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l], tuniv=tun,
               nums=[nummy, numl])
+    print('errors on mean:')
+    print(np.percentile(means1, [16., 50., 84.]))
+    print(np.percentile(means2, [16., 50., 84.]))

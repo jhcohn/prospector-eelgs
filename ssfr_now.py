@@ -287,6 +287,17 @@ if __name__ == "__main__":
     print(np.percentile(all_fracs_l, [16., 50., 84., 86., 87., 88., 89., 90., 91., 92., 93., 94., 95., 96., 97.]),
           'SFGs all_l more percs')
 
+    print('errors on the mean:')
+    # frac = np.zeros(shape=(len(eelgs), 10**3))
+    means = []
+    means_l = []
+    for ee in range(len(frac[0])):
+        means.append(np.mean(frac[:, ee]))
+    for ll in range(len(frac_l[0])):
+        means_l.append(np.mean(frac_l[:, ll]))
+    print(np.percentile(means, [16., 50., 84.]))
+    print(np.percentile(means_l, [16., 50., 84.]))
+
     # print(np.percentile(all_fracs, [85., 90., 99.]), 'EELGs top 15 percs')
     # print(np.percentile(all_fracs100, [16., 50., 84.]), 'combined')
     # print(np.percentile(all_fracs_l, [85., 90., 99.]), 'SFGs top 15 percs')  # 28.7% - 8.95%, 8.95% - 2.5%
