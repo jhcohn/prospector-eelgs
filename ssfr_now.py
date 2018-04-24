@@ -4,6 +4,8 @@ import pickle
 import one_stack as one
 import get_mass_dust as gmd
 import matplotlib.pyplot as plt
+from matplotlib import rc
+import scipy
 
 
 def get_ssfr(file):
@@ -279,11 +281,9 @@ if __name__ == "__main__":
     # 85th percentile forms 50% of mass, 86th -> 52%, 88th -> 60%, 90th -> 65% of mass, 91st -> 69%%, 92nd -> 71%,
     # 93rd -> 75%, 94th -> 78%, 95th -> 82%, 96th -> 87%, 97th -> 94%
     # print(np.percentile(all_r, [16., 50., 84.]), 'EELGs most recent bin')  # more peaked around center
-    e_percs = np.percentile(all_fracs, [16., 50., 84.])
-    l_percs = np.percentile(all_fracs_l, [16., 50., 84.])
     # print(e_percs, 'EELGs most recent bin')  # 86.7 - 26.1, 26.1 - 9.1
     print(np.percentile(all_fracs2, [16., 50., 84.]), 'EELGs second bin')  # 21.3 - 5.1, 5.1 - 0.91
-    print(l_percs, 'sfgs most recent bin')  # 28.7% - 8.95%, 8.95% - 2.5%
+    # print(l_percs, 'sfgs most recent bin')  # 28.7% - 8.95%, 8.95% - 2.5%
     print(np.percentile(all_fracs_l, [16., 50., 84., 86., 87., 88., 89., 90., 91., 92., 93., 94., 95., 96., 97.]),
           'SFGs all_l more percs')
 
@@ -309,25 +309,57 @@ if __name__ == "__main__":
     print(np.percentile(ssfr, [16., 50., 84.]))
     print(np.percentile(ssfr_l, [16., 50., 84.]))
 
+    x0, xs0 = [], []
+    for lf in range(len(all_fracs)):
+        x0.append(all_fracs[lf][1])
+    for ll in range(len(all_fracs_l)):
+        xs0.append(all_fracs_l[ll][1])
     print(len(all_fracs))
     x1 = []
-    for l in range(len(all_fracs)):
-        x1.append(all_fracs[l][1])
+    for l in range(len(all_true)):  # (all_fracs)):
+        x1.append(all_true[l])  #  all_fracs[l][1])
     x2 = []
-    for m in range(len(all_fracs_l)):
-        x2.append(all_fracs_l[m][1])
+    for m in range(len(all_l)):  # all_fracs_l)):
+        x2.append(all_l[m])  # all_fracs_l[m][1])
     # print(x1)
     print(np.median(x1))
     # print(x2)
     print(np.median(x2))
+    e_percs = np.percentile(x1, [16., 50, 84.])  # np.percentile(all_fracs, [16., 50., 84.])
+    l_percs = np.percentile(x2, [16., 50., 84.])  # np.percentile(all_fracs_l, [16., 50., 84.])
 
     fig = plt.figure()
     ax1 = plt.subplot(1, 1, 1)
-    ax1.hist(x1, bins=50, histtype="step", weights=[1.] * len(x1), normed=False, color='purple', lw=2,
-             label='EELGs')  # [1. / len(eelgs1)] * len(x1)
-    ax1.hist(x2, bins=50, histtype="step", weights=[1.] * len(x2), normed=False, color='b', lw=2,
-             label='SFGs')  # [19. / len(lbgs1)] * len(x2)
 
+    '''
+    for x11 in range(len(x1)):
+        if x1[x11] > 1.:
+            x1[x11] = 1.
+    for x22 in range(len(x2)):
+        if x2[x22] > 1.:
+            x2[x22] = 1.
+    '''
+
+    num_bins = 100
+    hi = np.histogram(x0, bins=num_bins, range=(0.0, 1.0))
+    hey = np.histogram(xs0, bins=num_bins, range=(0.0, 1.0))
+    print('KS 0', scipy.stats.ks_2samp(hi[0], hey[0]))  # (100: 0.19); (200: 0.03); (500: 1e-4); (1000: 1e-7)
+    print('A-D 0', scipy.stats.anderson_ksamp((hi[0], hey[0])))  # (15: 0.4); (50: 0.1); (75: 0.03); (100: 0.007); (200: 1
+
+    num_bins = 100
+    hi = np.histogram(x1, bins=num_bins, range=(0.0, 1.0))
+    hey = np.histogram(x2, bins=num_bins, range=(0.0, 1.0))
+    print('KS', scipy.stats.ks_2samp(hi[0], hey[0]))  # (100: 0.19); (200: 0.03); (500: 1e-4); (1000: 1e-7)
+    print('A-D', scipy.stats.anderson_ksamp((hi[0], hey[0])))  # (15: 0.4); (50: 0.1); (75: 0.03); (100: 0.007); (200: 1
+
+    #ax1.hist(x1, bins=50, histtype="step", weights=[1./len(x1)] * len(x1), normed=False, color='purple', lw=2,
+    #         label='EELGs')  # [1. / len(eelgs1)] * len(x1)
+    #ax1.hist(x2, bins=50, histtype="step", weights=[1./len(x2)] * len(x2), normed=False, color='b', lw=2,
+    #         label='SFGs')  # [19. / len(lbgs1)] * len(x2)
+    ax1.hist(x0, bins=50, histtype="step", weights=[1./len(x0)] * len(x0), normed=False, color='purple', lw=2,
+             label='EELGs')  # [1. / len(eelgs1)] * len(x1)
+    ax1.hist(xs0, bins=50, histtype="step", weights=[1./len(xs0)] * len(xs0), normed=False, color='b', lw=2,
+             label='SFGs')  # [19. / len(lbgs1)] * len(x2)
     # plot median, +/-1sigma for both histograms
     ax1.axvline(x=e_percs[1], color='purple', linestyle='--', lw=2)
     ax1.axvline(x=l_percs[1], color='b', linestyle='--', lw=2)
@@ -335,14 +367,20 @@ if __name__ == "__main__":
     # shade in +/-1sigma region
     ax1.axvspan(e_percs[0], e_percs[2], color='purple', alpha=0.2)
     ax1.axvspan(l_percs[0], l_percs[2], color='b', alpha=0.2)
-    ax1.set_ylim(0, 70.)
+    ax1.set_ylim(0, 0.85)  # (0, 70.)
     ax1.set_xlim(0, 1.)
-
-    # figure labels
     fs = 30
+    rc('font', **{'family': 'serif', 'serif': ['Times']})
+    rc('text', usetex=True)
+    ax1.set_yticklabels([r'$0.0$', r'$0.1$', r'$0.2$', r'$0.3$', r'$0.4$', r'$0.5$', r'$0.6$', r'$0.7$', r'$0.8$'],
+                        size=fs)
+    # ax1.set_xticks([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+    # ax1.set_xticklabels([r'$0.0$', r'$0.1$', r'$0.2$', r'$0.3$', r'$0.4$', r'$0.5$', r'$0.6$', r'$0.7$', r'$0.8$',
+    #                      r'$0.9$', r'$1.0'], size=fs)
+    ax1.set_xticklabels([r'$0.0$', r'$0.2$', r'$0.4$', r'$0.6$', r'$0.8$', r'$1.0'], size=fs)
     ax1.legend(numpoints=1, loc='upper right', prop={'size': fs})
     ax1.set_xlabel('Fraction of stellar mass [M$_{\odot}$] formed in most recent 50 Myr', ha='center', fontsize=fs)
-    ax1.set_ylabel(r'Number of galaxies', fontsize=fs)
+    ax1.set_ylabel(r'Fraction of galaxies', fontsize=fs)
     plt.show()
 
     '''
