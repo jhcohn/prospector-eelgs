@@ -396,7 +396,7 @@ def stacker(gal_draws, sigma=1):
 
 
 def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, sigma=1, save=False, title=None,
-              priors=None, show=False, tpbs=None, tuniv=False, nums=[1., 1.]):
+              priors=None, show=False, tpbs=None, tuniv=False, nums=[1., 1.], both=False, seconds=None, ratio=False):
     """
     Plots SFH stacks for two different galaxy samples side-by-side
 
@@ -411,16 +411,21 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     x = [0.5e-8, 1e-8, 1.5e-8]  # , 2e-8]  # used if log=0
     # y = [0.0, 0.05, 0.10, 0.15]  # used regardless of log
     # y = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70]  # used regardless of log
-    y = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40]
+    y = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.5, 0.55]#, 0.45, 0.5, 0.6, 0.7, 0.8, 0.9]
     # , 0.35]  # used regardless of log; max 0.35 for 1e-9 bin spacing
 
-    fig = plt.figure()
-    ax1 = plt.subplot(1, 2, 1)
-    ax2 = plt.subplot(1, 2, 2, sharey=ax1, sharex=ax1)
-    ax1.set_xlim(xmin=3*10**-14, xmax=1.75e-8)  # 2.25e-8)  # 3*10**-12, 7e-8
-    ax1.xaxis.set_ticks(x)
-    ax1.set_ylim(ymin=0., ymax=0.42)  # 0.34)  # 0.33)  # 0.28)  # 0.39)
-    ax1.yaxis.set_ticks(y)
+    if ratio:
+        fig = plt.figure()
+        ax1 = plt.subplot(1, 1, 1)
+    else:
+        fig = plt.figure()
+        ax1 = plt.subplot(1, 2, 1)
+        ax2 = plt.subplot(1, 2, 2, sharey=ax1, sharex=ax1)
+        ax1.set_xlim(xmin=3*10**-14, xmax=1.75e-8)  # 2.25e-8)  # 3*10**-12, 7e-8
+        ax1.xaxis.set_ticks(x)
+        ax1.set_ylim(ymin=0., ymax=0.57) #ymax=0.42)  # 0.34)  # 0.33)  # 0.28)  # 0.39)
+        ax1.yaxis.set_ticks(y)
+        fig.subplots_adjust(wspace=0)
 
     if not log:
         uvj_loc = 1  # 'upper right'
@@ -433,28 +438,36 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
         x = [1e-14, 1e-13, 1e-12, 1e-11, 1e-10, 1e-9, 1e-8, 1e-7]
         ax1.set_xlim(xmin=3*10**-15, xmax=1e-7)  # 3*10**-12
         ax1.xaxis.set_ticks(x)
-    ax1.set_ylabel(r'Fraction', fontsize=30)
-    fig.subplots_adjust(wspace=0)
+    ax1.set_ylabel(r'Cumulative distribution', fontsize=30)
 
     if uvj_in:  # also requires elist, llist to be not None; this insets uvj plots onto the top right of plot!
         ht = 10*0.28  # 8*0.28
         wd = 10*0.32  # 8*0.32
-        inset_axes(ax1, width=wd, height=ht, loc=uvj_loc)  # 20%
         ecols = ['purple' for idx in range(len(elist))]
         lcols = ['blue' for idx in range(len(llist))]
         # for colr in range(len(elist)):
         #     cols.append('purple')
-        uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False, col=ecols)
         # create inset axis: width (%), height (inches), location
         # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
         # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
-        inset_axes(ax2, width=wd, height=ht, loc=uvj_loc)  # 20%
-        uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False, col=lcols,
-                     hist=True)
+        if ratio:
+            inset_axes(ax1, width=wd, height=ht, loc=10)  # 20%
+            uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False, col=ecols)
+            inset_axes(ax1, width=wd, height=ht, loc=7)  # 20%
+            uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False,
+                         col=lcols,
+                         hist=True)
+        else:
+            inset_axes(ax1, width=wd, height=ht, loc=uvj_loc)  # 20%
+            uvj.uvj_plot(-1, 'all', objlist=elist, title=False, labels=False, lims=True, size=20, show=False, col=ecols)
+            inset_axes(ax2, width=wd, height=ht, loc=uvj_loc)  # 20%
+            uvj.uvj_plot(-1, 'all', objlist=llist, title=False, labels=False, lims=True, size=20, show=False, col=lcols,
+                         hist=True)
 
     if priors is not None:
-        ax1.axvline(x=priors[0][1], color='k', ls='--', label='Prior')  # median, +/- 1sigma for EELG prior
-        ax2.axvline(x=priors[1][1], color='k', ls='--', label='Prior')  # median, +/- 1sigma for SFG prior
+        if not ratio:
+            ax1.axvline(x=priors[0][1], color='k', ls='--', label='Prior')  # median, +/- 1sigma for EELG prior
+            ax2.axvline(x=priors[1][1], color='k', ls='--', label='Prior')  # median, +/- 1sigma for SFG prior
 
     # DO THE PLOTTING! AND KS TEST!
     print('hi')
@@ -466,18 +479,24 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
         logged2.append(np.log10(draws[1][i]))
     perc1 = np.percentile(draws[0], [25, 50, 75])
     perc2 = np.percentile(draws[1], [25, 50, 75])
-    print(perc1, perc2)
+    # print(perc1, perc2)
 
     # KS test bins: 100 bins corresponds to bin width 1e-9 (1 Gyr^-1)
     num_bins = 100
     hi = np.histogram(draws[0], bins=num_bins, range=(10**-12, 10**-7))
     hey = np.histogram(draws[1], bins=num_bins, range=(10**-12, 10**-7))
-    print('KS', scipy.stats.ks_2samp(hi[0], hey[0]))  # (100: 0.19); (200: 0.03); (500: 1e-4); (1000: 1e-7)
-    print('A-D', scipy.stats.anderson_ksamp((hi[0], hey[0])))  # (15: 0.4); (50: 0.1); (75: 0.03); (100: 0.007); (200: 1e-4)
+    print('KS', scipy.stats.ks_2samp(hi[0], hey[0]))  # ~0.01
+    print('A-D', scipy.stats.anderson_ksamp((hi[0], hey[0])))  # ~5e-5
+
+    hi2 = np.histogram(seconds[0], bins=num_bins, range=(10 ** -12, 10 ** -7))
+    hey2 = np.histogram(seconds[1], bins=num_bins, range=(10 ** -12, 10 ** -7))
+    print('KS2', scipy.stats.ks_2samp(hi2[0], hey2[0]))  # 0.005 (really?? maybe bc 4e3 pts, instead of just 3e3 above?)
+    print('A-D2', scipy.stats.anderson_ksamp((hi2[0], hey2[0])))  # 2e-5
+
     # NOTE: the above numbers changed WRONG: NOW CORRECT, for anderson-darling: (100: 0.043)
-    print(min(draws[1]), max(draws[1]))  # ~4.7e-14, 21*1e-9
+    # print(min(draws[1]), max(draws[1]))  # ~4.7e-14, 21*1e-9
     print(np.percentile(draws[1], [16, 50, 84]))  # 4.08e-10, 1.38e-9, 2.89e-9
-    print(min(draws[0]), max(draws[0]))  # 2.5e-10, 12e-9
+    # print(min(draws[0]), max(draws[0]))  # 2.5e-10, 12e-9
     print(np.percentile(draws[0], [16, 50, 84]))  # 1.25e-9, 3.05e-9, 4.59e-9
     # sqrt(N_SFG) = sqrt(167) = 12.92285 --> error on mean: {1.38e-9}^{+0.117e-9}_{-0.00752e-9} (max 1.497)
     # sqrt(N_EELG) = sqrt(18) = 4.24264 --> error on mean: {3.05e-9}^{+0.363e-9}_{-0.424e-9} (min 2.626)
@@ -487,13 +506,93 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
     # display_num = np.linspace(1e-12, 1e-7, num=30)
     fs = 20
     if not log:
-        ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[1./(nums[0]*3*10**3)]*len(draws[0]),
-                 color='purple', alpha=0.75, lw=2, label='EELGs')
-        ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1./(nums[1]*3*10**3)]*len(draws[1]), color='b',
-                 alpha=0.75, lw=2, label='SFGs')
-        fig.text(0.5, 0.04, r'sSFR (most recent bin) [Gyr$^{-1}$]', ha='center', fontsize=30)  # 30
-        ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.88), prop={'size': fs})
-        ax2.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.88), prop={'size': fs})
+        if both:
+            hi3 = np.histogram(draws[1], bins=num_bins, range=(10 ** -12, 10 ** -7))
+            hey3 = np.histogram(seconds[1], bins=num_bins, range=(10 ** -12, 10 ** -7))
+            print('KS3', scipy.stats.ks_2samp(hi3[0], hey3[0]))  # ~0.02 (maybe believable?)
+            print('A-D3', scipy.stats.anderson_ksamp((hi3[0], hey3[0])))  # 0.17 <-- NOT SIGNIFICANT
+
+            hi4 = np.histogram(draws[0], bins=num_bins, range=(10 ** -12, 10 ** -7))
+            hey4 = np.histogram(seconds[0], bins=num_bins, range=(10 ** -12, 10 ** -7))
+            print('KS4', scipy.stats.ks_2samp(hi4[0], hey4[0]))  # ~0.999997 (SHOULD BE VERY DIFF)
+            print('A-D4', scipy.stats.anderson_ksamp((hi4[0], hey4[0])))  # ~1.05 WTF THIS IS NOT CORRECT
+            # ax1.set_ylabel(r'Cumulative distribution', fontsize=30)
+            ax1.set_ylabel(r'Fraction of composite SED', fontsize=30)
+            # y = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]  # , 0.45, 0.5, 0.6, 0.7, 0.8, 0.9]
+            # ax1.set_ylim(ymin=0., ymax=1.0)  # ymax=0.42)  # 0.34)  # 0.33)  # 0.28)  # 0.39)
+            # ax1.set_xlim(xmin=3 * 10 ** -14, xmax=6e-8)  # 2.25e-8)  # 3*10**-12, 7e-8
+            ax1.xaxis.set_ticks(x)
+
+            ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[1. / (nums[0] * 3 * 10 ** 3)] * len(draws[0]),
+                     color='purple', alpha=0.75, lw=2, label='EELGs, most recent bin')
+            ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1. / (nums[1]*3*10**3)] * len(draws[1]),
+                     color='b', alpha=0.75, lw=2, label='SFGs, most recent bin')
+            ax1.hist(seconds[0], histtype='bar', bins=display_num, weights=[1. / (nums[0]*4*10**3)] * len(seconds[0]),
+                     color='k', hatch='/', alpha=0.25, lw=2, label='EELGs, second bin')  # ls='--',
+            ax2.hist(seconds[1], histtype='bar', bins=display_num, weights=[1. / (nums[1]*4*10**3)] * len(seconds[1]),
+                     color='k', hatch='/', alpha=0.25, lw=2, label='SFGs, second bin')  # ls='--',
+
+            fig.text(0.5, 0.04, r'sSFR [Gyr$^{-1}$]', ha='center', fontsize=30)  # 30
+            ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.842), prop={'size': fs})  # (0.05, 0.88)
+            ax2.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.842), prop={'size': fs})  # (0.05, 0.88)
+            # ax1.legend(numpoints=1, loc='upper left', prop={'size': fs})  # (0.05, 0.88)
+            # ax2.legend(numpoints=1, loc='upper left', prop={'size': fs})  # (0.05, 0.88)  # bucket just now
+
+            fs_ticks = 25
+            # ax1.set_xticklabels([r'$10$', r'$20$', r'$30$',  r'$40$', r'$50$'], size=fs_ticks)
+            ax2.set_xticklabels([r'$5$', r'$10$', r'$15$'], size=fs_ticks)  # bucket just now
+            ax2.set_xticklabels([r'$5$', r'$10$', r'$15$'], size=fs_ticks)  # bucket just now
+            ax1.set_yticklabels([r'$0.00$', r'$0.05$', r'$0.10$', r'$0.15$', r'$0.20$', r'$0.25$', r'$0.30$',
+                                 r'$0.35$', r'$0.40$', r'$0.45$', r'$0.50$', r'$0.55$'], size=fs_ticks)
+            # ax1.set_yticklabels([r'$0.00$', r'$0.10$', r'$0.20$', r'$0.30$', r'$0.40$', r'$0.50$', r'$0.60$',
+            #                      r'$0.70$', r'$0.80$', r'$0.90$', r'$1.0$'], size=fs_ticks)
+
+        elif ratio:
+            x = [0., 2., 4., 6., 8., 10., 12., 14., 16., 18.]  # , 2e-8]  # used if log=0
+            #y = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35]  # bucket just now
+            y = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]  # , 0.45, 0.5, 0.6, 0.7, 0.8, 0.9]
+            ax1.set_xlim(xmin=0., xmax=19.)  # 2.25e-8)  # 3*10**-12, 7e-8
+            ax1.xaxis.set_ticks(x)
+            ax1.set_ylim(ymin=0., ymax=1.0) #0.37  # ymax=0.42)  # 0.34)  # 0.33)  # 0.28)  # 0.39)
+            ax1.yaxis.set_ticks(y)
+            # print(np.percentile(np.histogram(seconds[0], bins=np.arange(0, 20., 0.5)), [16., 50., 84.]))
+            print(max(seconds[0]), max(seconds[1]), 'maxes')
+            ax1.hist(seconds[0], histtype='step', bins=np.arange(0, 20., 0.5), cumulative=True, normed=1,
+                     color='purple', alpha=0.75, lw=2, label='EELGs')
+            # weights=[1. / (nums[0] * 10 ** 3)] * len(seconds[0]),
+            ax1.hist(seconds[1], histtype='step', bins=np.arange(0, 20., 0.5), cumulative=True, normed=1,  # bucket just now
+                     color='b', alpha=0.75, lw=2, label='SFGs')
+            # weights=[1. / (nums[1] * 10 ** 3)] * len(seconds[1]),
+            fig.text(0.5, 0.04, r'(sSFR most recent bin) / (sSFR, second bin)', ha='center', fontsize=30)  # 30
+            fs_ticks = 25
+            ax1.set_xticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$', r'$10$', r'$12$', r'$14$', r'$16$', r'$18$'],
+                                size=fs_ticks)
+            #ax2.set_xticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$', r'$10$', r'$12$', r'$14$', r'$16$', r'$18$'],
+            #                    size=fs_ticks)  # bucket just now
+            #ax1.set_yticklabels([r'$0.00$', r'$0.05$', r'$0.10$', r'$0.15$', r'$0.20$', r'$0.25$', r'$0.30$',
+            #                     r'$0.35$'], size=fs_ticks)  # bucket just now
+            ax1.set_yticklabels([r'$0.00$', r'$0.10$', r'$0.20$', r'$0.30$', r'$0.40$', r'$0.50$', r'$0.60$',
+                                 r'$0.70$', r'$0.80$', r'$0.90$', r'$1.0$'], size=fs_ticks)
+            ax1.axvline(x=1., color='k', ls='--')
+            #ax2.axvline(x=1., color='k', ls='--')  # bucket just now
+            ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.8, 0.742), prop={'size': fs})  # 0.88
+            #ax2.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.75, 0.842), prop={'size': fs})  # 0.88  # bucket just now
+        else:
+            ax1.hist(draws[0], histtype='bar', bins=display_num, weights=[1. / (nums[0] * 3 * 10 ** 3)] * len(draws[0]),
+                     color='purple', alpha=0.75, lw=2, label='EELGs')
+            ax2.hist(draws[1], histtype='bar', bins=display_num, weights=[1. / (nums[1] * 3 * 10 ** 3)] * len(draws[1]),
+                     color='b', alpha=0.75, lw=2, label='SFGs')
+            fig.text(0.5, 0.04, r'sSFR (most recent bin) [Gyr$^{-1}$]', ha='center', fontsize=30)  # 30
+            ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.88), prop={'size': fs})
+            ax2.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.88), prop={'size': fs})
+            fs_ticks = 25
+            ax1.set_xticklabels([r'$5$', r'$10$', r'$15$'], size=fs_ticks)
+            ax2.set_xticklabels([r'$5$', r'$10$', r'$15$'], size=fs_ticks)
+            ax1.set_yticklabels([r'$0.00$', r'$0.05$', r'$0.10$', r'$0.15$', r'$0.20$', r'$0.25$', r'$0.30$', r'$0.35$',
+                                 r'$0.40$', r'$0.45$', r'$0.50$', r'$0.55$'], size=fs_ticks)
+
+        # ax1.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.842), prop={'size': fs})  # (0.05, 0.88)#
+        # ax2.legend(numpoints=1, loc='lower left', bbox_to_anchor=(0.05, 0.842), prop={'size': fs})  # (0.05, 0.88)
         # ax1.legend(numpoints=1, loc='upper left', prop={'size': fs})
         # ax2.legend(numpoints=1, loc='upper left', prop={'size': fs})
     else:
@@ -505,12 +604,7 @@ def plot_sfhs(draws, t, lw=1, elist=None, llist=None, uvj_in=False, spec=True, s
         ax1.legend(numpoints=1, loc='upper right', prop={'size': fs})
         ax2.legend(numpoints=1, loc='upper right', prop={'size': fs})
 
-    fs_ticks = 25
-    ax1.set_xticklabels([r'$5$', r'$10$', r'$15$'], size=fs_ticks)
-    ax2.set_xticklabels([r'$5$', r'$10$', r'$15$'], size=fs_ticks)
-    ax1.set_yticklabels([r'$0.00$', r'$0.05$', r'$0.10$', r'$0.15$', r'$0.20$', r'$0.25$', r'$0.30$', r'$0.35$',
-                         r'$0.40$'], size=fs_ticks)
-    plt.setp(ax2.get_yticklabels(), visible=False)  # hide y-axis labels on right-hand subplot to prevent overlap
+    plt.setp(ax2.get_yticklabels(), visible=False)  # hide y-axis labels on right-hand subplot to prevent overlap # bucket just now
     plt.rc('xtick', labelsize=20)
     plt.rc('ytick', labelsize=20)
     plt.rcParams.update({'font.size': 22})
@@ -730,6 +824,9 @@ if __name__ == "__main__":
             each2.append(draws2[gal2][0][nu])
         means1[nu] = np.mean(each)
         means2[nu] = np.mean(each2)
+    print('errors on mean:')
+    print(np.percentile(means1, [16., 50., 84.]))
+    print(np.percentile(means2, [16., 50., 84.]))
 
     new1 = []
     for i in range(len(all1[0])):
@@ -741,6 +838,36 @@ if __name__ == "__main__":
             new2.append(all2[j][i])
     print(len(all1[0]), len(all2[0]), len(new1), len(new2))
 
+    sec1 = []
+    for i in range(len(all1[0])):
+        for j in (3, 4, 5, 6):
+            sec1.append(all1[j][i])
+    sec2 = []
+    for i in range(len(all2[0])):
+        for j in (3, 4, 5, 6):
+            sec2.append(all2[j][i])
+
+    rat1 = []
+    for i in range(len(all1[0])):
+        recent = []
+        second = []
+        for j in (0, 1, 2):
+            recent.append(all1[j][i])
+        for k in (3, 4, 5, 6):
+            second.append(all1[k][i])
+        rat1.append((sum(recent)/3) / (sum(second)/4))
+    rat2 = []
+    for i in range(len(all2[0])):
+        recent = []
+        second = []
+        for j in (0, 1, 2):
+            recent.append(all2[j][i])
+        for k in (3, 4, 5, 6):
+            second.append(all2[k][i])
+        rat2.append((sum(recent)/3) / (sum(second)/4))
+    print(np.median(rat1), np.mean(rat1))
+    print(np.median(rat2), np.mean(rat2))
+
     # smooth_percs = perc1, perc2
     print(nummy, c, 'nume')
     print(numl, cl, 'numl')
@@ -749,8 +876,7 @@ if __name__ == "__main__":
     rc('font', **{'family': 'serif', 'serif': ['Times']})
     rc('text', usetex=True)
 
+    # seconds = [rat1, rat2]  # ratio
+    seconds = [sec1, sec2]  # both
     plot_sfhs([new1, new2], t1[0], elist=eelgs, llist=lbgs, uvj_in=True, sigma=sig, priors=[pri, pri_l], tuniv=tun,
-              nums=[nummy, numl])
-    print('errors on mean:')
-    print(np.percentile(means1, [16., 50., 84.]))
-    print(np.percentile(means2, [16., 50., 84.]))
+              nums=[nummy, numl], both=True, ratio=False, seconds=seconds)
