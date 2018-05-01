@@ -21,7 +21,7 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
         filt_factor2 = 5 * filt_factor1  # 6. * filt_factor1  # 0.7 * filt_factor1
 
         # AXIS LIMS
-        ymin = 8*10**-2  # 5*10**-2
+        ymin = 2*10**-2  # 5*10**-2
         ymax = 400  # 300
         xmin = 700  # 600
         xmax = 2.7 * 10 ** 4  # 3*10**4
@@ -143,8 +143,10 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
         zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
         obj_idx = (zout['id'] == objname[j])
 
+        spec_z = False
         if zout[obj_idx][0][1] >= 0:  # if z_spec exists for this galaxy
             zred = zout[obj_idx][0][1]  # index good for all main cats
+            spec_z = True
         elif objname > 0:
             zred = zout[obj_idx][0][17]  # using zout catalog, z_peak = z_phot; index good for all zout cats
 
@@ -176,15 +178,22 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
             # ax1.axvline(5050, color='k', ls='--')
             ax1.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
             # ax1.text(700, 3, 'z ~ ' + str(zred) + ', EELG', fontsize=20)
-            ax1.text(textx, texty1, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', EELG',
-                     fontsize=fs_text)  # temp setting 100 instead of texty1
+            if spec_z:
+                ax1.text(textx, texty1, str(field[j]).upper() + '-' + str(objname[j]) + r', z$_{\rm spec}$ = '
+                         + str(zred) + ', EELG', fontsize=fs_text)
+            else:
+                ax1.text(textx, texty1, str(field[j]).upper() + '-' + str(objname[j]) + r', z$_{\rm phot}$ = ' +
+                         str(round(zred, 2)) + ', EELG', fontsize=fs_text)
+            # ax1.text(textx, texty1, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', EELG',
+            #          fontsize=fs_text)  # temp setting 100 instead of texty1
 
+            ax1.tick_params(axis='x', which='major', pad=10)
             plt.tick_params(axis='y', which='minor')
             # ax1.set_xticks([10**3, 2*10**3, 5*10**3, 10**4, 2*10**4])  # technically works
             # ax1.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$', r'$2\times10^4$'],
             # size=30)
-            ax1.set_yticks([10**-2, 10**-1, 10**0, 10**1, 10**2])  # technically works
-            ax1.set_yticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)
+            ax1.set_yticks([10**-1, 10**0, 10**1, 10**2])  # technically works  # 10**-2,
+            ax1.set_yticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)  # r'$10^{-2}$',
             # ax1.set_yticks([10**-0.5, 10**0, 10**0.5, 10**1.])  # technically works
             # ax1.set_yticklabels([r'$10^{-0.5}$', r'$10^0$', r'$10^{0.5}$', r'$10^{1.}$'], size=fs_ticks)
 
@@ -215,17 +224,22 @@ def all_plots(fileset, objname, znames, field, font={'fontname': 'Times'}):
             ax2.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
             ax2.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
             # ax2.text(700, 3, 'z ~ ' + str(zred) + ', LBG', fontsize=20)
-            ax2.text(textx, texty2, str(field[j]).upper() + '-' + str(objname[j]) + ', z = ' + str(zred) + ', SFG',
-                     fontsize=fs_text)
+            if spec_z:
+                ax2.text(textx, texty2, str(field[j]).upper() + '-' + str(objname[j]) + r', z$_{\rm spec}$ = ' +
+                         str(zred) + ', SFG', fontsize=fs_text)
+            else:
+                ax2.text(textx, texty2, str(field[j]).upper() + '-' + str(objname[j]) + r', z$_{\rm phot}$ = ' +
+                         str(round(zred, 2)) + ', SFG', fontsize=fs_text)
             plt.subplots_adjust(hspace=.0)
 
             # hacking for Vy
             plt.tick_params(axis='y', which='minor')
+            ax2.tick_params(axis='x', which='major', pad=10)
             ax2.set_xticks([10**3, 2*10**3, 5*10**3, 10**4, 2*10**4])  # technically works
             ax2.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$', r'$2\times10^4$'],
                                 size=fs_ticks)
-            ax2.set_yticks([10**-2, 10**-1, 10**0, 10**1, 10**2])  # technically works
-            ax2.set_yticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)
+            ax2.set_yticks([10**-1, 10**0, 10**1, 10**2])  # technically works  # 10**-2,
+            ax2.set_yticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)  # r'$10^{-2}$',
             # ax2.set_yticks([10**-0.5, 10**0, 10**0.5, 10**1.])  # technically works
             # ax2.set_yticklabels([r'$10^{-0.5}$', r'$10^0$', r'$10^{0.5}$', r'$10^{1.}$'], size=fs_ticks)
             widths.fig2(ax2, field[j], zred, scale=(phot.max() * filt_factor2), rest=True)  # WIDTHS

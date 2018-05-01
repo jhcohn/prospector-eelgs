@@ -102,7 +102,7 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
                 for j in range(len(objs)):
                     if fs[j] == fld and i == objs[j] - 1:
                         new_obj_order.append(str(objs[j]) + '_' + fs[j])
-                        print(new_obj_order)
+                        # print(new_obj_order)
                         nummy += 1
                         special_uv.append(-2.5 * np.log10(s[i][11] / s[i][15]))
                         special_vj.append(-2.5 * np.log10(s[i][15] / s[i][17]))
@@ -193,12 +193,12 @@ def uvj_plot(objname, field, objlist=None, title=True, labels=True, lims=False, 
                 special_uv = special_uv[::-1]
                 special_vj = special_vj[::-1]
             for i in range(len(special_vj)):
-                print(objlist[i], col[i])
-                print(new_obj_order)
+                # print(objlist[i], col[i])
+                # print(new_obj_order)
                 if legend is None:
-                    plt.scatter(special_vj[i], special_uv[i], color=col[i], marker="*", s=200)  # 400
+                    plt.scatter(special_vj[i], special_uv[i], color=col[i], marker="*", s=400)  # 400
                 else:
-                    plt.scatter(special_vj[i], special_uv[i], color=col[i], marker="*", s=200, label=legend[i])  # 400
+                    plt.scatter(special_vj[i], special_uv[i], color=col[i], marker="*", s=400, label=legend[i])  # 400
                     plt.legend(scatterpoints=1, loc='upper left', prop={'size': 15})
     elif show:
         plt.show()

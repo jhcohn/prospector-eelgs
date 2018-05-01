@@ -516,9 +516,9 @@ def simpler_mass(recentx, secondy, logit=False):
     #ax2.plot(xlims, ylims, ls='--', color='k')  # [0., 17.]
 
     # Set up your x and y labels
-    xlabel = r'M$_{0-50}$/M$_{\rm tot}$ [Gyr$^{-1}$]'
+    xlabel = r'M$_{0-50}$/M$_{\rm tot}$'
     # r'$<$SSFR$>_{0-50}$ [Gyr$^{-1}$]'  # r'SSFR, most recent bin [Gyr$^{-1}$]'
-    ylabel = r'M$_{50-100}$/M$_{\rm tot}$ [Gyr$^{-1}$]'
+    ylabel = r'M$_{50-100}$/M$_{\rm tot}$'
     # r'$<$SSFR$>_{50-100}$ [Gyr$^{-1}$]'  # r'SSFR, second most recent bin [Gyr$^{-1}$]'
     ax1.set_xlabel(xlabel, fontsize=30)
     ax1.set_ylabel(ylabel, fontsize=30)
