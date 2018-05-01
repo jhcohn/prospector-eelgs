@@ -14,6 +14,7 @@ from matplotlib import ticker
 import matplotlib.colors as colors
 import matplotlib.gridspec as gridspec
 import scipy.stats as stats
+import get_mass_dust as gmd
 
 
 def draw_sfrs(objs, flds, new_logmass=None, ndraw=1e4, alpha_sfh=1.0, pfile=None, show=True):
@@ -207,7 +208,7 @@ def density_estimation(m1, m2, xs=[-1.5,2.5], ys=[-1,2.5], num=100):  # 100j
     return X, Y, Z
 
 
-def simpler(recentx, secondy, col, logit=False):
+def simpler(recentx, secondy, logit=False):
     if logit:
         x = [np.log10(rx) for rx in recentx[0]]
         y = [np.log10(sy) for sy in secondy[0]]
@@ -222,20 +223,21 @@ def simpler(recentx, secondy, col, logit=False):
         x2 = recentx[1]
         y2 = secondy[1]
 
-        xlims = [3*10**-2, 3*10**1.]  #[0., 13.]  # 17.
-        ylims = [3*10**-2, 3*10**1.]  #[0., 8.]#13.]  # 17.
+        xlims = [4*10**-2, 3*10**1.]  #[0., 13.]  # 17.
+        ylims = [4*10**-2, 3*10**1.]  #[0., 8.]#13.]  # 17.
 
     # start with a rectangular Figure
-    fig1 = plt.figure(1, figsize=(16, 16)) #(19.5, 12))
-    ax1 = plt.subplot(121)
-    ax2 = plt.subplot(122, sharex=ax1, sharey=ax1)
-    plt.subplots_adjust(wspace=0., hspace=0.)
+    fig1 = plt.figure(1, figsize=(12,12))#(16, 16)) #(19.5, 12))
+    #ax1 = plt.subplot(121)
+    #ax2 = plt.subplot(122, sharex=ax1, sharey=ax1)
+    ax1 = plt.subplot(111)
+    #plt.subplots_adjust(wspace=0., hspace=0.)
 
     print(xlims, ylims)
     ax1.set_xlim(xlims[0], xlims[1])
     ax1.set_ylim(ylims[0], ylims[1])
-    ax2.set_xlim(xlims[0], xlims[1])
-    ax2.set_ylim(ylims[0], ylims[1])
+    #ax2.set_xlim(xlims[0], xlims[1])
+    #ax2.set_ylim(ylims[0], ylims[1])
     percx2 = np.percentile(x2, [16., 50., 84.])
     percy2 = np.percentile(y2, [16., 50., 84.])
 
@@ -273,9 +275,9 @@ def simpler(recentx, secondy, col, logit=False):
 
     # get colormaps, plot 2dhists
     cmap = plt.get_cmap('Purples')
-    new_cmap = truncate_colormap(cmap, 0.3, 2.0)
+    new_cmap = truncate_colormap(cmap, 0.4, 1.5)
     cmap2 = plt.get_cmap('Blues')
-    new_cmap2 = truncate_colormap(cmap2, 0.3, 2.0)
+    new_cmap2 = truncate_colormap(cmap2, 0.4, 1.5)
     wantlog = True
     if wantlog:
         xbins = np.logspace(-2, 2, 100)  #10**np.linspace(-2, 2, 1000)
@@ -285,22 +287,25 @@ def simpler(recentx, secondy, col, logit=False):
 
         # x_bins = np.logspace(np.log10(min(x)), np.log10(max(x)), np.sqrt(100))
         # y_bins = np.logspace(np.log10(min(y)), np.log10(max(y)), np.sqrt(100))
-        x_bins = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), np.sqrt(len(x)))
-        y_bins = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), np.sqrt(len(x)))
+        x_bins = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), np.sqrt(len(x))/2)
+        y_bins = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), np.sqrt(len(x))/2)
         H1, xedges, yedges = np.histogram2d(x, y, bins=[x_bins, y_bins])
-        ax1.pcolormesh(xedges, yedges, H1.T, cmap='Purples')
+        H1 = np.ma.masked_array(H1, H1 < 20.)
+        # ax1.pcolormesh(xedges, yedges, H1.T, cmap='Purples')
 
         # x_bins2 = np.logspace(np.log10(min(x2)), np.log10(max(x2)), np.sqrt(100))
         # y_bins2 = np.logspace(np.log10(min(y2)), np.log10(max(y2)), np.sqrt(100))
-        x_bins2 = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), np.sqrt(len(x)))
-        y_bins2 = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), np.sqrt(len(x)))
+        x_bins2 = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), np.sqrt(len(x))/2)
+        y_bins2 = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), np.sqrt(len(x))/2)
         H2, xedges2, yedges2 = np.histogram2d(x2, y2, bins=[x_bins2, y_bins2])
-        ax2.pcolormesh(xedges2, yedges2, H2.T, cmap='Blues')
+        H2 = np.ma.masked_array(H2, H2 < 20.)
+        ax1.pcolormesh(xedges2, yedges2, H2.T, cmap=new_cmap2)
+        ax1.pcolormesh(xedges, yedges, H1.T, cmap=new_cmap)#, vmin=2, vmax=100)
 
         ax1.set_xscale('log')
         ax1.set_yscale('log')
-        ax2.set_xscale('log')
-        ax2.set_yscale('log')
+        #ax2.set_xscale('log')
+        #ax2.set_yscale('log')
         '''
         # , norm=colors.LogNorm(vmin=1, vmax=10000)
         counts2, _, _ = np.histogram2d(x2, y2, bins=(xbins2, ybins2))
@@ -338,7 +343,7 @@ def simpler(recentx, secondy, col, logit=False):
         # bins with counts < cmin won't be displayed! cmin=len(x)/1000
 
     ax1.plot(xlims, ylims, ls='--', color='k')  # [0., 17.]
-    ax2.plot(xlims, ylims, ls='--', color='k')  # [0., 17.]
+    #ax2.plot(xlims, ylims, ls='--', color='k')  # [0., 17.]
 
     # Set up your x and y labels
     xlabel = r'$<$SFR$_{0-50}>$/M$_{\rm tot}$ [Gyr$^{-1}$]'
@@ -347,7 +352,7 @@ def simpler(recentx, secondy, col, logit=False):
     # r'$<$SSFR$>_{50-100}$ [Gyr$^{-1}$]'  # r'SSFR, second most recent bin [Gyr$^{-1}$]'
     ax1.set_xlabel(xlabel, fontsize=30)
     ax1.set_ylabel(ylabel, fontsize=30)
-    ax2.set_xlabel(xlabel, fontsize=30)
+    #ax2.set_xlabel(xlabel, fontsize=30)
 
     # Make the tickmarks pretty
     fs = 20
@@ -368,13 +373,14 @@ def simpler(recentx, secondy, col, logit=False):
         #plt.gca().set_xscale('log')
         ax1.set_xscale('log')
         ax1.set_xscale('log')
-        ax2.set_xscale('log')
-        ax2.set_yscale('log')
+        #ax2.set_xscale('log')
+        #ax2.set_yscale('log')
         xtick = [10**-1, 10**0, 10**1]  # 10**-2
         ytick = [10 ** -1, 10 ** 0, 10 ** 1]  # 10**-2
         ax1.set_xticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$'], size=fs_ticks)  # r'$10^{-2}$',
         ax1.set_yticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$'], size=fs_ticks)  # r'$10^{-2}$',
-        ax2.set_xticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$'], size=fs_ticks)  # r'$10^{-2}$',
+        ax1.tick_params(axis='x', which='major', pad=10)
+        #ax2.set_xticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$'], size=fs_ticks)  # r'$10^{-2}$',
 
     else:
         xtick = [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13.]  # , 15.]  # , 2e-8]  # used if log=0
@@ -388,13 +394,13 @@ def simpler(recentx, secondy, col, logit=False):
                              r'$11$', r'$12$', r'$13$'], size=fs_ticks)  # , r'$15$'
     ax1.xaxis.set_ticks(xtick)
     ax1.yaxis.set_ticks(ytick)
-    ax2.xaxis.set_ticks(xtick)
-    ax2.yaxis.set_ticks(ytick)
+    #ax2.xaxis.set_ticks(xtick)
+    #ax2.yaxis.set_ticks(ytick)
     ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)
     ax1.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
-    ax2.tick_params('x', length=3, width=1, which='both', labelsize=fs)
-    ax2.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
-    plt.setp(ax2.get_yticklabels(), visible=False)
+    #ax2.tick_params('x', length=3, width=1, which='both', labelsize=fs)
+    #ax2.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
+    #plt.setp(ax2.get_yticklabels(), visible=False)
     plt.rc('xtick', labelsize=20)
     plt.rc('ytick', labelsize=20)
 
@@ -402,6 +408,167 @@ def simpler(recentx, secondy, col, logit=False):
     legend_elements = [Patch(edgecolor='purple', facecolor='purple', label='EELGs'),
                        Patch(edgecolor='b', facecolor='b', label='SFGs')]
     ax1.legend(handles=legend_elements, loc='upper left', fontsize=30)
+
+    #plt.axes().set_aspect('equal')
+    plt.show()
+
+
+def simpler_mass(recentx, secondy, logit=False):
+    if logit:
+        x = [np.log10(rx) for rx in recentx[0]]
+        y = [np.log10(sy) for sy in secondy[0]]
+        x2 = [np.log10(rx2) for rx2 in recentx[1]]
+        y2 = [np.log10(sy2) for sy2 in secondy[1]]
+
+        xlims = [-2, 1.5]  # [10**-3, 13.] #[0., 13.]  # 17.
+        ylims = [-2, 1.5]  # [10**-3, 13.]#[0., 8.]#13.]  # 17.
+    else:
+        x = recentx[0]
+        y = secondy[0]
+        x2 = recentx[1]
+        y2 = secondy[1]
+
+        xlims = [3*10**-3, 1.]  #[0., 13.]  # 17.
+        ylims = [3*10**-3, 1.]  #[0., 8.]#13.]  # 17.
+
+    # start with a rectangular Figure
+    fig1 = plt.figure(1, figsize=(12,12))#(16, 16)) #(19.5, 12))
+    #ax1 = plt.subplot(121)
+    #ax2 = plt.subplot(122, sharex=ax1, sharey=ax1)
+    ax1 = plt.subplot(111)
+    #plt.subplots_adjust(wspace=0., hspace=0.)
+
+    print(xlims, ylims)
+    ax1.set_xlim(xlims[0], xlims[1])
+    ax1.set_ylim(ylims[0], ylims[1])
+    #ax2.set_xlim(xlims[0], xlims[1])
+    #ax2.set_ylim(ylims[0], ylims[1])
+    percx2 = np.percentile(x2, [16., 50., 84.])
+    percy2 = np.percentile(y2, [16., 50., 84.])
+
+    print(percx2, percy2)
+    # (array([ 0.33044154,  0.94145865,  2.54337235]), array([ 0.40491095,  1.14943934,  5.03257121]))
+    print(np.percentile(x, [16., 50., 84.]), np.percentile(y, [16., 50., 84.]))
+
+    ang = 45
+    xcenter = np.median(x2)
+    ycenter = np.median(y2)
+    rb = (percx2[2] - percx2[0])/2 # np.std(x2)
+    ra = (percy2[2] - percy2[0])/2 # np.std(y2)
+    '''
+    X, Y = ellipse(ra, rb, ang, xcenter, ycenter)
+    ax1.plot(X, Y, "b--", ms=1, linewidth=2.0)
+    '''
+    perc2sigx2 = np.percentile(x2, [2.5, 50., 97.5])
+
+    not_diff = 0
+    in_ell = [0, 0, 0]  # 1, 2, 3 sigma
+    sames = 0
+    for i in range(len(x)):
+        if percx2[0] < x[i] < percx2[2]:  # and percy2[0] < y[i] < percy2[2]:
+            not_diff += 1.
+        if ((xcenter - x[i])**2 / rb**2) + ((ycenter - y[i])**2 / ra**2) <= 1.:
+            in_ell[0] += 1.
+        if perc2sigx2[0] < x[i] < perc2sigx2[2]:
+            sames += 1.
+    print(not_diff, not_diff / len(x))  # consistently ~24% to 25% are not different --> 75% are distinct
+    print(in_ell)
+    print(sames, sames/len(x))  # 15978, 84%
+
+    # ax1.axvline(x=perc2sigx2[2], color='k')
+    # ax1.axvline(x=percx2[2], color='k')
+
+    # get colormaps, plot 2dhists
+    cmap = plt.get_cmap('Purples')
+    new_cmap = truncate_colormap(cmap, 0.4, 1.5)
+    cmap2 = plt.get_cmap('Blues')
+    new_cmap2 = truncate_colormap(cmap2, 0.4, 1.5)
+    wantlog = True
+    if wantlog:
+        xbins = np.logspace(-2, 2, 100)  #10**np.linspace(-2, 2, 1000)
+        ybins = np.logspace(-2, 2, 100)  # 10**np.linspace(-2, 2, 1000)
+        xbins2 = np.logspace(-2, 2, 100*int(127/19))  # 10**np.linspace(-2, 2, 1000)
+        ybins2 = np.logspace(-2, 2, 100*int(127/19))  # 10**np.linspace(-2, 2, 1000)
+
+        # x_bins = np.logspace(np.log10(min(x)), np.log10(max(x)), np.sqrt(100))
+        # y_bins = np.logspace(np.log10(min(y)), np.log10(max(y)), np.sqrt(100))
+        x_bins = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), np.sqrt(len(x))/2)
+        y_bins = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), np.sqrt(len(x))/2)
+        H1, xedges, yedges = np.histogram2d(x, y, bins=[x_bins, y_bins])
+        H1 = np.ma.masked_array(H1, H1 < 20.)
+        # ax1.pcolormesh(xedges, yedges, H1.T, cmap='Purples')
+
+        # x_bins2 = np.logspace(np.log10(min(x2)), np.log10(max(x2)), np.sqrt(100))
+        # y_bins2 = np.logspace(np.log10(min(y2)), np.log10(max(y2)), np.sqrt(100))
+        x_bins2 = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), np.sqrt(len(x))/2)
+        y_bins2 = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), np.sqrt(len(x))/2)
+        H2, xedges2, yedges2 = np.histogram2d(x2, y2, bins=[x_bins2, y_bins2])
+        H2 = np.ma.masked_array(H2, H2 < 30.)
+        ax1.pcolormesh(xedges2, yedges2, H2.T, cmap=new_cmap2)
+        ax1.pcolormesh(xedges, yedges, H1.T, cmap=new_cmap)#, vmin=2, vmax=100)
+
+        ax1.set_xscale('log')
+        ax1.set_yscale('log')
+        #ax2.set_xscale('log')
+        #ax2.set_yscale('log')
+
+    ax1.plot(xlims, ylims, ls='--', color='k')  # [0., 17.]
+    #ax2.plot(xlims, ylims, ls='--', color='k')  # [0., 17.]
+
+    # Set up your x and y labels
+    xlabel = r'M$_{0-50}$/M$_{\rm tot}$ [Gyr$^{-1}$]'
+    # r'$<$SSFR$>_{0-50}$ [Gyr$^{-1}$]'  # r'SSFR, most recent bin [Gyr$^{-1}$]'
+    ylabel = r'M$_{50-100}$/M$_{\rm tot}$ [Gyr$^{-1}$]'
+    # r'$<$SSFR$>_{50-100}$ [Gyr$^{-1}$]'  # r'SSFR, second most recent bin [Gyr$^{-1}$]'
+    ax1.set_xlabel(xlabel, fontsize=30)
+    ax1.set_ylabel(ylabel, fontsize=30)
+    #ax2.set_xlabel(xlabel, fontsize=30)
+
+    # Make the tickmarks pretty
+    fs = 20
+    fs_ticks = 25
+    log = True
+    if log:
+        #plt.xscale('log')
+        #plt.yscale('log')
+        #plt.gca().set_yscale('log')
+        #plt.gca().set_xscale('log')
+        ax1.set_xscale('log')
+        ax1.set_xscale('log')
+        #ax2.set_xscale('log')
+        #ax2.set_yscale('log')
+        xtick = [10**-2, 10**-1, 10**0]  # 10**-2
+        ytick = [10 ** -2, 10 ** -1, 10 ** 0]  # 10**-2
+        ax1.set_xticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^0$'], size=fs_ticks)  # r'$10^{-2}$',
+        ax1.set_yticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^0$'], size=fs_ticks)  # r'$10^{-2}$',
+        ax1.tick_params(axis='x', which='major', pad=10)
+        #ax2.set_xticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$'], size=fs_ticks)  # r'$10^{-2}$',
+    else:
+        xtick = [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13.]  # , 15.]  # , 2e-8]  # used if log=0
+        ytick = [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13.]  # , 15.]  # , 2e-8]  # used if log=0
+        # ytick = [0., 1., 2., 3., 4., 5., 6., 7., 8.]  # , 10.]#, 15.]  # , 0.45, 0.5, 0.6, 0.7, 0.8, 0.9]
+        ax1.set_xticklabels([r'$0$', r'$1$', r'$2$', r'$3$', r'$4$', r'$5$', r'$6$', r'$7$', r'$8$', r'$9$', r'$10$',
+                             r'$11$', r'$12$', r'$13$'], size=fs_ticks)  # , r'$15$'
+        # ax1.set_yticklabels([r'$0$', r'$1$', r'$2$', r'$3$', r'$4$', r'$5$', r'$6$', r'$7$', r'$8$'], size=fs_ticks)
+        # r'$10$', r'$15$'
+        ax1.set_xticklabels([r'$0$', r'$1$', r'$2$', r'$3$', r'$4$', r'$5$', r'$6$', r'$7$', r'$8$', r'$9$', r'$10$',
+                             r'$11$', r'$12$', r'$13$'], size=fs_ticks)  # , r'$15$'
+    ax1.xaxis.set_ticks(xtick)
+    ax1.yaxis.set_ticks(ytick)
+    #ax2.xaxis.set_ticks(xtick)
+    #ax2.yaxis.set_ticks(ytick)
+    ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)
+    ax1.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
+    #ax2.tick_params('x', length=3, width=1, which='both', labelsize=fs)
+    #ax2.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
+    #plt.setp(ax2.get_yticklabels(), visible=False)
+    plt.rc('xtick', labelsize=20)
+    plt.rc('ytick', labelsize=20)
+
+    from matplotlib.patches import Patch
+    legend_elements = [Patch(edgecolor='purple', facecolor='purple', label='EELGs'),
+                       Patch(edgecolor='b', facecolor='b', label='SFGs')]
+    ax1.legend(handles=legend_elements, loc='lower left', fontsize=30)
 
     #plt.axes().set_aspect('equal')
     # plt.savefig('/home/jonathan/newfigs/butts.png',dpi=200)
@@ -444,6 +611,8 @@ if __name__ == "__main__":
 
     pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[0]
     l_pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + folders[1]
+    out = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + 'out_efico/'
+    l_out = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + 'out_nfico/'
 
     # START STACKING
     t1 = []
@@ -456,14 +625,27 @@ if __name__ == "__main__":
     numl = 0
     cl = 0
     # t2 = []
+
+    eelgs1 = []
+    for file in os.listdir(out):
+        if file.endswith(".h5"):
+            eelgs1.append(file)
+    sfgs1 = []
+    for file in os.listdir(l_out):
+        if file.endswith(".h5"):
+            sfgs1.append(file)
     for glxy in eelgs:
         c += 1
         # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
         file = pkls + glxy + '_extra_out.pkl'
         if os.path.exists(file):
+            for mfile in eelgs1:
+                if mfile.startswith(glxy):
+                    use_mfile = mfile
+            get_e = gmd.printer(out + use_mfile, percs=False)
             nummy += 1
             # temp = randraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
-            temp = randraw(file, mass[0])  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
+            temp = randraw(file, get_e[np.random.randint(len(get_e))])  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
             # temp = bootdraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
             draws.append(temp[0])  # append random draw of ssfr
             # boots.append(bootstrap(temp[0]))
@@ -479,9 +661,13 @@ if __name__ == "__main__":
         file = l_pkls + glxy + '_extra_out.pkl'
 
         if os.path.exists(file):
+            for mfile in sfgs1:
+                if mfile.startswith(glxy):
+                    use_mfile = mfile
+            get_l = gmd.printer(l_out + use_mfile, percs=False)
             numl += 1
             # temp = randraw(file)
-            temp = randraw(file, mass[1])
+            temp = randraw(file, get_l[np.random.randint(len(get_l))])
             # temp = bootdraw(file)
             draws2.append(temp[0])
             # t2.append(temp[1])
@@ -512,6 +698,8 @@ if __name__ == "__main__":
 
     rec1 = []
     sec1 = []
+    mr1 = []
+    ms1 = []
     for i in range(len(all1[0])):
         recent = []
         second = []
@@ -521,8 +709,12 @@ if __name__ == "__main__":
             second.append(all1[k][i])
         rec1.append(sum(recent) * 10**9 / 3)
         sec1.append(sum(second) * 10**9 / 4)
+        mr1.append(sum(recent) * 5*10**7 / 3)
+        ms1.append(sum(second) * 5 * 10 ** 7 / 4)
     rec2 = []
     sec2 = []
+    mr2 = []
+    ms2 = []
     for i in range(len(all2[0])):
         recent = []
         second = []
@@ -532,6 +724,8 @@ if __name__ == "__main__":
             second.append(all2[k][i])
         rec2.append(sum(recent) * 10**9 / 3)
         sec2.append(sum(second) * 10**9 / 4)
+        mr2.append(sum(recent) * 5*10**7 / 3)
+        ms2.append(sum(second) * 5 * 10 ** 7 / 4)
 
     randome1 = []
     randome2 = []
@@ -574,6 +768,10 @@ if __name__ == "__main__":
 
     recents = [rec1, rec2]
     seconds = [sec1, sec2]
+    massrec = [mr1, mr2]
+    masssec = [ms1, ms2]
 
-    simpler(recents, seconds, col=['purple', 'b'])
+    simpler_mass(massrec, masssec)
+
+    simpler(recents, seconds)
     # simpler(rec2, sec2, col='b')
