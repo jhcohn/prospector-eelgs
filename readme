@@ -10,6 +10,8 @@ assembly_time.py: calculate mass-weighted ages (and save to .txt files) for gala
 
 bootstack.py: use for bootstrapping and plotting sSFHs (built from smart_stack.py)
 
+chi_compare.py: comparing the typical chi^2 values for different Prospector runs
+
 deltafig.py: use to make new fig2, showing difference in SED shape for EELG and SFG
 
 dust_multirun_params.py: same as eelg_fixedmet_params.py, but with add_dust_emission turned on and logzsol not fixed; defunct
@@ -21,6 +23,8 @@ eelg_addmass_params.py: param file with no free params, made for generating phot
 eelg_all_fields_params.py: same as eelg_emission_params.py, but can use for CDFS, COSMOS, and UDS galaxies, rather than just COSMOS; defunct
 
 eelg_emission_params.py: same as eelg_npSFH_params.py, now with nebular emission turned on; defunct
+
+eelg_fast_params.py: made to simulate the FAST runs in F17, to see if Prospector reproduces the same results (it does!)
 
 eelg_fifty_params.py: same as eelg_multirun_params.py, but with agebins 0-50 Myr, 50-100 Myr, 100 Myr-1 Gyr, etc.
 
@@ -38,6 +42,8 @@ eelg_npSFH_params.py: param file for running prospector fits on EELGs, using non
 eelg_otherbins_params.py: eelg_fixedmet_params.py, but with different agebins
 
 eelg_quickstart_params.py: same as eelg_emission_params.py, but skip do_Powell process; start run by using previous best fit values as input initial parameter values
+
+eelg_tenmet_params.py: same as eelg_fifty_params.py, but with the lower boundary on logzsol increased from -2 to -1
 
 eelg_thvary_params.py: eelg_varymet_params.py, but with new agebins (0-30 Myr, ...)
 
@@ -86,6 +92,8 @@ output_all.py: combined quickgrab.py + sfh_output.py; creates all _out.pkl files
 
 overlay_seds.py: make plots of Prospector SEDs with emission lines, overlaid with Prospector SEDs from runs with emission masked out, overlaid wth FAST (see differences in SED shape from FAST vs regular Prospector runs vs Prospector runs with emission masked out)
 
+plot_all_seds.py: plot all seds on top of each other at once
+
 print_sfh.py: prints SFH from pickled file produced by output_all.py; also prints sSFR(t)
 -Running with: python print_sfh.py --obj=1824 --field=cosmos --base=_newbins
 
@@ -111,6 +119,10 @@ sizes.py: currently using to calculate half-light radii of galaxies; from files 
 
 smart_stack.py: used to plot side-by-side stacked sSFHs for EELGs vs LBGs
 -Running with: python smart_stack.py
+
+ssfr_2dhist.py: brainstormed ideas for a 2dhist for fig 3 of the paper
+
+ssfr_fig3.py: using to create figure 3 for the paper (2d histogram!)
 
 ssfr_hists.py: now using to make new fig 3 (side-by-side histograms of SSFR values in the most recent time bin for EELG COMP_10 and our Ss)
 

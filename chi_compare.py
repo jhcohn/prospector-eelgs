@@ -144,21 +144,41 @@ all_chis_uds = np.zeros(shape=(len(waves_uds[0])))
 num_cdf = np.zeros(len(all_chis_cdf))
 num_cos = np.zeros(len(all_chis_cos))
 num_uds = np.zeros(len(all_chis_uds))
+chisq_per_nphot = []
 for i in range(len(chis_cdf)):  # for each of the 19 galaxies
-    for j in range(len(chis_cdf[i])):
+    newsum = 0
+    photsum = 0
+    for j in range(len(chis_cdf[i])):  # for each data point
         if chis_cdf[i][j] >= 0:
             all_chis_cdf[j] += chis_cdf[i][j]
             num_cdf[j] += 1
+        if 0 <= chis_cdf[i][j] < 300:
+            newsum += chis_cdf[i][j]
+            photsum += 1
+    chisq_per_nphot.append(newsum / photsum)
 for i in range(len(chis_cos)):  # for each of the 19 galaxies
-    for j in range(len(chis_cos[i])):
+    newsum = 0
+    photsum = 0
+    for j in range(len(chis_cos[i])):  # for each data point
         if chis_cos[i][j] >= 0:
             all_chis_cos[j] += chis_cos[i][j]
             num_cos[j] += 1
+        if 0 <= chis_cdf[i][j] < 300:
+            newsum += chis_cdf[i][j]
+            photsum += 1
+    chisq_per_nphot.append(newsum / photsum)
 for i in range(len(chis_uds)):  # for each of the 19 galaxies
-    for j in range(len(chis_uds[i])):
+    newsum = 0
+    photsum = 0
+    for j in range(len(chis_uds[i])):  # for each data point
         if chis_uds[i][j] >= 0:
             all_chis_uds[j] += chis_uds[i][j]
             num_uds[j] += 1
+        if 0 <= chis_cdf[i][j] < 300:
+            newsum += chis_cdf[i][j]
+            photsum += 1
+    chisq_per_nphot.append(newsum / photsum)
+
 for i in range(len(all_chis_cdf)):
     all_chis_cdf[i] /= num_cdf[i]
 for i in range(len(all_chis_cos)):
@@ -175,21 +195,45 @@ lall_chis_uds = np.zeros(shape=(len(lwaves_uds[0])))
 lnum_cdf = np.zeros(len(all_chis_cdf))
 lnum_cos = np.zeros(len(all_chis_cos))
 lnum_uds = np.zeros(len(all_chis_uds))
+lchisq_per_nphot = []
 for i in range(len(lchis_cdf)):  # for each of the second set of galaxies
+    lnewsum = 0
+    lphotsum = 0
     for j in range(len(lchis_cdf[i])):
         if lchis_cdf[i][j] >= 0:
             lall_chis_cdf[j] += lchis_cdf[i][j]
             lnum_cdf[j] += 1
+        if 0 <= lchis_cdf[i][j] < 300:
+            lnewsum += lchis_cdf[i][j]
+            lphotsum += 1
+    lchisq_per_nphot.append(lnewsum / lphotsum)
 for i in range(len(lchis_cos)):  # for each of the second set of galaxies
+    lnewsum = 0
+    lphotsum = 0
     for j in range(len(lchis_cos[i])):
         if lchis_cos[i][j] >= 0:
             lall_chis_cos[j] += lchis_cos[i][j]
             lnum_cos[j] += 1
+        if 0 <= lchis_cdf[i][j] < 300:
+            lnewsum += lchis_cdf[i][j]
+            lphotsum += 1
+    lchisq_per_nphot.append(lnewsum / lphotsum)
 for i in range(len(lchis_uds)):  # for each of the second set of galaxies
+    lnewsum = 0
+    lphotsum = 0
     for j in range(len(lchis_uds[i])):
         if lchis_uds[i][j] >= 0:
             lall_chis_uds[j] += lchis_uds[i][j]
             lnum_uds[j] += 1
+        if 0 <= lchis_cdf[i][j] < 300:
+            lnewsum += lchis_cdf[i][j]
+            lphotsum += 1
+    lchisq_per_nphot.append(lnewsum / lphotsum)
+
+print(np.percentile(chisq_per_nphot, [16., 50., 84.]), 'orig')
+print(np.mean(chisq_per_nphot))
+print(np.percentile(lchisq_per_nphot, [16., 50., 84.]), 'tenmet')
+print(np.mean(lchisq_per_nphot))
 
 for i in range(len(lall_chis_cdf)):
     lall_chis_cdf[i] /= lnum_cdf[i]
