@@ -833,7 +833,7 @@ def simpler(recentx, secondy, col):
     rect_histy = [left_h, bottom, 0.2, height]
 
     # start with a rectangular Figure
-    fig1 = plt.figure(1)
+    fig1 = plt.figure(1, figsize=(8, 8))  # right now I have to manually set aspect by manually expanding the image...
 
     #axScatter = plt.axes(rect_scatter)
     #axHistx = plt.axes(rect_histx)
@@ -843,7 +843,10 @@ def simpler(recentx, secondy, col):
     axScatter = fig1.add_subplot(specs[1, 0])
     axHistx = fig1.add_subplot(specs[0, 0])
     axHisty = fig1.add_subplot(specs[1, 1])
-    #axScatter.set_aspect('equal')
+
+    # axScatter.set_aspect('equal')
+    # axHistx.set_aspect('equal')
+    # axHisty.set_aspect('equal')
 
     # added
     # axScatter2 = plt.axes(rect_scatter2)
@@ -910,8 +913,8 @@ def simpler(recentx, secondy, col):
     axHisty.set_xlim(0., 0.25)
 
     # Set up your x and y labels
-    xlabel = r'SSFR, most recent bin [Gyr$^{-1}$]'
-    ylabel = r'SSFR, second most recent bin [Gyr$^{-1}$]'
+    xlabel = r'<SSFR>$_{0-50}$n [Gyr$^{-1}$]'  # r'SSFR, most recent bin [Gyr$^{-1}$]'
+    ylabel = r'<SSFR>$_{50-100}$n [Gyr$^{-1}$]'  # r'SSFR, second most recent bin [Gyr$^{-1}$]'
     axScatter.set_xlabel(xlabel, fontsize=30)
     axScatter.set_ylabel(ylabel, fontsize=30)
 

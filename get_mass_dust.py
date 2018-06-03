@@ -12,7 +12,7 @@ import os
 np.errstate(invalid='ignore')
 
 
-def md(sample_results, start=0, thin=1, percs=True, masstest=False, quiet=False, draw1=False):
+def md(sample_results, start=0, thin=1, percs=True, masstest=False, fast=False, quiet=False, draw1=False):
     """Make a triangle plot of the (thinned, latter) samples of the posterior
     parameter space.  Optionally make the plot only for a supplied subset of
     the parameters.
@@ -63,6 +63,12 @@ def md(sample_results, start=0, thin=1, percs=True, masstest=False, quiet=False,
         gasmet = np.random.choice(flatchain[:, -1], size=(10**3))
         metal = np.random.choice(flatchain[:, 7], size=(10**3))
         ret = np.asarray([mass, dust, metal, gasmet])
+    elif fast:
+        mass = np.percentile(flatchain[:, 0], [16, 50, 84])[1]
+        tage = np.percentile(flatchain[:, 1], [16, 50, 84])[1]
+        logtau = np.percentile(flatchain[:, 2], [16, 50, 84])[1]
+        dust = np.percentile(flatchain[:, 3], [16, 50, 84])[1]
+        ret = np.asarray([mass, tage, logtau, dust])
     else:
         mass = flatchain[:, 0]
         if not quiet:
@@ -76,7 +82,7 @@ def md(sample_results, start=0, thin=1, percs=True, masstest=False, quiet=False,
     return ret
 
 
-def printer(out_file, percs=True, masstest=False, quiet=False, draw1=False):
+def printer(out_file, percs=True, masstest=False, fast=False, quiet=False, draw1=False):
     if not quiet:
         print(out_file)
         print(masstest)
@@ -84,7 +90,7 @@ def printer(out_file, percs=True, masstest=False, quiet=False, draw1=False):
     # ''' #
 
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
-    return md(res, start=-1000, thin=5, percs=percs, masstest=masstest, quiet=quiet, draw1=draw1)  # -650
+    return md(res, start=-1000, thin=5, percs=percs, masstest=masstest, fast=fast, quiet=quiet, draw1=draw1)  # -650
     # set start by when kl converges!  # returns mass, dust, stellar Z, gas Z
 
 
@@ -93,6 +99,8 @@ if __name__ == "__main__":
     corr = 0
     fico = 1
     news = 0
+    tenmet = 0
+    fast = 0
     masstest = 0
 
     if corr:
@@ -103,6 +111,14 @@ if __name__ == "__main__":
         folders = ['out_efico/', 'out_nfico/']
         pars = ['eelg_fifty_params.py', 'eelg_fifty_params.py']
         base = ['fico', 'fico']
+    elif tenmet:
+        folders = ['out_etenmet/', 'out_nfico/']
+        pars = ['eelg_tenmet_params.py', 'eelg_fifty_params.py']
+        base = ['tenmet', 'fico']
+    elif fast:
+        folders = ['out_efast/', 'out_nfico/']
+        pars = ['eelg_fast_params.py', 'eelg_fifty_params.py']
+        base = ['fast', 'fico']
     elif news:
         folders = ['out_efico/', 'out_nnewsfg/']
         pars = ['eelg_fifty_params.py', 'eelg_fifty_params.py']
@@ -199,10 +215,15 @@ if __name__ == "__main__":
     onedraw = np.zeros(shape=(4, len(eelgs), 10**3))  # *10**3))
     for i in range(len(eelgs)):
         if os.path.exists(oute + eelgs[i]):
-            get_e[:, i] = printer(oute + eelgs[i])
-            print(eelgs[i], get_e[0, i])
-            # for k in range(10**3):
-            onedraw[:, i, :] = printer(oute + eelgs[i], percs=False, draw1=True)
+            if fast:
+                print('hmm')
+                get_e[:, i] = printer(oute + eelgs[i], percs=False, fast=fast)
+                print('hmm')
+            else:
+                get_e[:, i] = printer(oute + eelgs[i])
+                print(eelgs[i], get_e[0, i])
+                # for k in range(10**3):
+                onedraw[:, i, :] = printer(oute + eelgs[i], percs=False, fast=fast, draw1=True)
 
     masse = np.percentile(get_e[0], [16., 50., 84.])
     duste = np.percentile(get_e[1], [16., 50., 84.])

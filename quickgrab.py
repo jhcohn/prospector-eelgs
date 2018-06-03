@@ -13,7 +13,7 @@ import glob
 np.errstate(invalid='ignore')
 
 
-def printer(out_file, cvg=-1000):
+def printer(out_file, cvg=-1000, masstest=False, obj_true=None):
     objname = ''
     count = 0
     field = ''
@@ -49,8 +49,31 @@ def printer(out_file, cvg=-1000):
 
     # ''' #
 
+    truths = None
+    print(objname)
+    if masstest:
+        print('hi?')
+        import get_mass_dust as gmd
+        oute = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/out_efico/'
+        for file in os.listdir(oute):
+            if file.endswith(".h5") and file.startswith(obj_true):
+                print(file, 'file')
+                params = gmd.printer(oute + file, percs=False, masstest=True)
+                mass = params[0]
+                dust = params[6]
+                met = params[7]
+                gasmet = params[8]
+                sfh = []
+                for i in [1, 2, 3, 4, 5]:
+                    sfh.append(params[i])
+                truths = [np.log10(10**mass + 6.5*10**8), sfh[0], sfh[1], sfh[2], sfh[3], sfh[4], dust, met, gasmet]
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
-    bread.subtriangle(res, start=cvg, thin=5, show_titles=True)  # set start by when kl converges!
+    # truths now corrected for masses of efico output + 6.5e8
+    # truths = [9.466 + 6.5e8, 0.22, 0.12, 0.22, 0.12, 0.1, 0.0737, -1.79, -0.33]  # 12552
+    # truths = [9.83 + 6.5e8, 0.43, 0.08, 0.04, 0.12, 0.1, 0.32, -1.57, -0.35]  # 12105
+    # truths = [9.51 + 6.5e8, 0.80, 0.02, 0.01, 0.04, 0.04, 0.54, -1.94, -0.31]  # 21442
+    print(truths)
+    bread.subtriangle(res, start=cvg, thin=5, truths=truths, show_titles=True)  # set start by when kl converges!
     plt.show()
     # plt.savefig('delete' + '_ctracefig2.png', bbox_inches='tight')
     # For FAST: truths = [mass, age, tau, dust2] (for 1824: [9.78, 0.25, -1., 0.00])
@@ -154,7 +177,7 @@ def sed(objname, field, res, mod, walker, iteration, param_file, **kwargs):
     plt.ylim(10**-5, 4*10**3)
     plt.show()
 
-    ''' #
+    # ''' #
     # PLOT CHI_SQ BESTFIT
     chi_sq = ((res['obs']['maggies'] - phot) / res['obs']['maggies_unc']) ** 2
     plt.plot(wave_rest, chi_sq, 'o', color='b')
@@ -162,6 +185,9 @@ def sed(objname, field, res, mod, walker, iteration, param_file, **kwargs):
     plt.xlabel('Rest frame wavelength [angstroms]')
     plt.ylabel(r'$\chi^2$')
     plt.show()
+    # 4 10-30, 1>70 ;; 3 10-30, 1>40 ;; 4 10-30 ;; 2 10-30, 1>50 ;; 2 10-30
+
+    # 5 10-30, 1>50 ;; 2 10-30, 1>30
     # ''' #
 
 
@@ -171,7 +197,7 @@ if __name__ == "__main__":
     parser.add_argument('--parfile')
     parser.add_argument('--outname')
 
-    out_folder = 'out_efico/'
+    out_folder = 'out_efast/'  # 'out_etenmet/'  # 'out_masstest/'  # 'out_efico/'
 
     args = vars(parser.parse_args())
     kwargs = {}
@@ -214,11 +240,12 @@ if __name__ == "__main__":
                 true_field = e_fs[i]
                 true_obj = e_objs[i]
 
-                objname, field, res, mod, walker, iteration = printer(out_file)  # , cvg=cvg[i])
-                # sed(true_obj, true_field, res, mod, walker, iteration, param_file, **kwargs)
+                objname, field, res, mod, walker, iteration = printer(out_file, masstest=False, obj_true=true_obj)
+                # , cvg=cvg[i])
+                sed(true_obj, true_field, res, mod, walker, iteration, param_file, **kwargs)
 
     else:
-        out_file = files['outname']
+        out_file = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'+files['outname']
         param_file = files['parfile']
         print(param_file, out_file)
 

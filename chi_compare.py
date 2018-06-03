@@ -13,19 +13,24 @@ home = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospe
 e_only = 1  # True=1
 # folders = ['pkl_efifty', 'pkl_nvary']
 # file = ['fifty', 'vary']  # 'fix'  # 'fifty'  # 'vary'  # 'newmask'
-folders = ['pkl_efifty', 'pkl_efix']
-file = ['fifty', 'fix']  # 'fix'  # 'fifty'  # 'vary'  # 'newmask'
+folders = ['pkl_efico', 'pkl_etenmet']  # 'pkl_efix']
+# folders = ['pkl_efifty', 'pkl_evar']  # 'pkl_efix']
+file = ['fico', 'tenmet']  # ['fifty', 'vary']  # 'fix'  # 'fifty'  # 'vary'  # 'newmask'
+ylabs = ['50 Myr bin', '1/10 met minimum boundary']
+# ylabs = ['50 Myr bin', '100 Myr bin']
 
 objs = []
 fields = []
 count = 0
 
-eelg_objs, eelg_fields, lbg_objs, lbg_fields = sa.get_gal_lists(base=['fifty', 'vary'], objlists=True)
+eelg_objs, eelg_fields, lbg_objs, lbg_fields = sa.get_gal_lists(base=file, objlists=True)
 if e_only:
-    eelg_objs2, eelg_fields2, lbg_objs, lbg_fields = sa.get_gal_lists(base=['fix', 'vary'], objlists=True)
+    eelg_objs2, eelg_fields2, lbg_objs, lbg_fields = sa.get_gal_lists(base=file, objlists=True)
     objsets = [[eelg_objs, eelg_fields], [eelg_objs2, eelg_fields2]]
+    print(objsets)
 else:
     objsets = [[eelg_objs, eelg_fields], [lbg_objs, lbg_fields]]
+print(objsets[1])
 
 set_count = 0
 waves_cos = []
@@ -170,17 +175,17 @@ lall_chis_uds = np.zeros(shape=(len(lwaves_uds[0])))
 lnum_cdf = np.zeros(len(all_chis_cdf))
 lnum_cos = np.zeros(len(all_chis_cos))
 lnum_uds = np.zeros(len(all_chis_uds))
-for i in range(len(lchis_cdf)):  # for each of the 19 galaxies
+for i in range(len(lchis_cdf)):  # for each of the second set of galaxies
     for j in range(len(lchis_cdf[i])):
         if lchis_cdf[i][j] >= 0:
             lall_chis_cdf[j] += lchis_cdf[i][j]
             lnum_cdf[j] += 1
-for i in range(len(lchis_cos)):  # for each of the 19 galaxies
+for i in range(len(lchis_cos)):  # for each of the second set of galaxies
     for j in range(len(lchis_cos[i])):
         if lchis_cos[i][j] >= 0:
             lall_chis_cos[j] += lchis_cos[i][j]
             lnum_cos[j] += 1
-for i in range(len(lchis_uds)):  # for each of the 19 galaxies
+for i in range(len(lchis_uds)):  # for each of the second set of galaxies
     for j in range(len(lchis_uds[i])):
         if lchis_uds[i][j] >= 0:
             lall_chis_uds[j] += lchis_uds[i][j]
@@ -197,9 +202,9 @@ plt.scatter(waves_cdf[0], all_chis_cdf, s=30, color='b', marker='D', label=r'var
 plt.scatter(waves_cos[0], all_chis_cos, s=30, color='b', marker='o', label=r'varying metallicity (COSMOS)')
 plt.scatter(waves_uds[0], all_chis_uds, s=30, color='b', marker='*', label=r'varying metallicity (UDS)')
 
-plt.scatter(lwaves_cdf[0], lall_chis_cdf, s=30, color='r', marker='D', label=r'fixed metallicity (CDFS)')
-plt.scatter(lwaves_cos[0], lall_chis_cos, s=30, color='r', marker='o', label=r'fixed metallicity (COSMOS)')
-plt.scatter(lwaves_uds[0], lall_chis_uds, s=30, color='r', marker='*', label=r'fixed metallicity (UDS)')
+plt.scatter(lwaves_cdf[0], lall_chis_cdf, s=30, color='r', marker='D', label=r'1/10 metallicity (CDFS)')
+plt.scatter(lwaves_cos[0], lall_chis_cos, s=30, color='r', marker='o', label=r'1/10 metallicity (COSMOS)')
+plt.scatter(lwaves_uds[0], lall_chis_uds, s=30, color='r', marker='*', label=r'1/10 metallicity (UDS)')
 
 if e_only:
     plt.ylim(0, 40)
@@ -248,11 +253,12 @@ print(len(total), len(cos1))
 print(np.percentile(cdf1, [16., 50., 84.]))
 print(np.percentile(cos1, [16., 50., 84.]))
 print(np.percentile(uds1, [16., 50., 84.]))
-print(np.percentile(total, [16., 50., 84.]))
+print(np.percentile(total, [16., 50., 84.]))  # ~0.911 for 50_myr_bin / 100_
+# myr_bin
 
 plt.ylim(10**-2, 10**2)
 plt.xlim(700, 21000)
-plt.ylabel(r'Free $\chi^2$ / Fixed $\chi^2$', fontsize=30)
+plt.ylabel(ylabs[0] + r' $\chi^2$ / ' + ylabs[1] + r' $\chi^2$', fontsize=30)  # r'Free $\chi^2$ / Fixed $\chi^2$'
 plt.xlabel(r'Wavelength (Rest) [$\rm \AA$]', fontsize=30)
 plt.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
 plt.axhline(y=1, color='k', linestyle='--')

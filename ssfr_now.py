@@ -30,7 +30,8 @@ if __name__ == "__main__":
 
     git = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
     corr = 0
-    fico = 1
+    fico = 0
+    tenmet = 1
     newsfg = 0
     write = False
 
@@ -46,6 +47,13 @@ if __name__ == "__main__":
         out_folds = ['out/out_efico/', 'out/out_nfico/']
         folders = ['pkl_efico/', 'pkl_nfico/']
         import eelg_fifty_params as e_params
+        import eelg_fifty_params as n_params
+        normal = True
+    elif tenmet:
+        base = ['tenmet', 'fico']
+        out_folds = ['out/out_etenmet/', 'out/out_nfico/']
+        folders = ['pkl_etenmet/', 'pkl_nfico/']
+        import eelg_tenmet_params as e_params
         import eelg_fifty_params as n_params
         normal = True
     elif newsfg:
