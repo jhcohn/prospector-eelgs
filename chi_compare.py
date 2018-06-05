@@ -13,10 +13,12 @@ home = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospe
 e_only = 1  # True=1
 # folders = ['pkl_efifty', 'pkl_nvary']
 # file = ['fifty', 'vary']  # 'fix'  # 'fifty'  # 'vary'  # 'newmask'
-folders = ['pkl_efico', 'pkl_etenmet']  # 'pkl_efix']
+# folders = ['pkl_efico', 'pkl_esol']
+folders = ['pkl_efico', 'pkl_etenmet']
 # folders = ['pkl_efifty', 'pkl_evar']  # 'pkl_efix']
-file = ['fico', 'tenmet']  # ['fifty', 'vary']  # 'fix'  # 'fifty'  # 'vary'  # 'newmask'
-ylabs = ['50 Myr bin', '1/10 met minimum boundary']
+# file = ['fico', 'sol']  # ['fifty', 'vary']  # 'fix'  # 'fifty'  # 'vary'  # 'newmask'
+file = ['fico', 'tenmet']
+ylabs = ['50 Myr bin', 'solar']  # '1/10 met minimum boundary']
 # ylabs = ['50 Myr bin', '100 Myr bin']
 
 objs = []
@@ -145,9 +147,12 @@ num_cdf = np.zeros(len(all_chis_cdf))
 num_cos = np.zeros(len(all_chis_cos))
 num_uds = np.zeros(len(all_chis_uds))
 chisq_per_nphot = []
+rands = []
 for i in range(len(chis_cdf)):  # for each of the 19 galaxies
     newsum = 0
     photsum = 0
+    for k in range(len(chis_cdf[i])):
+        rands.append(np.random.choice(chis_cdf[i]))
     for j in range(len(chis_cdf[i])):  # for each data point
         if chis_cdf[i][j] >= 0:
             all_chis_cdf[j] += chis_cdf[i][j]
@@ -159,6 +164,8 @@ for i in range(len(chis_cdf)):  # for each of the 19 galaxies
 for i in range(len(chis_cos)):  # for each of the 19 galaxies
     newsum = 0
     photsum = 0
+    for l in range(len(chis_cos[i])):
+        rands.append(np.random.choice(chis_cos[i]))
     for j in range(len(chis_cos[i])):  # for each data point
         if chis_cos[i][j] >= 0:
             all_chis_cos[j] += chis_cos[i][j]
@@ -170,6 +177,8 @@ for i in range(len(chis_cos)):  # for each of the 19 galaxies
 for i in range(len(chis_uds)):  # for each of the 19 galaxies
     newsum = 0
     photsum = 0
+    for m in range(len(chis_uds[i])):
+        rands.append(np.random.choice(chis_uds[i]))
     for j in range(len(chis_uds[i])):  # for each data point
         if chis_uds[i][j] >= 0:
             all_chis_uds[j] += chis_uds[i][j]
@@ -196,9 +205,12 @@ lnum_cdf = np.zeros(len(all_chis_cdf))
 lnum_cos = np.zeros(len(all_chis_cos))
 lnum_uds = np.zeros(len(all_chis_uds))
 lchisq_per_nphot = []
+lrands = []
 for i in range(len(lchis_cdf)):  # for each of the second set of galaxies
     lnewsum = 0
     lphotsum = 0
+    for lk in range(len(lchis_cdf[i])):
+        lrands.append(np.random.choice(lchis_cdf[i]))
     for j in range(len(lchis_cdf[i])):
         if lchis_cdf[i][j] >= 0:
             lall_chis_cdf[j] += lchis_cdf[i][j]
@@ -210,6 +222,8 @@ for i in range(len(lchis_cdf)):  # for each of the second set of galaxies
 for i in range(len(lchis_cos)):  # for each of the second set of galaxies
     lnewsum = 0
     lphotsum = 0
+    for ll in range(len(lchis_cos[i])):
+        lrands.append(np.random.choice(lchis_cos[i]))
     for j in range(len(lchis_cos[i])):
         if lchis_cos[i][j] >= 0:
             lall_chis_cos[j] += lchis_cos[i][j]
@@ -221,6 +235,8 @@ for i in range(len(lchis_cos)):  # for each of the second set of galaxies
 for i in range(len(lchis_uds)):  # for each of the second set of galaxies
     lnewsum = 0
     lphotsum = 0
+    for lm in range(len(lchis_uds[i])):
+        lrands.append(np.random.choice(lchis_uds[i]))
     for j in range(len(lchis_uds[i])):
         if lchis_uds[i][j] >= 0:
             lall_chis_uds[j] += lchis_uds[i][j]
@@ -230,6 +246,24 @@ for i in range(len(lchis_uds)):  # for each of the second set of galaxies
             lphotsum += 1
     lchisq_per_nphot.append(lnewsum / lphotsum)
 
+print(np.std(chisq_per_nphot))
+print(np.std(lchisq_per_nphot))
+ran = np.zeros(shape=(10**3, 10**3))
+lran = np.zeros(shape=(10**3, 10**3))
+means = []
+lmeans = []
+for j in range(10**3):
+    for k in range(10**3):
+        ran[j, k] = np.random.choice(chisq_per_nphot)
+        lran[j, k] = np.random.choice(lchisq_per_nphot)
+    means.append(np.mean(ran[j]))
+    lmeans.append(np.mean(lran[j]))
+print('errors on means')
+print(np.percentile(means, [16., 50., 84.]))
+print(np.percentile(lmeans, [16., 50., 84.]))
+
+print(np.percentile(rands, [16., 50., 84.]))
+print(np.percentile(lrands, [16., 50., 84.]))
 print(np.percentile(chisq_per_nphot, [16., 50., 84.]), 'orig')
 print(np.mean(chisq_per_nphot))
 print(np.percentile(lchisq_per_nphot, [16., 50., 84.]), 'tenmet')

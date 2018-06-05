@@ -144,13 +144,23 @@ def all_plots(ax, fileset, objname, zname, color='purple', font={'fontname': 'Ti
 
 
 if __name__ == "__main__":
-    fico = True
+    fico = 0
+    comp_fast = 1
+
     if fico:
         folders = ['pkl_efico/', 'pkl_nfico/']
-        base = 'fico'
+        base1 = 'fico'
+        base2 = 'fico'
+    if comp_fast:
+        folders = ['pkl_efico/', 'pkl_efast/']
+        base1 = 'fico'
+        base2 = 'fast'
 
     # FIGURES
     fig = plt.figure()
+    rc('font', **{'family': 'serif', 'serif': ['Times']})
+    rc('text', usetex=True)
+    font = {'fontname': 'Times'}
 
     scale = False  # True
     if scale:
@@ -197,9 +207,9 @@ if __name__ == "__main__":
         fs = 20
         fs_ticks = 25
         fs_text = 30
-        ylabel = r'Flux [$\mu$Jy]'
+        ylabel = r'Flux [scaled]'  # [$\mu$Jy]'
 
-    e_objs, e_fields, l_objs, l_fields = sa.get_gal_lists(base='fico', objlists=True)
+    e_objs, e_fields, l_objs, l_fields = sa.get_gal_lists(base=base1, objlists=True)
 
     ax1 = plt.subplot(1, 2, 1)  # number cols, number rows, which fig currently on
     ax1.set_yscale("log")
@@ -216,7 +226,7 @@ if __name__ == "__main__":
                         size=fs_ticks)
     ax1.set_yticks([10 ** -1, 10 ** 0, 10 ** 1, 10 ** 2])  # technically works  # 10**-2,
     ax1.set_yticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)  # r'$10^{-2}$',
-    plot_wrapper(ax1, e_objs, e_fields, folders[0], base, color='purple')
+    plot_wrapper(ax1, e_objs, e_fields, folders[0], base1, color='purple')
 
     ax2 = plt.subplot(1, 2, 2, sharey=ax1)
     ax2.set_yscale("log")
@@ -234,11 +244,12 @@ if __name__ == "__main__":
     # ax2.set_yticks([10 ** -1, 10 ** 0, 10 ** 1, 10 ** 2])  # technically works  # 10**-2,
     # ax2.set_yticklabels([])  # [r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)  # r'$10^{-2}$',
     ax2.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
-    plot_wrapper(ax2, l_objs, l_fields, folders[1], base, color='b')
-
-    rc('font', **{'family': 'serif', 'serif': ['Times']})
-    rc('text', usetex=True)
-    font = {'fontname': 'Times'}
+    if comp_fast:
+        plot_wrapper(ax2, e_objs, e_fields, folders[1], base2, color='b')
+        fig.text(0.2, 0.8, 'Regular EELGs', fontsize=fs_text, **font)
+        fig.text(0.6, 0.8, 'FAST-like runs', fontsize=fs_text, **font)
+    else:
+        plot_wrapper(ax2, l_objs, l_fields, folders[1], base2, color='b')
 
     plt.subplots_adjust(wspace=.0)
     plt.subplots_adjust(hspace=.0)
