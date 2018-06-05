@@ -94,6 +94,8 @@ overlay_seds.py: make plots of Prospector SEDs with emission lines, overlaid wit
 
 plot_all_seds.py: plot all seds on top of each other at once
 
+possible_newfig.py: basically plot_all_seds.py, but showing the distributions of the EELGs' and SFGs' observed photometry rather than best-fit models, and overlaid in 1 panel instead of 2
+
 print_sfh.py: prints SFH from pickled file produced by output_all.py; also prints sSFR(t)
 -Running with: python print_sfh.py --obj=1824 --field=cosmos --base=_newbins
 
