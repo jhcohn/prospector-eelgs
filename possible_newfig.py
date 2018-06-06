@@ -15,11 +15,13 @@ from scipy import ndimage
 
 
 def distribution_wrapper(ax, objs, fields, folder, base, color, label):
-    bounds = [700, 750, 800, 850, 900, 950, 10**3, 1.1*10**3, 1.2*10**3, 1.3*10**3, 1.4*10**3, 1.5*10**3, 1.6*10**3,
+    bounds = [750, 800, 850, 900, 950, 10**3, 1.1*10**3, 1.2*10**3, 1.3*10**3, 1.4*10**3, 1.5*10**3, 1.6*10**3,
               1.7*10**3, 1.8*10**3, 1.9*10**3, 2*10**3, 2.2*10**3, 2.4*10**3, 2.6*10**3, 2.8*10**3, 3.*10**3,
               3.3*10**3, 3.6*10**3, 3.9*10**3, 4.2*10**3, 4.5*10**3, 4.8*10**3, 5.1*10**3, 5.5*10**3,
-              6.*10**3, 6.5*10**3, 7.*10**3, 7.5*10**3, 8.*10**3, 9.*10**3, 10**4, 1.1*10**4, 1.2*10**4, 1.4*10**4,
-              1.6*10**4, 1.8*10**4, 2.*10**4, 2.2*10**4, 2.4*10**4, 2.7*10**4]
+              7.5*10**3, 8.*10**3, 9.*10**3, 10**4, 1.1*10**4]
+              # 6.*10**3, 6.5*10**3, 7.*10**3,
+              # , 1.2*10**4, 1.4*10**4,
+              #1.6*10**4, 1.8*10**4, 2.*10**4, 2.25*10**4, 2.5*10**4]
     waves = []
     for x in range(len(bounds) - 1):
         waves.append((bounds[x] + bounds[x+1]) / 2)
@@ -67,7 +69,7 @@ def distribution_wrapper(ax, objs, fields, folder, base, color, label):
             if totes[to, tes] != 0.:
                 summer += 1
                 typicals.append(totes[to, tes])
-        if summer >= 4:
+        if summer >= 3:
             avgs.append(np.percentile(typicals, [16, 50., 84.])[1])
             plus.append(np.percentile(typicals, [16, 50., 84.])[2])
             minus.append(np.percentile(typicals, [16, 50., 84.])[0])
@@ -76,34 +78,83 @@ def distribution_wrapper(ax, objs, fields, folder, base, color, label):
             plus.append(0.)
             minus.append(0.)
 
-    print(len(avgs), len(plus), len(minus))
+    #print(len(avgs), len(plus), len(minus))
+    print(avgs)
+    print(len(waves), waves)
     ind_to_pop = []
+    spec_pop = []
     for pl in range(len(avgs)):
-        if avgs[pl] <= 3*10**-2 or minus[pl] <= 3*10**-2:
+        if minus[pl] <= 0.01:
             ind_to_pop.append(pl)
+            # if avgs[pl] <= 0.05 and avgs[pl] != 0.:
+            #     spec_pop.append(pl)
         # elif minus[pl] <= 3*10**-2:
         #     ind_to_pop.append(pl)
+
+    # print(ind_to_pop)
+    # print([waves[x] for x in spec_pop])
+    # waves_sp = [waves[x] for x in spec_pop]
+    # up_lims = [plus[x] for x in spec_pop]
 
     for ind in sorted(ind_to_pop, reverse=True):
         avgs.pop(ind)
         plus.pop(ind)
         minus.pop(ind)
         waves.pop(ind)
-    print(waves, avgs)
-    # avgs = ndimage.filters.gaussian_filter1d(avgs, sigma=3.)
-    # minus = ndimage.filters.gaussian_filter1d(minus, sigma=3.)
-    # plus = ndimage.filters.gaussian_filter1d(plus, sigma=3.)
+    # print(waves, avgs)
+
+    split_waves1 = []
+    avgs1, avgs2, avgsm, minus1, minus2, minusm, plus1, plus2, plusm = [], [], [], [], [], [], [], [], []
+    split_waves2 = []
+    mid_waves = []
+    for wav in range(len(waves)):
+        if waves[wav] <= 4.5*10**3:
+            split_waves1.append(waves[wav])
+            avgs1.append(avgs[wav])
+            minus1.append(minus[wav])
+            plus1.append(plus[wav])
+        elif waves[wav] >= 5.5*10**3:
+            split_waves2.append(wav)
+            avgs2.append(avgs[wav])
+            minus2.append(minus[wav])
+            plus2.append(plus[wav])
+        else:
+            mid_waves.append(wav)
+            avgsm.append(avgs[wav])
+            minusm.append(minus[wav])
+            plusm.append(plus[wav])
+
+    # '''
     avgs = pandas.Series((x for x in avgs))
     minus = pandas.Series((x for x in minus))
     plus = pandas.Series((x for x in plus))
     avgs = pandas.rolling_median(avgs, 2)
     minus = pandas.rolling_median(minus, 2)
     plus = pandas.rolling_median(plus, 2)
+    '''
+    avgs1 = pandas.Series((x for x in avgs1))
+    minus1 = pandas.Series((x for x in minus1))
+    plus1 = pandas.Series((x for x in plus1))
+    avgs1 = pandas.rolling_median(avgs1, 2)
+    minus1 = pandas.rolling_median(minus1, 2)
+    plus1 = pandas.rolling_median(plus1, 2)
+    avgs2 = pandas.Series((x for x in avgs2))
+    minus2 = pandas.Series((x for x in minus2))
+    plus2 = pandas.Series((x for x in plus2))
+    avgs2 = pandas.rolling_median(avgs2, 2)
+    minus2 = pandas.rolling_median(minus2, 2)
+    plus2 = pandas.rolling_median(plus2, 2)
+    avgs = avgs1.tolist() + avgsm + avgs2.tolist()
+    plus = plus1.tolist() + plusm + plus2.tolist()
+    minus = minus1.tolist() + minusm + minus2.tolist()
+    '''
 
+    print(len(waves), waves)
     ax.fill_between(waves, minus, plus, color=color, alpha=0.3)  # fill region between +/- 1sigma
     ax.plot(waves, avgs, '-', lw=2, color=color, label=label)  # , markersize=20, label=label)
     ax.plot(waves, plus, '-', lw=2, color=color)  # , markersize=20, label=label)
     ax.plot(waves, minus, '-', lw=2, color=color)  # , markersize=20, label=label)
+    # ax.plot(waves_sp, up_lims, 'v', color=color, markersize=20)
 
 
 def plot_wrapper(ax, objs, fields, folder, base, color, label):
@@ -286,7 +337,7 @@ if __name__ == "__main__":
     comp_fast = 0
 
     distrib = 1
-    log = 1
+    log = 0
 
     if fico:
         folders = ['pkl_efico/', 'pkl_nfico/']
@@ -308,9 +359,9 @@ if __name__ == "__main__":
     textx = 1.7*10**3  # 10**4  # 700
     texty1 = 10**2  # 50
     texty2 = 3*10**2
-    fs = 20
-    fs_ticks = 25
-    fs_text = 30
+    fs = 40  # 20
+    fs_ticks = 50  # 25
+    fs_text = 60 # 30
     ylabel = r'F$_\nu$ [scaled]'  # [$\mu$Jy]'
 
     e_objs, e_fields, l_objs, l_fields = sa.get_gal_lists(base=base1, objlists=True)
@@ -326,10 +377,11 @@ if __name__ == "__main__":
         xmax = 2.5 * 10 ** 4  # 3*10**4
     else:
         # AXIS LIMS
+        ax1.set_xscale("log")
         ymin = 0.  # 2*10**-3  # 10**-7
-        ymax = 9  # 15  # 7*10**2  # 3*10**2  # 2*10**3  # 5*10**3  # NOTE: use 15 if not doing percs
-        xmin = 10**3  # 600
-        xmax = 2.5 * 10 ** 4  # 3*10**4
+        ymax = 7.  # 15  # 7*10**2  # 3*10**2  # 2*10**3  # 5*10**3  # NOTE: use 15 if not doing percs
+        xmin = 10**3  # 800  # 600
+        xmax = 10**4  # 2.5 * 10 ** 4  # 3*10**4
     ax1.set_xlim(xmin, xmax)
     ax1.set_ylim(ymin, ymax)
     ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs) # 'axis_name', which='both' --> major & minor!
@@ -337,40 +389,21 @@ if __name__ == "__main__":
     ax1.tick_params(axis='x', which='major', pad=10)
     ax1.tick_params(axis='y', which='minor')
     if log:
-        ax1.set_xticks([10 ** 3, 2 * 10 ** 3, 5 * 10 ** 3, 10 ** 4, 2 * 10 ** 4])  # technically works
-        ax1.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
-        ax1.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$', r'$2\times10^4$'],
-                            size=fs_ticks)
         ax1.set_yticks([10 ** -1, 10 ** 0, 10 ** 1])  # , 10 ** 2])  # technically works  # 10**-2,
         ax1.set_yticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$'], size=fs_ticks)  # r'$10^{-2}$',  , r'$10^2$'
     else:
-        ax1.set_xticks([2000, 4000, 6000, 8000, 10**4, 1.2*10**4, 1.4*10**4, 1.6*10**4, 1.8*10**4, 2*10**4, 2.2*10**4,
-                        2.4*10**4])  # technically works
-        ax1.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
-        ax1.set_xticklabels([r'$2\times10^3$', r'$4\times10^3$', r'$6\times10^3$', r'$8\times10^3$', r'$10^4$',
-                             r'$1.2\times10^4$', r'$1.4\times10^4$', r'$1.6\times10^4$', r'$1.8\times10^4$',
-                             r'$2\times10^4$', r'$2.2\times10^4$', r'$2.4\times10^4$'], size=fs_ticks)  # , r'$2.6\times10^4$'
-        ax1.set_yticks([0., 2., 4., 6., 8.])
-        ax1.set_yticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$'], size=fs_ticks)  # , r'$10$', r'$12$', r'$14$'
+        # ax1.set_xticks([2000, 4000, 6000, 8000, 10**4, 1.2*10**4, 1.4*10**4, 1.6*10**4, 1.8*10**4, 2*10**4, 2.2*10**4,
+        #                 2.4*10**4])  # technically works
+        # ax1.set_xticklabels([r'$2\times10^3$', r'$4\times10^3$', r'$6\times10^3$', r'$8\times10^3$', r'$10^4$',
+        #                      r'$1.2\times10^4$', r'$1.4\times10^4$', r'$1.6\times10^4$', r'$1.8\times10^4$',
+        #                      r'$2\times10^4$', r'$2.2\times10^4$', r'$2.4\times10^4$'], size=fs_ticks)  # , r'$2.6\times10^4$'
+        ax1.set_yticks([0., 2., 4., 6.])
+        ax1.set_yticklabels([r'$0$', r'$2$', r'$4$', r'$6$'], size=fs_ticks)  # , r'$8$', r'$10$', r'$12$', r'$14$'
 
-    '''
-    ax2 = plt.subplot(1, 2, 2, sharey=ax1)
-    ax2.set_yscale("log")
-    ax2.set_xscale("log")
-    ax2.set_xlim(xmin, xmax)
-    ax2.set_ylim(ymin, ymax)
-    ax2.tick_params('x', length=3, width=1, which='both', labelsize=fs)
-    ax2.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
-    plt.subplots_adjust(hspace=.0)
-    ax2.tick_params(axis='y', which='minor')
-    ax2.tick_params(axis='x', which='major', pad=10)
-    ax2.set_xticks([10 ** 3, 2 * 10 ** 3, 5 * 10 ** 3, 10 ** 4, 2 * 10 ** 4])  # technically works
-    ax2.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$', r'$2\times10^4$'],
-                        size=fs_ticks)
-    # ax2.set_yticks([10 ** -1, 10 ** 0, 10 ** 1, 10 ** 2])  # technically works  # 10**-2,
-    # ax2.set_yticklabels([])  # [r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)  # r'$10^{-2}$',
-    ax2.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
-    '''
+    ax1.set_xticks([10 ** 3, 2 * 10 ** 3, 5 * 10 ** 3, 10 ** 4])  # technically works  #  2 * 10 ** 4
+    ax1.axvspan(4800, 5050, color='k', alpha=0.25)  # 0.2
+    ax1.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$'], size=fs_ticks)  # , r'$2\times10^4$'
+
     if comp_fast:
         plot_wrapper(ax1, e_objs, e_fields, folders[1], base2, color='b', label='FAST-like EELGs')
         plot_wrapper(ax1, e_objs, e_fields, folders[0], base1, color='purple', label='Regular EELGs')
@@ -379,40 +412,23 @@ if __name__ == "__main__":
     elif distrib:
         distribution_wrapper(ax1, l_objs, l_fields, folders[1], base2, color='b', label='SFGs')
         distribution_wrapper(ax1, e_objs, e_fields, folders[0], base1, color='purple', label='EELGs')
+        andromeda = [7.65, 7.95, 8.75, 9.3, 9.55, 9.65, 9.7,
+                     9., 8.65, 8.5, 8.2]
+        an_waves = [1800, 2200, 3400, 4800, 6000, 7500, 9000,
+                    35000, 45000, 59000, 80000]
+        andromeda /= np.median(andromeda)
+        # ax1.plot(an_waves, andromeda, '--', lw=2, color='k', label=r'Andromeda (Groves+2012)')
     else:
         plot_wrapper(ax1, l_objs, l_fields, folders[1], base2, color='b', label='SFGs')
         plot_wrapper(ax1, e_objs, e_fields, folders[0], base1, color='purple', label='EELGs')
 
-    ax1.legend(numpoints=1, loc=loc, prop={'size': 20})  # , line2) ... , r'$\chi$']
+    ax1.legend(numpoints=1, loc=loc, prop={'size': fs_text})  # , line2) ... , r'$\chi$']
 
     # plt.subplots_adjust(wspace=.0)
     # plt.subplots_adjust(hspace=.0)
 
-    fig.text(0.07, 0.5, ylabel, fontsize=fs_text, va='center', rotation='vertical', **font)
+    fig.text(0.575, 0.85, r'H$\beta$+[OIII]', fontsize=fs_text, **font)  # .54
+    fig.text(0.08, 0.5, ylabel, fontsize=fs_text, va='center', rotation='vertical', **font)
     fig.text(0.5, 0.02, 'Wavelength (Rest) [\AA]', ha='center', fontsize=fs_text, **font)  # 20
     # plt.xlabel('Wavelength (Rest) [\AA]', fontsize=fs_text, **font)  # 20
     plt.show()
-
-'''
-Currently running with:
-python new_fig1.py --obj1=21442 --base1=fico --obj2=7817 --base2=corr --field=cdfs
-
-python new_fig1.py --obj1=21442 --base1=fifty --obj2=7817 --base2=vary --field=cdfs
-python new_fig1.py --obj1=12105 --base1=fifty --obj2=2729 --base2=vary --field=cosmos  # pretty good, deltafig 2xtreme
-python new_fig1.py --obj1=12105 --base1=fifty --obj2=3623 --base2=vary --field=cosmos  # pretty good, deltafig 2xtreme!!
-python new_fig1.py --obj1=12105 --base1=fifty --obj2=8233 --base2=vary --field=cosmos  # not bad...
-python new_fig1.py --obj1=12105 --base1=fifty --obj2=12535 --base2=vary --field=cosmos  # pretty good, big-ish z-diff
-python new_fig1.py --obj1=12105 --base1=fifty --obj2=12676 --base2=vary --field=cosmos  # not bad, deltafig good emlines
-# but not great slope
-
-# WAS DOING:
-python new_fig1.py --obj1=12533 --base1=fifty --obj2=7817 --base2=vary
-# look for smaller photometric errors than 12533
-# Shape-wise, I like 11462. 12903 not as bad error-wise. 15124 best errors, but lack of impressive emission points.
-# 18561 not super terrible. 21442 quite good.
-
-Prior to taking this ratio, I scaled the EELG such that its median flux is the same as the median flux of the SFG (the
-SFG inherently has a larger continuum, the only purpose of this scaling is so that a ratio of "1" corresponds to
-effectively equivalent fluxes on the EELG and SFG compared to their respective continua; the scaling doesn't change the
-actual shape of the plot at all).
-'''
