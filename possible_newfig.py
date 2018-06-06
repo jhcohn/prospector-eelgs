@@ -10,6 +10,8 @@ from mpl_toolkits.axes_grid.inset_locator import inset_axes
 from matplotlib import rc
 import stellar_ages as sa
 import os
+import pandas
+from scipy import ndimage
 
 
 def distribution_wrapper(ax, objs, fields, folder, base, color, label):
@@ -77,10 +79,10 @@ def distribution_wrapper(ax, objs, fields, folder, base, color, label):
     print(len(avgs), len(plus), len(minus))
     ind_to_pop = []
     for pl in range(len(avgs)):
-        if avgs[pl] <= 3*10**-2:
+        if avgs[pl] <= 3*10**-2 or minus[pl] <= 3*10**-2:
             ind_to_pop.append(pl)
-        elif minus[pl] <= 3*10**-2:
-            ind_to_pop.append(pl)
+        # elif minus[pl] <= 3*10**-2:
+        #     ind_to_pop.append(pl)
 
     for ind in sorted(ind_to_pop, reverse=True):
         avgs.pop(ind)
@@ -88,10 +90,20 @@ def distribution_wrapper(ax, objs, fields, folder, base, color, label):
         minus.pop(ind)
         waves.pop(ind)
     print(waves, avgs)
+    # avgs = ndimage.filters.gaussian_filter1d(avgs, sigma=3.)
+    # minus = ndimage.filters.gaussian_filter1d(minus, sigma=3.)
+    # plus = ndimage.filters.gaussian_filter1d(plus, sigma=3.)
+    avgs = pandas.Series((x for x in avgs))
+    minus = pandas.Series((x for x in minus))
+    plus = pandas.Series((x for x in plus))
+    avgs = pandas.rolling_median(avgs, 2)
+    minus = pandas.rolling_median(minus, 2)
+    plus = pandas.rolling_median(plus, 2)
+
     ax.fill_between(waves, minus, plus, color=color, alpha=0.3)  # fill region between +/- 1sigma
-    ax.plot(waves, avgs, '-', lw=2, color=color, label=label)#, markersize=20, label=label)
-    ax.plot(waves, plus, '-', lw=2, color=color)#, markersize=20, label=label)
-    ax.plot(waves, minus, '-', lw=2, color=color)#, markersize=20, label=label)
+    ax.plot(waves, avgs, '-', lw=2, color=color, label=label)  # , markersize=20, label=label)
+    ax.plot(waves, plus, '-', lw=2, color=color)  # , markersize=20, label=label)
+    ax.plot(waves, minus, '-', lw=2, color=color)  # , markersize=20, label=label)
 
 
 def plot_wrapper(ax, objs, fields, folder, base, color, label):
@@ -272,7 +284,9 @@ def all_plots(ax, fileset, objname, zname, color='purple', do_plot=True, font={'
 if __name__ == "__main__":
     fico = 1
     comp_fast = 0
+
     distrib = 1
+    log = 1
 
     if fico:
         folders = ['pkl_efico/', 'pkl_nfico/']
@@ -289,12 +303,6 @@ if __name__ == "__main__":
     rc('text', usetex=True)
     font = {'fontname': 'Times'}
 
-    # AXIS LIMS
-    ymin = 3*10**-2  # 2*10**-3  # 10**-7
-    ymax = 1.5*10**1  # 7*10**2  # 3*10**2  # 2*10**3  # 5*10**3
-    xmin = 700  # 600
-    xmax = 2.7*10**4  # 3*10**4
-
     # LEGEND, TEXT LOCATION, FONT SIZE
     loc = 2  # loc=1 (up R), loc=2 (up L), loc=3 (low L), loc=4 (low R); loc=7 (center R)
     textx = 1.7*10**3  # 10**4  # 700
@@ -308,20 +316,42 @@ if __name__ == "__main__":
     e_objs, e_fields, l_objs, l_fields = sa.get_gal_lists(base=base1, objlists=True)
 
     ax1 = plt.subplot(1, 1, 1)  # number cols, number rows, which fig currently on
-    ax1.set_yscale("log")
-    ax1.set_xscale("log")
+    if log:
+        ax1.set_yscale("log")
+        ax1.set_xscale("log")
+        # AXIS LIMS
+        ymin = 9 * 10 ** -2  # 3*10**-2  # 2*10**-3  # 10**-7
+        ymax = 1.5 * 10 ** 1  # 7*10**2  # 3*10**2  # 2*10**3  # 5*10**3
+        xmin = 800  # 700  # 600
+        xmax = 2.5 * 10 ** 4  # 3*10**4
+    else:
+        # AXIS LIMS
+        ymin = 0.  # 2*10**-3  # 10**-7
+        ymax = 9  # 15  # 7*10**2  # 3*10**2  # 2*10**3  # 5*10**3  # NOTE: use 15 if not doing percs
+        xmin = 10**3  # 600
+        xmax = 2.5 * 10 ** 4  # 3*10**4
     ax1.set_xlim(xmin, xmax)
     ax1.set_ylim(ymin, ymax)
     ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs) # 'axis_name', which='both' --> major & minor!
     ax1.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
     ax1.tick_params(axis='x', which='major', pad=10)
     ax1.tick_params(axis='y', which='minor')
-    ax1.set_xticks([10 ** 3, 2 * 10 ** 3, 5 * 10 ** 3, 10 ** 4, 2 * 10 ** 4])  # technically works
-    ax1.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
-    ax1.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$', r'$2\times10^4$'],
-                        size=fs_ticks)
-    ax1.set_yticks([10 ** -1, 10 ** 0, 10 ** 1])  #, 10 ** 2])  # technically works  # 10**-2,
-    ax1.set_yticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$'], size=fs_ticks)  # r'$10^{-2}$',  , r'$10^2$'
+    if log:
+        ax1.set_xticks([10 ** 3, 2 * 10 ** 3, 5 * 10 ** 3, 10 ** 4, 2 * 10 ** 4])  # technically works
+        ax1.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
+        ax1.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$', r'$2\times10^4$'],
+                            size=fs_ticks)
+        ax1.set_yticks([10 ** -1, 10 ** 0, 10 ** 1])  # , 10 ** 2])  # technically works  # 10**-2,
+        ax1.set_yticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$'], size=fs_ticks)  # r'$10^{-2}$',  , r'$10^2$'
+    else:
+        ax1.set_xticks([2000, 4000, 6000, 8000, 10**4, 1.2*10**4, 1.4*10**4, 1.6*10**4, 1.8*10**4, 2*10**4, 2.2*10**4,
+                        2.4*10**4])  # technically works
+        ax1.axvspan(4800, 5050, color='k', alpha=0.175)  # 0.2
+        ax1.set_xticklabels([r'$2\times10^3$', r'$4\times10^3$', r'$6\times10^3$', r'$8\times10^3$', r'$10^4$',
+                             r'$1.2\times10^4$', r'$1.4\times10^4$', r'$1.6\times10^4$', r'$1.8\times10^4$',
+                             r'$2\times10^4$', r'$2.2\times10^4$', r'$2.4\times10^4$'], size=fs_ticks)  # , r'$2.6\times10^4$'
+        ax1.set_yticks([0., 2., 4., 6., 8.])
+        ax1.set_yticklabels([r'$0$', r'$2$', r'$4$', r'$6$', r'$8$'], size=fs_ticks)  # , r'$10$', r'$12$', r'$14$'
 
     '''
     ax2 = plt.subplot(1, 2, 2, sharey=ax1)
