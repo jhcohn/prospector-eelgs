@@ -359,9 +359,9 @@ if __name__ == "__main__":
     textx = 1.7*10**3  # 10**4  # 700
     texty1 = 10**2  # 50
     texty2 = 3*10**2
-    fs = 40  # 20
-    fs_ticks = 50  # 25
-    fs_text = 60 # 30
+    fs = 25  # 20
+    fs_ticks = 30  # 25
+    fs_text = 35  # 30
     ylabel = r'F$_\nu$ [scaled]'  # [$\mu$Jy]'
 
     e_objs, e_fields, l_objs, l_fields = sa.get_gal_lists(base=base1, objlists=True)
@@ -412,12 +412,14 @@ if __name__ == "__main__":
     elif distrib:
         distribution_wrapper(ax1, l_objs, l_fields, folders[1], base2, color='b', label='SFGs')
         distribution_wrapper(ax1, e_objs, e_fields, folders[0], base1, color='purple', label='EELGs')
+        '''
         andromeda = [7.65, 7.95, 8.75, 9.3, 9.55, 9.65, 9.7,
                      9., 8.65, 8.5, 8.2]
         an_waves = [1800, 2200, 3400, 4800, 6000, 7500, 9000,
                     35000, 45000, 59000, 80000]
         andromeda /= np.median(andromeda)
-        # ax1.plot(an_waves, andromeda, '--', lw=2, color='k', label=r'Andromeda (Groves+2012)')
+        ax1.plot(an_waves, andromeda, '--', lw=2, color='k', label=r'Andromeda (Groves+2012)')
+        '''
     else:
         plot_wrapper(ax1, l_objs, l_fields, folders[1], base2, color='b', label='SFGs')
         plot_wrapper(ax1, e_objs, e_fields, folders[0], base1, color='purple', label='EELGs')
@@ -427,8 +429,9 @@ if __name__ == "__main__":
     # plt.subplots_adjust(wspace=.0)
     # plt.subplots_adjust(hspace=.0)
 
-    fig.text(0.575, 0.85, r'H$\beta$+[OIII]', fontsize=fs_text, **font)  # .54
-    fig.text(0.08, 0.5, ylabel, fontsize=fs_text, va='center', rotation='vertical', **font)
-    fig.text(0.5, 0.02, 'Wavelength (Rest) [\AA]', ha='center', fontsize=fs_text, **font)  # 20
-    # plt.xlabel('Wavelength (Rest) [\AA]', fontsize=fs_text, **font)  # 20
+    ax1.tick_params(axis='x', which='major', pad=15)
+    fig.text(0.575, 0.82, r'H$\beta$+[OIII]', fontsize=fs_text, **font)  # 0.575, 0.85
+    fig.text(0.04, 0.5, ylabel, fontsize=fs_text, va='center', rotation='vertical', **font)  # 0.08
+    # fig.text(0.5, 0.92, 'Wavelength (Rest) [\AA]', ha='center', fontsize=fs_text, **font)  # 0.02
+    plt.xlabel('Wavelength (Rest) [\AA]', fontsize=fs_text, **font)  # 20
     plt.show()
