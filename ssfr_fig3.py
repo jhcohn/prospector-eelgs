@@ -223,26 +223,25 @@ def simpler(recentx, secondy, logit=False):
         x2 = recentx[1]
         y2 = secondy[1]
 
-        xlims = [4*10**-2, 3*10**1.]  #[0., 13.]  # 17.
-        ylims = [4*10**-2, 3*10**1.]  #[0., 8.]#13.]  # 17.
+        xlims = [6*10**-2, 2*10**1.]  # 4*10**-2, 3*10**1.
+        ylims = [6*10**-2, 2*10**1.]  # 4*10**-2, 3*10**1.
 
-    # start with a rectangular Figure
-    fig1 = plt.figure(1, figsize=(12,12))#(16, 16)) #(19.5, 12))
-    #ax1 = plt.subplot(121)
-    #ax2 = plt.subplot(122, sharex=ax1, sharey=ax1)
-    ax1 = plt.subplot(111)
-    #plt.subplots_adjust(wspace=0., hspace=0.)
+    # start with a Figure
+    fig1 = plt.figure(1, figsize=(12, 12))
+    cb = False
+    if cb:
+        gs = gridspec.GridSpec(1, 3, width_ratios=[12, 1, 1])
+        ax1 = plt.subplot(gs[0])  # plt.subplot(111)
+    else:
+        ax1 = plt.subplot(111)
 
     print(xlims, ylims)
     ax1.set_xlim(xlims[0], xlims[1])
     ax1.set_ylim(ylims[0], ylims[1])
-    #ax2.set_xlim(xlims[0], xlims[1])
-    #ax2.set_ylim(ylims[0], ylims[1])
     percx2 = np.percentile(x2, [16., 50., 84.])
     percy2 = np.percentile(y2, [16., 50., 84.])
 
     print(percx2, percy2)
-    # (array([ 0.33044154,  0.94145865,  2.54337235]), array([ 0.40491095,  1.14943934,  5.03257121]))
     print(np.percentile(x, [16., 50., 84.]), np.percentile(y, [16., 50., 84.]))
 
     ang = 45
@@ -282,15 +281,16 @@ def simpler(recentx, secondy, logit=False):
     if wantlog:
         xbins = np.logspace(-2, 2, 100)  #10**np.linspace(-2, 2, 1000)
         ybins = np.logspace(-2, 2, 100)  # 10**np.linspace(-2, 2, 1000)
-        xbins2 = np.logspace(-2, 2, 100*int(127/19))  # 10**np.linspace(-2, 2, 1000)
-        ybins2 = np.logspace(-2, 2, 100*int(127/19))  # 10**np.linspace(-2, 2, 1000)
+        xbins2 = np.logspace(-2, 2, 100*int(167/19))  # 10**np.linspace(-2, 2, 1000)
+        ybins2 = np.logspace(-2, 2, 100*int(167/19))  # 10**np.linspace(-2, 2, 1000)
 
         # x_bins = np.logspace(np.log10(min(x)), np.log10(max(x)), np.sqrt(100))
         # y_bins = np.logspace(np.log10(min(y)), np.log10(max(y)), np.sqrt(100))
         x_bins = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), np.sqrt(len(x))/2)
         y_bins = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), np.sqrt(len(x))/2)
         H1, xedges, yedges = np.histogram2d(x, y, bins=[x_bins, y_bins])
-        H1 = np.ma.masked_array(H1, H1 < 20.)
+        H1 = np.ma.masked_array(H1, H1 < len(x) / (1.5*10**3))  # 20.
+        # H1 /= 19
         # ax1.pcolormesh(xedges, yedges, H1.T, cmap='Purples')
 
         # x_bins2 = np.logspace(np.log10(min(x2)), np.log10(max(x2)), np.sqrt(100))
@@ -298,25 +298,31 @@ def simpler(recentx, secondy, logit=False):
         x_bins2 = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), np.sqrt(len(x))/2)
         y_bins2 = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), np.sqrt(len(x))/2)
         H2, xedges2, yedges2 = np.histogram2d(x2, y2, bins=[x_bins2, y_bins2])
-        H2 = np.ma.masked_array(H2, H2 < 20.)
-        ax1.pcolormesh(xedges2, yedges2, H2.T, cmap=new_cmap2)
-        ax1.pcolormesh(xedges, yedges, H1.T, cmap=new_cmap)#, vmin=2, vmax=100)
+        H2 = np.ma.masked_array(H2, H2 < len(x2) / (2*10**3))  # 20.
+        # H2 /= 167.
+
+        im2 = ax1.pcolormesh(xedges2, yedges2, H2.T, cmap=new_cmap2)
+        im1 = ax1.pcolormesh(xedges, yedges, H1.T, cmap=new_cmap)#, vmin=2, vmax=100)
+
+        if cb:
+            ax2 = plt.subplot(gs[1])
+            ax3 = plt.subplot(gs[2])
+            cbar1 = plt.colorbar(im1, cax=ax2)
+            cbar2 = plt.colorbar(im2, cax=ax3)
+
+            cbar1.set_ticks([20., 40., 60., 80., 100.])
+            cbar2.set_ticks([200., 250., 300., 350., 400.])
+            cbar1.set_ticklabels([r'20', r'40', r'60', r'80', r'100'])
+            cbar2.set_ticklabels([r'200', r'250', r'300', r'350', r'400'])
+            cbar1.ax.tick_params(labelsize=20)
+            cbar2.ax.tick_params(labelsize=20)
+
+            plt.subplots_adjust(wspace=0.1)  # , hspace=0.)
 
         ax1.set_xscale('log')
         ax1.set_yscale('log')
         #ax2.set_xscale('log')
         #ax2.set_yscale('log')
-        '''
-        # , norm=colors.LogNorm(vmin=1, vmax=10000)
-        counts2, _, _ = np.histogram2d(x2, y2, bins=(xbins2, ybins2))
-        #ax2 = fig1.add_axes(ax1.get_position(), frameon=False)
-        #ax2.axis('equal')
-        ax2 = plt.subplot(122)
-        ax2.pcolormesh(xbins2, ybins2, counts2.T, cmap=new_cmap2)
-        # ax1.contourf(xbins, ybins, counts2, levels=[0.5, 0.75, 0.99, 1.0], camp='Blues')
-        counts, _, _ = np.histogram2d(x, y, bins=(xbins, ybins))
-        ax1.pcolormesh(xbins, ybins, counts.T, cmap=new_cmap)
-        '''
     elif logit:
         print("hi")
         X2, Y2, Z2 = density_estimation(x2, y2, xs=[-2., 2.], ys=[-2., 2.], num=10)
@@ -337,7 +343,7 @@ def simpler(recentx, secondy, logit=False):
         ax1.hist2d(x, y, bins=[xbins, ybins], cmap=new_cmap, cmin=19)  # , legend='EELGs')  # 19
         '''
     else:
-        ax1.hist2d(x2, y2, bins=100*127/19, cmap=new_cmap2, cmin=19)  #, legend='SFGs')  # *(127/19), ..., 19
+        ax1.hist2d(x2, y2, bins=100*167/19, cmap=new_cmap2, cmin=19)  #, legend='SFGs')  # *(127/19), ..., 19
         # bins with counts < cmin won't be displayed! cmin=len(x2)/1000
         ax1.hist2d(x, y, bins=100, cmap=new_cmap, cmin=19)#, legend='EELGs')  # 19
         # bins with counts < cmin won't be displayed! cmin=len(x)/1000
@@ -367,21 +373,13 @@ def simpler(recentx, secondy, logit=False):
         ax1.set_yticklabels([r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$', r'$10^3$'],
                             size=fs_ticks)
     elif log:
-        #plt.xscale('log')
-        #plt.yscale('log')
-        #plt.gca().set_yscale('log')
-        #plt.gca().set_xscale('log')
         ax1.set_xscale('log')
-        ax1.set_xscale('log')
-        #ax2.set_xscale('log')
-        #ax2.set_yscale('log')
+        # ax1.set_xscale('log')
         xtick = [10**-1, 10**0, 10**1]  # 10**-2
         ytick = [10 ** -1, 10 ** 0, 10 ** 1]  # 10**-2
         ax1.set_xticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$'], size=fs_ticks)  # r'$10^{-2}$',
         ax1.set_yticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$'], size=fs_ticks)  # r'$10^{-2}$',
         ax1.tick_params(axis='x', which='major', pad=10)
-        #ax2.set_xticklabels([r'$10^{-1}$', r'$10^0$', r'$10^1$'], size=fs_ticks)  # r'$10^{-2}$',
-
     else:
         xtick = [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13.]  # , 15.]  # , 2e-8]  # used if log=0
         ytick = [0., 1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12., 13.]  # , 15.]  # , 2e-8]  # used if log=0
@@ -394,13 +392,8 @@ def simpler(recentx, secondy, logit=False):
                              r'$11$', r'$12$', r'$13$'], size=fs_ticks)  # , r'$15$'
     ax1.xaxis.set_ticks(xtick)
     ax1.yaxis.set_ticks(ytick)
-    #ax2.xaxis.set_ticks(xtick)
-    #ax2.yaxis.set_ticks(ytick)
     ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)
     ax1.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
-    #ax2.tick_params('x', length=3, width=1, which='both', labelsize=fs)
-    #ax2.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
-    #plt.setp(ax2.get_yticklabels(), visible=False)
     plt.rc('xtick', labelsize=20)
     plt.rc('ytick', labelsize=20)
 
@@ -487,8 +480,8 @@ def simpler_mass(recentx, secondy, logit=False):
     if wantlog:
         xbins = np.logspace(-2, 2, 100)  #10**np.linspace(-2, 2, 1000)
         ybins = np.logspace(-2, 2, 100)  # 10**np.linspace(-2, 2, 1000)
-        xbins2 = np.logspace(-2, 2, 100*int(127/19))  # 10**np.linspace(-2, 2, 1000)
-        ybins2 = np.logspace(-2, 2, 100*int(127/19))  # 10**np.linspace(-2, 2, 1000)
+        xbins2 = np.logspace(-2, 2, 100*int(167/19))  # 10**np.linspace(-2, 2, 1000)
+        ybins2 = np.logspace(-2, 2, 100*int(167/19))  # 10**np.linspace(-2, 2, 1000)
 
         # x_bins = np.logspace(np.log10(min(x)), np.log10(max(x)), np.sqrt(100))
         # y_bins = np.logspace(np.log10(min(y)), np.log10(max(y)), np.sqrt(100))
@@ -771,7 +764,7 @@ if __name__ == "__main__":
     massrec = [mr1, mr2]
     masssec = [ms1, ms2]
 
-    simpler_mass(massrec, masssec)
-
     simpler(recents, seconds)
     # simpler(rec2, sec2, col='b')
+
+    simpler_mass(massrec, masssec)

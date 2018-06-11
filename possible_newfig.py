@@ -402,6 +402,7 @@ if __name__ == "__main__":
 
     ax1.set_xticks([10 ** 3, 2 * 10 ** 3, 5 * 10 ** 3, 10 ** 4])  # technically works  #  2 * 10 ** 4
     ax1.axvspan(4800, 5050, color='k', alpha=0.25)  # 0.2
+    ax1.axvspan(6000, 7000, facecolor='none', edgecolor='k', hatch='/')
     ax1.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$'], size=fs_ticks)  # , r'$2\times10^4$'
 
     if comp_fast:
@@ -430,7 +431,7 @@ if __name__ == "__main__":
     # plt.subplots_adjust(hspace=.0)
 
     ax1.tick_params(axis='x', which='major', pad=15)
-    fig.text(0.575, 0.82, r'H$\beta$+[OIII]', fontsize=fs_text, **font)  # 0.575, 0.85
+    fig.text(0.48, 0.82, r'H$\beta$+[OIII]', fontsize=fs_text, **font)  # 0.575, 0.85
     fig.text(0.04, 0.5, ylabel, fontsize=fs_text, va='center', rotation='vertical', **font)  # 0.08
     # fig.text(0.5, 0.92, 'Wavelength (Rest) [\AA]', ha='center', fontsize=fs_text, **font)  # 0.02
     plt.xlabel('Wavelength (Rest) [\AA]', fontsize=fs_text, **font)  # 20
