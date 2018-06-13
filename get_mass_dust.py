@@ -12,7 +12,7 @@ import os
 np.errstate(invalid='ignore')
 
 
-def md(sample_results, start=0, thin=1, percs=True, masstest=False, fast=False, quiet=False, draw1=False):
+def md(sample_results, start=0, thin=1, percs=True, masstest=False, fast=False, five=False, quiet=False, draw1=False):
     """Make a triangle plot of the (thinned, latter) samples of the posterior
     parameter space.  Optionally make the plot only for a supplied subset of
     the parameters.
@@ -69,6 +69,10 @@ def md(sample_results, start=0, thin=1, percs=True, masstest=False, fast=False, 
         logtau = np.percentile(flatchain[:, 2], [16, 50, 84])[1]
         dust = np.percentile(flatchain[:, 3], [16, 50, 84])[1]
         ret = np.asarray([mass, tage, logtau, dust])
+    elif fivemet:
+        mass = np.percentile(flatchain[:, 0], [16, 50, 84])[1]
+        dust = np.percentile(flatchain[:, 6], [16, 50, 84])[1]
+        ret = np.asarray([mass, dust])
     else:
         mass = flatchain[:, 0]
         if not quiet:
@@ -82,7 +86,7 @@ def md(sample_results, start=0, thin=1, percs=True, masstest=False, fast=False, 
     return ret
 
 
-def printer(out_file, percs=True, masstest=False, fast=False, quiet=False, draw1=False):
+def printer(out_file, percs=True, masstest=False, fast=False, five=False, quiet=False, draw1=False):
     if not quiet:
         print(out_file)
         print(masstest)
@@ -90,18 +94,19 @@ def printer(out_file, percs=True, masstest=False, fast=False, quiet=False, draw1
     # ''' #
 
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
-    return md(res, start=-1000, thin=5, percs=percs, masstest=masstest, fast=fast, quiet=quiet, draw1=draw1)  # -650
+    return md(res, start=-1000, thin=5, percs=percs, masstest=masstest, fast=fast, five=five, quiet=quiet, draw1=draw1)  # -650
     # set start by when kl converges!  # returns mass, dust, stellar Z, gas Z
 
 
 if __name__ == "__main__":
 
     corr = 0
-    fico = 1
+    fico = 0
     news = 0
     tenmet = 0
     fast = 0
     masstest = 0
+    fivemet = 1
 
     if corr:
         folders = ['out_ecorr/', 'out_ncorr/']
@@ -111,6 +116,10 @@ if __name__ == "__main__":
         folders = ['out_efico/', 'out_nfico/']
         pars = ['eelg_fifty_params.py', 'eelg_fifty_params.py']
         base = ['fico', 'fico']
+    elif fivemet:
+        folders = ['out_efivemet/', 'out_efico/']
+        pars = ['eelg_fivemet_params.py', 'eelg_fifty_params.py']
+        base = ['fivemet', 'fico']
     elif tenmet:
         folders = ['out_etenmet/', 'out_nfico/']
         pars = ['eelg_tenmet_params.py', 'eelg_fifty_params.py']
@@ -211,7 +220,10 @@ if __name__ == "__main__":
                 countl += 1
     print(countl)
 
-    get_e = np.zeros(shape=(4, len(eelgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as eelgs
+    if fivemet:
+        get_e = np.zeros(shape=(2, len(eelgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as eelgs
+    else:
+        get_e = np.zeros(shape=(4, len(eelgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as eelgs
     onedraw = np.zeros(shape=(4, len(eelgs), 10**3))  # *10**3))
     for i in range(len(eelgs)):
         if os.path.exists(oute + eelgs[i]):
@@ -219,14 +231,18 @@ if __name__ == "__main__":
                 print('hmm')
                 get_e[:, i] = printer(oute + eelgs[i], percs=False, fast=fast)
                 print('hmm')
+            elif fivemet:
+                get_e[:, i] = printer(oute + eelgs[i], percs=False, fast=fast, five=fivemet)
             else:
                 get_e[:, i] = printer(oute + eelgs[i])
                 print(eelgs[i], get_e[0, i])
                 # for k in range(10**3):
-                onedraw[:, i, :] = printer(oute + eelgs[i], percs=False, fast=fast, draw1=True)
+                onedraw[:, i, :] = printer(oute + eelgs[i], percs=False, fast=fast, five=fivemet, draw1=True)
 
     masse = np.percentile(get_e[0], [16., 50., 84.])
     duste = np.percentile(get_e[1], [16., 50., 84.])
+    print(masse)
+    print(duste)
     mete = np.percentile(get_e[2], [16., 50., 84.])
     gasmete = np.percentile(get_e[3], [16., 50., 84.])
 
