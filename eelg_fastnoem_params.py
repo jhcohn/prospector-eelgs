@@ -438,7 +438,7 @@ model_params.append({'name': 'add_dust_emission', 'N': 1,
 ###### Nebular Emission ###########
 model_params.append({'name': 'add_neb_emission', 'N': 1,
                      'isfree': False,
-                     'init': True,  # BUCKET1 emission lines --> init: True
+                     'init': False,  # BUCKET1 emission lines --> init: True
                      'units': r'log Z/Z_\odot',
                      'prior_function_name': None,
                      'prior_args': None})

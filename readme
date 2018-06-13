@@ -26,6 +26,8 @@ eelg_emission_params.py: same as eelg_npSFH_params.py, now with nebular emission
 
 eelg_fast_params.py: made to simulate the FAST runs in F17, to see if Prospector reproduces the same results (it does!)
 
+eelg_fastnoem_params.py: same as eelg_fast_params.py, but without emission!
+
 eelg_fifty_params.py: same as eelg_multirun_params.py, but with agebins 0-50 Myr, 50-100 Myr, 100 Myr-1 Gyr, etc.
 
 eelg_fixedmet_params.py: same as eelg_multirun_params.py, but with logzsol fixed
@@ -56,6 +58,8 @@ ewmass.py: make plots of EW vs mass, or Prosp/FAST mass offset vs metallicity, o
 fast_compare.py: plot comparisons of FAST-derived stellar masses vs Prospector-derived stellar masses for galaxies
 
 fast_mimic_params_latest.py: latest iteration of parameter file for running FAST-like fits in Prospector; defunct
+
+fastnoem_sed_compare.py: compare SEDs for one galaxy from regular Prospector run vs FAST-like run in Prospector without emission lines
 
 get_mass_dust.py: print out median and +/- 1sigma values for the varying parameters (stellar mass, dust, gaslogz, logzsol if applicable) for each population (EELGs and LBGs) as a whole
 
@@ -89,6 +93,8 @@ output.py: improved output_all.py; creates all _out.pkl files needed for make_al
 
 output_all.py: combined quickgrab.py + sfh_output.py; creates all _out.pkl files needed for make_all_plots.py; defunct [functionally replaced by output.py]
 -Running with: python output_all.py --outname=1824_cosmos_decoupled_n1200_1495729287_mcmc.h5 --parfile=eelg_multirun_params.py
+
+outputfast.py: output.py, but specified for FAST-like output. Currently specified for one galaxy at a time, created from eelg_fastnoem_params.py
 
 overlay_seds.py: make plots of Prospector SEDs with emission lines, overlaid with Prospector SEDs from runs with emission masked out, overlaid wth FAST (see differences in SED shape from FAST vs regular Prospector runs vs Prospector runs with emission masked out)
 
