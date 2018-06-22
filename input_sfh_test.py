@@ -5,11 +5,12 @@ from prospect.io import write_results
 from prospect import fitting
 from prospect.likelihood import lnlike_spec, lnlike_phot, write_log
 
-obj = 15124  # 20366  # 12533  # 11462  # 12552  # 12105  # 21442
-field = 'cdfs'  # 'cdfs'  # 'cosmos'  # 'cdfs'
+obj = 11063  # 15124  # 20366  # 12533  # 11462  # 12552  # 12105  # 21442
+field = 'cosmos'  # 'cdfs'  # 'cosmos'  # 'cdfs'
+sfh_style = '15_05_17'  # =0.15 mfrac in most recent bin, 0.05 mfrac in second most recent bin, logzsol of -1.7
 
 sargv = sys.argv
-argdict = {'param_file': 'eelg_addmass_params.py'}
+argdict = {'param_file': 'eelg_sfhtest_params.py'}
 clargs = model_setup.parse_args(sargv, argdict=argdict)
 run_params = model_setup.get_run_params(argv=sargv, **clargs)
 
@@ -26,11 +27,12 @@ global_model = model_setup.load_model(**run_params)
 global_obs = model_setup.load_obs(**run_params)
 
 # -------------
-# ADDED LINES FOR FAST TEST
+# ADDED LINES FOR SFH TEST
 import matplotlib.pyplot as plt
 
 mu, phot, x = global_model.mean_model(global_model.initial_theta, global_obs, sps=sps)
 errs = np.log10(global_obs['maggies'])-np.log10(global_obs['maggies']-global_obs['maggies_unc'])
+# WHY IS INITIAL GUESS MODEL NOT CHANGING?!
 
 # print(global_model.initial_theta, 'model')  # check initial theta
 # print(global_model.theta_labels(), 'labels')  # check theta labels
@@ -47,12 +49,12 @@ phot *= 3631 * 10 ** 6  # uJy
 # print(len(global_obs['wave_effective']), 'wavel')
 
 # CALCULATE MEAN DIFFERENCE BETWEEN INPUT PHOTOMETRY AND INITIAL GUESS MODEL
-mean = ((global_obs['maggies']-phot)/global_obs['maggies']).mean()
-ratio = []
-for i in range(len(global_obs['maggies'])):
-    ratio.append((global_obs['maggies'] / phot))
-print(ratio, 'ratio')
-print(mean, 'mean')
+# mean = ((global_obs['maggies']-phot)/global_obs['maggies']).mean()
+# ratio = []
+# for i in range(len(global_obs['maggies'])):
+#     ratio.append((global_obs['maggies'] / phot))
+# print(ratio, 'ratio')
+# print(mean, 'mean')
 
 # PRINT INPUT PHOTOMETRY SED AND INITIAL GUESS MODEL SED
 plt.subplot(111, xscale="log", yscale="log")
@@ -61,18 +63,6 @@ plt.plot(global_obs['wave_effective'], phot, 'o', color='r')
 # label='Model at {},{}'.format(walker, iteration), color='r')
 plt.show()
 
-# print(global_obs['wave_effective'], 'pop2')
-# too_blue = np.log10(global_obs['wave_effective']) < 3.5
-# print(too_blue, 'pop3')
-
-'''
-# PRINT INITIAL GUESS CHI_SQ
-chi_sq = ((global_obs['maggies'] - phot) / global_obs['maggies_unc']) ** 2
-plt.plot(global_obs['wave_effective'], chi_sq, 'o', color='b')
-plt.xlabel('Wave Effective')
-plt.ylabel(r'$\chi^2$')
-plt.show()
-'''
 
 def get_names(field):
     photname = None
@@ -112,29 +102,32 @@ dat = np.loadtxt(photname, comments='#', delimiter=' ', dtype=dtype)
 # EXTRACT FILTERS, FLUXES, ERRORS FOR OBJECT
 obj_idx = (dat['id'] == str(obj))  # OBJID
 
-flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filters])
-print(len(flux), len(phot))
-tot = []
-diff = []
-for j in range(len(flux)):
-    tot.append((float(flux[j]) + phot[j] * 10 ** 0.44))
-    diff.append(((float(flux[j]) * 10 ** -0.44) - phot[j]) / (float(flux[j]) * 10 ** -0.44))
+# flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filters])
+# print(len(flux), len(phot))
 
-print(diff)
-newphot = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/newphot_' + str(obj)
+# ASSUME UNCERTAINTIES SIMILAR TO TYPICAL UNCERTAINTIES
+unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
+# tot = []
+# diff = []
+for j in range(len(phot)):
+    tot.append(phot[j])
+    # diff.append(((float(flux[j]) * 10 ** -0.44) - phot[j]) / (float(flux[j]) * 10 ** -0.44))
+
+# print(diff)
+newphot = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_' + sfh_style  # str(obj)
 with open(newphot, 'w+') as new:
     new.write('# id ')
     for i in range(len(filters)):
         new.write('f_' + filters[i] + ' ')
     new.write('\n')
-    new.write(str(obj) + ' ')
+    new.write(sfh_style + ' ')  # (str(obj) + ' ')
     for k in range(len(tot)):
         new.write(str(tot[k]) + ' ')
     new.write('\n')
 
 print('tot', tot)
-print('generated phot', phot)
-print('cat flux', flux)
+print('generated phot', phot)  # should be identical to tot
+# print('cat flux', flux)
 
 phot2 = []
 with open(newphot, 'r') as newp:
@@ -146,4 +139,4 @@ with open(newphot, 'r') as newp:
                     pass
                 else:
                     phot2.append(cols[l])
-print(np.squeeze(phot2))
+print(np.squeeze(phot2))  # should be identical to phot and tot?

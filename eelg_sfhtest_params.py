@@ -32,8 +32,8 @@ run_params = {'verbose': True,
               'interp_type': 'logarithmic',
               'agelims': [0.0, 8.0, 8.5, 9.0, 9.5, 9.8, 10.0],  # NEW (see load_model)
               # Data info
-              'field': 'cdfs',
-              'objname': '11462',
+              'field': 'cosmos',
+              'objname': '11063',  # BUCKET: update objname, field each time!
               'photname': '',
               'zname': '',
               'convergence_check_interval': 100,  # Fix convergence test problem
@@ -304,7 +304,7 @@ model_params = []
 ###### BASIC PARAMETERS ##########
 model_params.append({'name': 'zred', 'N': 1,
                      'isfree': False,
-                     'init': 0.0,
+                     'init': 3.085,  # 0.0,
                      'units': '',
                      'prior_function': tophat,
                      'prior_args': {'mini': 0.0, 'maxi': 4.0}})
@@ -410,19 +410,21 @@ model_params.append({'name': 'sf_start', 'N': 1,
                      'prior_function': tophat,
                      'prior_args': {'mini': 0.0, 'maxi': 14.0}})
 
-model_params.append({'name': 'agebins', 'N': 0,  # NEW
+model_params.append({'name': 'agebins', 'N': 6,  # NEW
                      'isfree': False,
-                     'init': [],
+                     'init': np.asarray([[0., 7.7, 8., 9., 9.11064808, 9.22129617], [7.7, 8., 9., 9.11064808,
+                                                                                     9.22129617, 9.33194425]]).T,
                      'units': 'log(yr)',
                      'prior_function': priors.tophat,
                      'prior_args': {'mini': 0.1, 'maxi': 15.0}})
 
-model_params.append({'name': 'sfr_fraction', 'N': 0,  # NEW
+model_params.append({'name': 'sfr_fraction', 'N': 5,  # NEW
                      'isfree': False,
-                     'init': [],
+                     'init': np.asarray([0.15, 0.05, 0.2, 0.2, 0.2]),  # mfrac1, mfrac2, (1 - (mfrac1+mfrac2))/4 [...]
                      'units': 'Msun',
                      'prior_function': priors.tophat,
-                     'prior_args': {'mini': 0.0, 'maxi': 1.0}})
+                     'prior_args': {'maxi': np.full(5, 1.0),  # NOTE: ncomp instead of ncomp-1 makes the prior take into account the implicit Nth variable too
+                                    'mini': np.full(5, 0.0)}})  # {'mini': 0.0, 'maxi': 1.0}})
 
 ######## IMF ##############
 model_params.append({'name': 'imf_type', 'N': 1,
@@ -640,6 +642,7 @@ def load_model(objname, field, agelims=[], **extras):
                np.log10(tuniv*1e9)]
     ncomp = len(agelims) - 1
     agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
+    print(agebins, 'grab these agebins')
 
     # INSERT REDSHIFT INTO MODEL PARAMETER DICTIONARY
     zind = n.index('zred')
@@ -653,7 +656,7 @@ def load_model(objname, field, agelims=[], **extras):
             print(str(objname))
             get = gmd.printer(get_out + plop)  # [mass, dust, metal, gasmet]
     model_params[n.index('dust2')]['init'] = get[1]
-    model_params[n.index('logzsol')]['init'] = get[2]
+    model_params[n.index('logzsol')]['init'] = -1.7  # get[2]
     model_params[n.index('gas_logz')]['init'] = get[3]
 
     # SET UP AGEBINS
@@ -670,9 +673,12 @@ def load_model(objname, field, agelims=[], **extras):
                                                            # NOTE: ncomp instead of ncomp-1 makes the prior take into
                                                            # account the implicit Nth variable too
                                                           }
-    eelg_frac = 0.6
-    sf_inits = np.zeros(ncomp-1)+(1.-eelg_frac)/(ncomp-1.)
-    sf_inits[0] = eelg_frac
+    eelg_frac1 = 0.9  # mfrac in most recent bin
+    eelg_frac2 = 0.05  # mfrac in second most recent bin
+    sf_inits = np.zeros(ncomp-1)+(1.-(eelg_frac1 + eelg_frac2))/(ncomp-2.)
+    sf_inits[0] = eelg_frac1
+    sf_inits[1] = eelg_frac2
+    print(sf_inits, 'look at me!!!')
 
     model_params[n.index('sfr_fraction')]['init'] = sf_inits  # np.zeros(ncomp-1)+1./ncomp
     model_params[n.index('sfr_fraction')]['init_disp'] = 0.02
