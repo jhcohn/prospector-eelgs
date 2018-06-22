@@ -364,6 +364,7 @@ model_params.append({'name': 'tau', 'N': 1,
                      'prior_function': tophat,
                      'prior_args': {'mini': 0.1, 'maxi': 100.0}})
 
+'''
 model_params.append({'name': 'tage', 'N': 1,
                      'isfree': False,  # set tage to the age of the Universe
                      'init': 5.0,
@@ -371,6 +372,7 @@ model_params.append({'name': 'tage', 'N': 1,
                      'units': 'Gyr',
                      'prior_function': tophat,
                      'prior_args': {'mini': 0.101, 'maxi': 14.0}})
+'''
 
 model_params.append({'name': 'logtau', 'N': 1,
                      'isfree': False,  # NEW turn off
@@ -571,7 +573,6 @@ class FracSFH(FastStepBasis):  # NEW CLASS
         self.update(**params)
 
         # here's the custom fractional stuff
-        '''
         fractions = np.array(self.params['sfr_fraction'])
         bin_fractions = np.append(fractions, (1 - np.sum(fractions)))
         time_per_bin = []
@@ -583,16 +584,10 @@ class FracSFH(FastStepBasis):  # NEW CLASS
         mass = bin_fractions * self.params['mass']
         mtot = self.params['mass'].sum()
 
-        '''
-        mass = self.params['mass']
-        mtot = self.params['mass'].sum()
-
-        '''
         time, sfr, tmax = self.convert_sfh(self.params['agebins'], mass)
         self.ssp.params["sfh"] = 3  # Hack to avoid rewriting the superclass
         self.ssp.set_tabular_sfh(time, sfr)
-        '''
-        wave, spec = self.ssp.get_spectrum(tage=self.params['tage'], peraa=False)
+        wave, spec = self.ssp.get_spectrum(tage=tmax, peraa=False)
 
         return wave, spec / mtot, self.ssp.stellar_mass / mtot
 
@@ -655,7 +650,8 @@ def load_model(objname, field, agelims=[], **extras):
         if plop.startswith(str(objname)) and plop.endswith(".h5"):
             print(str(objname))
             get = gmd.printer(get_out + plop)  # [mass, dust, metal, gasmet]
-    model_params[n.index('dust2')]['init'] = get[1]
+    model_params[n.index('logmass')]['init'] = 9.4  # get[0]
+    model_params[n.index('dust2')]['init'] = 0.32  # get[1]
     model_params[n.index('logzsol')]['init'] = -1.7  # get[2]
     model_params[n.index('gas_logz')]['init'] = get[3]
 
@@ -685,6 +681,9 @@ def load_model(objname, field, agelims=[], **extras):
 
     # CREATE MODEL
     model = BurstyModel(model_params)
+    print('model')
+    print(model_params)
+    print(model_params[n.index('sfr_fraction')])
 
     return model
 

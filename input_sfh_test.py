@@ -13,6 +13,8 @@ sargv = sys.argv
 argdict = {'param_file': 'eelg_sfhtest_params.py'}
 clargs = model_setup.parse_args(sargv, argdict=argdict)
 run_params = model_setup.get_run_params(argv=sargv, **clargs)
+print('runpars')
+print(run_params)
 
 # --------------
 # Globals
@@ -25,6 +27,9 @@ spec_noise, phot_noise = model_setup.load_gp(**run_params)
 global_model = model_setup.load_model(**run_params)
 # Obs as global
 global_obs = model_setup.load_obs(**run_params)
+
+print(global_model.initial_theta)
+print(global_obs)
 
 # -------------
 # ADDED LINES FOR SFH TEST
