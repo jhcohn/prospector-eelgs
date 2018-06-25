@@ -45,6 +45,10 @@ eelg_otherbins_params.py: eelg_fixedmet_params.py, but with different agebins
 
 eelg_quickstart_params.py: same as eelg_emission_params.py, but skip do_Powell process; start run by using previous best fit values as input initial parameter values
 
+eelg_sfhtest_params.py: use with input_sfh_test.py to generate simulated photometry
+
+eelg_simsfh_params.py: run prospector on simulated photometry (generated from eelg_sfhtest_params.py with input_sfh_test.py) to see if we can recover input params
+
 eelg_tenmet_params.py: same as eelg_fifty_params.py, but with the lower boundary on logzsol increased from -2 to -1
 
 eelg_thvary_params.py: eelg_varymet_params.py, but with new agebins (0-30 Myr, ...)
@@ -66,6 +70,8 @@ get_mass_dust.py: print out median and +/- 1sigma values for the varying paramet
 half_times.py: compare half-mass assembly times (calculated in output.py and stored in extra_output pickles) for EELG and LBG samples; plot as histograms; can also bootstrap and plot results of bootstrapped ages
 
 input_plot_test.py: file for bulding prospector model and then testing input SED and chi_sq; defunct; un-defunct, now using to generate photometry at early times to see if we can recover an old stellar mass population
+
+input_sfh_test.py: generate simulated photometry for EELG-like galaxy (with eelg_sfhtest_params.py); later, run this photometry with eelg_simsfh_params.py to see if we can recover input params
 
 make_all_plots.py: calls uvj.py, print_sfh.py, and then also prints SED and chi^2 on same plot from pickled files produced by output_all.py; can also call widths.py
 -Running with: python make_all_plots.py --obj=7730 --field=cosmos --base=_newbins
@@ -139,6 +145,8 @@ ssfr_now.py: previously used this to get SFHs and other parameters for the galax
 stack_sfh.py: use to plot stacked SFHs for lists of galaxies; defunct
 
 stellar_ages.py: use for calculating typical stellar ages in the galaxy samples, rather than half-mass assembly times -- essentially SUM((SFR in each bin) * (time in each bin) * (average age of bin)) / SUM(SFR in each bin * time in each bin)
+
+tt_etc.py: gmd, ssfr for Tiantian's galaxies
 
 uvj.py: code to make a uvj diagram for a given object, field, with the given object highlighted as a star
 

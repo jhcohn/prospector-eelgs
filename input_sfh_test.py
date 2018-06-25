@@ -7,14 +7,14 @@ from prospect.likelihood import lnlike_spec, lnlike_phot, write_log
 
 obj = 11063  # 15124  # 20366  # 12533  # 11462  # 12552  # 12105  # 21442
 field = 'cosmos'  # 'cdfs'  # 'cosmos'  # 'cdfs'
-sfh_style = '15_05_17'  # =0.15 mfrac in most recent bin, 0.05 mfrac in second most recent bin, logzsol of -1.7
+sfh_style = str(obj) + '_9_03_17_15_05'
+# =logmass of 9., dust2 of 0.3, logzsol of -1.7, 0.15 mfrac in most recent bin, 0.05 mfrac in second most recent bin
 
 sargv = sys.argv
 argdict = {'param_file': 'eelg_sfhtest_params.py'}
 clargs = model_setup.parse_args(sargv, argdict=argdict)
 run_params = model_setup.get_run_params(argv=sargv, **clargs)
 print('runpars')
-print(run_params)
 
 # --------------
 # Globals
@@ -28,8 +28,8 @@ global_model = model_setup.load_model(**run_params)
 # Obs as global
 global_obs = model_setup.load_obs(**run_params)
 
-print(global_model.initial_theta)
-print(global_obs)
+# print(global_model.initial_theta)
+# print(global_obs)
 
 # -------------
 # ADDED LINES FOR SFH TEST
@@ -111,8 +111,9 @@ obj_idx = (dat['id'] == str(obj))  # OBJID
 # print(len(flux), len(phot))
 
 # ASSUME UNCERTAINTIES SIMILAR TO TYPICAL UNCERTAINTIES
-unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
-# tot = []
+# unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
+
+tot = []
 # diff = []
 for j in range(len(phot)):
     tot.append(phot[j])

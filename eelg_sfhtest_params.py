@@ -650,8 +650,8 @@ def load_model(objname, field, agelims=[], **extras):
         if plop.startswith(str(objname)) and plop.endswith(".h5"):
             print(str(objname))
             get = gmd.printer(get_out + plop)  # [mass, dust, metal, gasmet]
-    model_params[n.index('logmass')]['init'] = 9.4  # get[0]
-    model_params[n.index('dust2')]['init'] = 0.32  # get[1]
+    model_params[n.index('logmass')]['init'] = 9.  # get[0]
+    model_params[n.index('dust2')]['init'] = 0.3  # get[1]
     model_params[n.index('logzsol')]['init'] = -1.7  # get[2]
     model_params[n.index('gas_logz')]['init'] = get[3]
 
