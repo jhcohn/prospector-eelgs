@@ -16,23 +16,34 @@ np.errstate(invalid='ignore')
 
 if __name__ == "__main__":
 
-    folders = ['out_tt/', 'out_tfast/']
-    pars = ['eelg_fifty_params.py', 'eelg_fast_params.py']
-    base = ['tt' 'tfast']
+    tt = 0  # Tiantian's galaxies
+    sfhtest = 1  # sfh test
 
-    gnames = ['5519_cdfs_tt', '5593_cdfs_tt', '5475_cdfs_tt']
-    fnames = ['5519_cdfs_tfast', '5593_cdfs_tfast', '5475_cdfs_tfast']
+    if tt:
+        folders = ['out_tt/', 'out_tfast/']
+        pkls = ['pkl_tt/', 'pkl_tfast/']
+        pars = ['eelg_fifty_params.py', 'eelg_fast_params.py']
+        base = ['tt' 'tfast']
+        gnames = ['5519_cdfs_tt', '5593_cdfs_tt', '5475_cdfs_tt']
+        fnames = ['5519_cdfs_tfast', '5593_cdfs_tfast', '5475_cdfs_tfast']
+    elif sfhtest:
+        folders = ['out_simsfh/', 'out_simsfh/']
+        pkls = ['pkl_simsfh/', 'pkl_simsfh/']
+        pars = ['eelg_simsfh_params.py', 'eelg_simsfh_params.py']
+        base = ['9_03_17_15_05', '9_03_17_15_05']
+        fnames = ['11063_sim_9_03_17_15_05']
+        gnames = ['11063_sim_9']
 
     gals = []
     oute = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + folders[0]
-    pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/pkl_tt/'
+    pkls = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + pkls[0]
     for file in os.listdir(oute):
         if file.endswith(".h5"):
             gals.append(file)
 
     fasts = []
     outl = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + folders[1]
-    pklsf = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/pkl_tfast/'
+    pklsf = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/' + pkls[1]
     for file in os.listdir(outl):
         if file.endswith(".h5"):
             fasts.append(file)
@@ -42,7 +53,6 @@ if __name__ == "__main__":
     onedrawf = np.zeros(shape=(4, len(fasts), 10**3))  # *10**3))
     for i in range(len(gals)):
         if os.path.exists(oute + gals[i]):
-            print(gals[i])
             # print('reg', printer(oute + gals[i]))
             # print('fast', printer(outl + fasts[i], percs=False, fast=True))
 
@@ -53,6 +63,7 @@ if __name__ == "__main__":
         # fgal = fnames[i]
         file = pkls + glxy + '_extra_out.pkl'
         # ffile = pklsf + fgal + '_extra_out.pkl'
+        print(i)
         randomdraws = sfh.randraw(file, onedraw[0, i, np.random.randint(10**3)])[0]  # size 22, num
         # note: above random randint chooses a random value of mass for galaxy
         recent = []

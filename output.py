@@ -166,7 +166,7 @@ def calc_extra_quantities(sample_results, ncalc=2000, **kwargs):  # ncalc=3000
         print(stellar_mass[jj])
         ssfr_10[jj] = sfr_10[jj] / stellar_mass[jj]
         ssfr_100[jj] = sfr_100[jj] / stellar_mass[jj]
-        ssfr_full[:, jj] = intsfr[:, jj] / stellar_mass[jj]
+        ssfr_full[:, jj] = intsfr[:, jj] / stellar_mass[jj]  # /0.8 ?! But then why is that not necessary for sfr_10(0)?
 
         loop += 1
         print('loop', loop)
@@ -238,7 +238,7 @@ def post_processing(out_file, param_file, full_h5file=True, out_incl=False, **kw
             count += 1
 
         elif out_incl:
-            if slash == 1 and count == 1:
+            if slash == 2 and count == 1:
                 obj += i
             elif count == 2:
                 field += i
@@ -280,8 +280,19 @@ def post_processing(out_file, param_file, full_h5file=True, out_incl=False, **kw
     res['flatprob'] = prosp_dutils.chop_chain(res['lnprobability'], **res['run_params'])
     extra_output = calc_extra_quantities(res, **kwargs)
     print('extra calculated')
+    print(base)
 
     # choose correct folder where .h5 file is stored based on param file name
+    if base == 'corr':
+        folder = 'pkl_ecorr/'  # 'pkl_ncorr/'
+    elif base == 'fico':
+        folder = 'pkl_efico/'  # 'pkl_nfico/'
+    elif base == 'masstest':
+        folder = 'pkl_masstest/'
+    else:
+        folder = 'pkl_simsfh/'
+
+    '''
     if base == 'thirty':
         folder = 'etpkls/'
     elif base == 'nth':
@@ -295,8 +306,19 @@ def post_processing(out_file, param_file, full_h5file=True, out_incl=False, **kw
     elif base == 'nother':
         folder = 'nopkls/'
     elif base == 'vary':
-        folder = 'evar_pkl/'
+        folder = 'ecorr_pkl/'
+        # folder = 'evar_pkl/'
+    elif base == 'noneb' or 'evarnoneb':
+        folder = 'nonebpkls/'
+    elif base == 'efifty2':
+        folder = 'efifty2_pkls/'
+    elif base == 'evar2':
+        folder = 'evar2_pkls/'
+    elif base == 'masstest':
+        folder = 'pkl_masstest'
+    '''
 
+    # folder = 'evar2_pkls/'  # 'efifty2_pkls/'
     # pkl extra output!
     extra = folder + full_base + '_extra_' + pkl  # full_base + '_extra_' + pkl
     print(extra)
@@ -306,13 +328,14 @@ def post_processing(out_file, param_file, full_h5file=True, out_incl=False, **kw
     
     # PRINT TRACE SHOWING HOW ITERATIONS PROGRESS FOR EACH PARAMETER
     # I edited param_evol to also store lnprob, but this is a silly and long-obsolete way of doing this
-    tracefig, prob = bread.param_evol(res)  # prints tracefig, store probability
+    tracefig = bread.param_evol(res)  # prints tracefig
     plt.title(full_base)  # BUCKET just added
     # plt.savefig(img_base + '_tracefig.png', bbox_inches='tight')
     # plt.show()
 
     # FIND WALKER, ITERATION THAT GIVE MAX PROBABILITY
     # a result of the silly, long-obsolete way I'm grabbing lnprob above
+    prob = res['lnprobability'][..., 0:]
     print('max', prob.max())
     row = prob.argmax() / len(prob[0])
     col = prob.argmax() - row * len(prob[0])
@@ -320,7 +343,7 @@ def post_processing(out_file, param_file, full_h5file=True, out_incl=False, **kw
     print(walker, iteration)
 
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
-    bread.subtriangle(res, start=0, thin=5, show_titles=True)
+    bread.subtriangle(res, start=-1000, thin=5, show_titles=True)
     plt.title(full_base)  # BUCKET just added
     # plt.savefig(img_base + '_cornerfig.png', bbox_inches='tight')
     # plt.show()
@@ -354,6 +377,9 @@ def post_processing(out_file, param_file, full_h5file=True, out_incl=False, **kw
     elif field == 'uds':
         datname = '/home/jonathan/uds/uds.v1.5.10.cat'
         zname = '/home/jonathan/uds/uds.v1.5.8.awk.zout'
+    elif field == 'sim':  # hacking for now
+        datname = '/home/jonathan/cosmos/cosmos.v1.3.8.cat'  # main catalog
+        zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'  # redshift catalog
 
     # photometry catalog
     with open(datname, 'r') as f:

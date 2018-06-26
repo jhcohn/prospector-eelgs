@@ -244,6 +244,26 @@ if __name__ == "__main__":
                 # , cvg=cvg[i])
                 sed(true_obj, true_field, res, mod, walker, iteration, param_file, **kwargs)
 
+    elif files['outname'] == 'tt' or files['outname'] == 'tfast':
+        objs = ['5519', '5593', '5475']
+        if files['outname'] == 'tt':
+            out_folder = 'out_tt/'
+        elif files['outname'] == 'tfast':
+            out_folder = 'out_tfast/'
+
+        for i in range(len(objs)):
+            for infile in glob.glob(os.path.join('/home/jonathan/.conda/envs/snowflakes/lib/python2.7/' +
+                                                 'site-packages/prospector/git/out/' + out_folder, objs[i] + '*.h5')):
+                out_file = infile
+                param_file = files['parfile']
+                print(param_file, out_file)
+                true_field = 'cdfs'
+                true_obj = objs[i]
+
+                objname, field, res, mod, walker, iteration = printer(out_file, masstest=False, obj_true=true_obj)
+                # , cvg=cvg[i])
+                # sed(true_obj, true_field, res, mod, walker, iteration, param_file, **kwargs)
+
     else:
         out_file = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'+files['outname']
         param_file = files['parfile']
