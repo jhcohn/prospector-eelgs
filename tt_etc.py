@@ -16,16 +16,16 @@ np.errstate(invalid='ignore')
 
 if __name__ == "__main__":
 
-    tt = 0  # Tiantian's galaxies
-    sfhtest = 1  # sfh test
+    tt = 1  # Tiantian's galaxies
+    sfhtest = 0  # sfh test
 
     if tt:
-        folders = ['out_tt/', 'out_tfast/']
-        pkls = ['pkl_tt/', 'pkl_tfast/']
-        pars = ['eelg_fifty_params.py', 'eelg_fast_params.py']
-        base = ['tt' 'tfast']
+        folders = ['out_tt/', 'out_tfastnoem/']
+        pkls = ['pkl_tt/', 'pkl_tfn/']
+        pars = ['eelg_fifty_params.py', 'eelg_fastnoem_params.py']
+        base = ['tt' 'tfn']
         gnames = ['5519_cdfs_tt', '5593_cdfs_tt', '5475_cdfs_tt']
-        fnames = ['5519_cdfs_tfast', '5593_cdfs_tfast', '5475_cdfs_tfast']
+        fnames = ['5519_cdfs_tfn', '5593_cdfs_tfn', '5475_cdfs_tfn']
     elif sfhtest:
         folders = ['out_simsfh/', 'out_simsfh/']
         pkls = ['pkl_simsfh/', 'pkl_simsfh/']

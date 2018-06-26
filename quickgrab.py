@@ -244,12 +244,12 @@ if __name__ == "__main__":
                 # , cvg=cvg[i])
                 sed(true_obj, true_field, res, mod, walker, iteration, param_file, **kwargs)
 
-    elif files['outname'] == 'tt' or files['outname'] == 'tfast':
+    elif files['outname'] == 'tt' or files['outname'] == 'tfast' or files['outname'] == 'tfn':
         objs = ['5519', '5593', '5475']
         if files['outname'] == 'tt':
             out_folder = 'out_tt/'
-        elif files['outname'] == 'tfast':
-            out_folder = 'out_tfast/'
+        elif files['outname'] == 'tfast' or files['outname'] == 'tfn':
+            out_folder = 'out_tfastnoem/'
 
         for i in range(len(objs)):
             for infile in glob.glob(os.path.join('/home/jonathan/.conda/envs/snowflakes/lib/python2.7/' +

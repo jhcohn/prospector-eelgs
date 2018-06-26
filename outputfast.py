@@ -263,7 +263,7 @@ def post_processing(out_file, param_file, out_incl=False, full_h5file=False):  #
             break
     print(field)
     git = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
-    full_base = 'pkl_efastnoem/' + obj + '_' + field + '_' + base  # 'pkl_efico/'
+    full_base = 'pkl_tfn/' + obj + '_' + field + '_' + base  # 'pkl_efastnoem/'  # 'pkl_efico/'
     pkl = 'out.pkl'
 
     res, pr, mod = bread.results_from(out_file)
@@ -425,21 +425,22 @@ if __name__ == "__main__":
     # don't create keyword if not passed in!
 
     print('start')
-    folder = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/out_efastnoem'  # out_efico'  # out_ecorr'  # out_efix'  # out_efifth'  # out_eshort' # out_emask'  # out_evar'
+    folder = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/out_tfastnoem'
+             # 'out_efastnoem'  # out_efico'  # out_ecorr'  # out_efix'  # out_efifth'  # out_eshort' # out_emask'  # out_evar'
     count = 0
     for infile in glob.glob(os.path.join(folder, '*.h5')):
         count += 1
         print("current file is: " + infile)
         out_file = infile
-    param_file = 'eelg_fastnoem_params.py'
-    outy = False
-    full = False
-    if count <= 6:
-        if out_file[-1] == '5' and out_file[0] == '/':
-            full = True
-        elif out_file[0] == 'o' and not full:
-            outy = True
-        post_processing(out_file=out_file, param_file=param_file, out_incl=outy, full_h5file=full)
+        param_file = 'eelg_fastnoem_params.py'
+        outy = False
+        full = False
+        if count <= 6:
+            if out_file[-1] == '5' and out_file[0] == '/':
+                full = True
+            elif out_file[0] == 'o' and not full:
+                outy = True
+            post_processing(out_file=out_file, param_file=param_file, out_incl=outy, full_h5file=full)
     print(count)
 # post_processing(out_file=out_file, param_file=param_file, **kwargs)
 
