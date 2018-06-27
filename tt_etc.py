@@ -24,8 +24,9 @@ if __name__ == "__main__":
         pkls = ['pkl_tt/', 'pkl_tfn/']
         pars = ['eelg_fifty_params.py', 'eelg_fastnoem_params.py']
         base = ['tt' 'tfn']
-        gnames = ['5519_cdfs_tt', '5593_cdfs_tt', '5475_cdfs_tt']
-        fnames = ['5519_cdfs_tfn', '5593_cdfs_tfn', '5475_cdfs_tfn']
+        gnames = ['5519_cosmos_tt', '5593_cosmos_tt', '5475_cosmos_tt']
+        fnames = ['5519_cosmos_tfn', '5593_cosmos_tfn', '5475_cosmos_tfn']
+
     elif sfhtest:
         folders = ['out_simsfh/', 'out_simsfh/']
         pkls = ['pkl_simsfh/', 'pkl_simsfh/']
@@ -66,6 +67,7 @@ if __name__ == "__main__":
         print(i)
         randomdraws = sfh.randraw(file, onedraw[0, i, np.random.randint(10**3)])[0]  # size 22, num
         # note: above random randint chooses a random value of mass for galaxy
+
         recent = []
         second = []
         for j in range(len(randomdraws)):  # 22?
@@ -82,6 +84,7 @@ if __name__ == "__main__":
         print('dust', np.percentile(onedraw[1, i, :], [16., 50., 84.]))
         print('met', np.percentile(onedraw[2, i, :], [16., 50., 84.]))
         print('gasmet', np.percentile(onedraw[3, i, :], [16., 50., 84.]))
+
         print(fasts[i])
         print('mass', np.percentile(onedrawf[0, i, :], [16., 50., 84.]))
         print('tage', np.percentile(onedrawf[1, i, :], [16., 50., 84.]))

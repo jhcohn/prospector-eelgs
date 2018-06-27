@@ -289,6 +289,8 @@ def post_processing(out_file, param_file, full_h5file=True, out_incl=False, **kw
         folder = 'pkl_efico/'  # 'pkl_nfico/'
     elif base == 'masstest':
         folder = 'pkl_masstest/'
+    elif base == 'tt':
+        folder = 'pkl_tt/'
     else:
         folder = 'pkl_simsfh/'
 

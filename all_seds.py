@@ -16,11 +16,11 @@ sfh = 0  # if not sfh, then seds
 chi_stuff = 0
 folders = ['pkl_tt', 'pkl_tfn']  # ['pkl_masstest', 'pkl_ncorr']
 # ['pkl_efix', 'pkl_nvary']  # ['pkl_efifty', 'pkl_nvary']  # ['pkl_evar', 'pkl_nvary']  # ['pkl_emask', 'pkl_nmask']
-file = 'tfn'  # 'tt'  # 'masstest'  # 'fifty'  # 'vary'  # 'newmask'
+file = 'tt'  # 'tfn'  # 'masstest'  # 'fifty'  # 'vary'  # 'newmask'
 fs = 20  # 30
 fs_text = 30
 textx = 1100
-texty = 30  # 300  # 500
+texty = 15  # 30  # 300  # 500
 
 objs = []
 fields = []
@@ -53,13 +53,15 @@ if eelgs:
 elif tt:
     # galxs = ['5519_cdfs_tt', '5593_cdfs_tt', '547_cdfs_tt']
     folder = 'pkl_tt'
+    file = 'tt'
     objs = ['5519', '5593', '5475']
-    fields = ['cdfs', 'cdfs', 'cdfs']
+    fields = ['cosmos', 'cosmos', 'cosmos']
 elif tfast:
     # galxs = ['5519_cdfs_tt', '5593_cdfs_tt', '547_cdfs_tt']
     folder = 'pkl_tfn'
+    file = 'tfn'
     objs = ['5519', '5593', '5475']
-    fields = ['cdfs', 'cdfs', 'cdfs']
+    fields = ['cosmos', 'cosmos', 'cosmos']
 else:
     folder = folders[1]
     galxs = open(home + 'lbg_ids1', 'r')
@@ -191,11 +193,13 @@ for i in range(len(objs)):
             ax1.legend(numpoints=1, loc='upper left', prop={'size': 20})  # , line2) ... , r'$\chi$']
             # plt.subplots_adjust(hspace=.0)
 
-            loc_uvj = 1
-            inset_axes(ax1, width=8 * 0.32, height=8 * 0.28, loc=loc_uvj)
+            # inset_axes(ax1, width=8 * 0.32, height=8 * 0.28, loc=3, bbox_to_anchor=(1.0,1.0))
+            # ax4 = fig.add_axes([0.75, 0.36, 0.14, 0.21])  # left, bottom, width, height
+            ax4 = fig.add_axes([0.65, 0.66, 0.14, 0.21])  # left, bottom, width, height
             # NOTE: height = 0.875 width (3.5 units vs 4 units) 20%/0.875=0.22857 --> if height 28%, set width to 32%
             # create inset axis: width (%), height (inches), location
-            # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right)
+            # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right),
+            # loc=9 (upper center)
             # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
             uvj.uvj_plot(-1, 'all', objlist=[obj + '_' + field], title=False, labels=False, lims=True,
                          size=20, show=False, col=['purple'])
@@ -204,20 +208,21 @@ for i in range(len(objs)):
             plt.subplots_adjust(wspace=.0, hspace=.0)
 
             xmin = 10 ** 3
-            xmax = 2.5 * 10 ** 4
-            ymin = 5*10**-3  # 10**-2  # 10 ** -1  # 6*10**-2
-            ymax = 5*10**2  # 8*10**3  # 4 * 10 ** 3  # 10**4
+            xmax = 3.5*10**4  # 2.5 * 10 ** 4
+            ymin = 5*10**-2  # 5*10**-3  # 10**-2  # 10 ** -1  # 6*10**-2
+            ymax = 200  # 5*10**2  # 8*10**3  # 4 * 10 ** 3  # 10**4
             ax1.set_xlim(xmin, xmax)  # 700, xmax
             ax1.set_ylim(ymin, ymax)
-            ax3.set_ylim(-2.99, 2.99)
+            ax3.set_ylim(-5, 5.)
             fs_ticks = 25
             ax1.set_xticks([10 ** 3, 2 * 10 ** 3, 5 * 10 ** 3, 10 ** 4, 2 * 10 ** 4])  # technically works
             ax1.set_xticklabels([r'$10^3$', r'$2\times10^3$', r'$5 \times 10^3$', r'$10^4$', r'$2\times10^4$'],
                                 size=fs_ticks)
-            ax1.set_yticks([10**-2, 10**-1, 10**0, 10**1, 10**2])  # technically works
+            ax1.set_yticks([10**-2, 10**-1, 10**0, 10**1, 10**2])  # technically works  # , 10**2
             ax1.set_yticklabels([r'$10^{-2}$', r'$10^{-1}$', r'$10^0$', r'$10^1$', r'$10^2$'], size=fs_ticks)
-            ax3.set_yticks([-2, -1, 0, 1, 2])  # technically works
-            ax3.set_yticklabels([r'$-2$', r'$-1$', r'$0$', r'$1$', r'$2$'], size=fs_ticks)
+            #  , r'$10^2$', r'$10^3$'
+            ax3.set_yticks([-4, -2, 0, 2, 4])  # technically works
+            ax3.set_yticklabels([r'$-4$', r'$-2$', r'$0$', r'$2$', r'$4$'], size=fs_ticks)
 
             ax1.tick_params('x', length=3, width=1, which='both', labelsize=fs)
             ax1.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
