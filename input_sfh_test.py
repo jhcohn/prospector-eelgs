@@ -5,10 +5,21 @@ from prospect.io import write_results
 from prospect import fitting
 from prospect.likelihood import lnlike_spec, lnlike_phot, write_log
 
-obj = 11063  # 15124  # 20366  # 12533  # 11462  # 12552  # 12105  # 21442
-field = 'cosmos'  # 'cdfs'  # 'cosmos'  # 'cdfs'
-sfh_style = str(obj) + '_9_03_17_15_05'
-# =logmass of 9., dust2 of 0.3, logzsol of -1.7, 0.15 mfrac in most recent bin, 0.05 mfrac in second most recent bin
+obj = 12533 # 11063  # 15124  # 20366  # 12533  # 11462  # 12552  # 12105  # 21442
+field = 'cdfs'# 'cosmos'  # 'cdfs'  # 'cosmos'  # 'cdfs'
+sfh_style = str(obj) + '_set8'
+set9 = 'set9_94_04_17_68_07'
+set8 = 'set8_99_03_006_30_05'  # cdfs 12533
+set7 = 'set7_94_03_17_66_05'
+set6 = 'set6_94_03_17_15_05'
+set5 = 'set5_97_04_20_20_05'
+set4 = 'set4_95_03_17_60_05'
+set3 = 'set3_95_00_10_40_05'
+set2 = 'set2_10_03_17_30_10'  # log(M)=10, dust=0.3, log(Z_sol)=-1.7, sfr_frac_msotrecent=0.30, sfr_fracsecond=0.10
+set1 = 'set1_9_03_17_90_05'
+# =logmass of 9., dust2 of 0.3, logzsol of -1.7, 0.90 mfrac in most recent bin, 0.05 mfrac in second most recent bin
+
+pset = set8
 
 sargv = sys.argv
 argdict = {'param_file': 'eelg_sfhtest_params.py'}
@@ -107,32 +118,26 @@ dat = np.loadtxt(photname, comments='#', delimiter=' ', dtype=dtype)
 # EXTRACT FILTERS, FLUXES, ERRORS FOR OBJECT
 obj_idx = (dat['id'] == str(obj))  # OBJID
 
-# flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filters])
+flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filters])
 # print(len(flux), len(phot))
 
 # ASSUME UNCERTAINTIES SIMILAR TO TYPICAL UNCERTAINTIES
 # unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
 
-tot = []
-# diff = []
-for j in range(len(phot)):
-    tot.append(phot[j])
-    # diff.append(((float(flux[j]) * 10 ** -0.44) - phot[j]) / (float(flux[j]) * 10 ** -0.44))
-
 # print(diff)
 newphot = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_' + sfh_style  # str(obj)
-with open(newphot, 'w+') as new:
+with open(newphot, 'a') as new:
     new.write('# id ')
     for i in range(len(filters)):
         new.write('f_' + filters[i] + ' ')
     new.write('\n')
-    new.write(sfh_style + ' ')  # (str(obj) + ' ')
-    for k in range(len(tot)):
-        new.write(str(tot[k]) + ' ')
+    new.write(pset + ' ')  # new.write(sfh_style + ' ')  # (str(obj) + ' ')
+    for k in range(len(phot)):
+        new.write(str(phot[k]) + ' ')
     new.write('\n')
 
-print('tot', tot)
-print('generated phot', phot)  # should be identical to tot
+print('generated phot', phot)
+print(str(obj) + ' flux', flux)
 # print('cat flux', flux)
 
 phot2 = []

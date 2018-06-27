@@ -32,8 +32,8 @@ run_params = {'verbose': True,
               'interp_type': 'logarithmic',
               'agelims': [0.0, 8.0, 8.5, 9.0, 9.5, 9.8, 10.0],  # NEW (see load_model)
               # Data info
-              'field': 'cosmos',
-              'objname': '11063',  # BUCKET: update objname, field each time!
+              'field': 'cdfs',#'cosmos',  #  'cosmos',
+              'objname': '12533',  #'11063',  # BUCKET: update objname, field each time!
               'photname': '',
               'zname': '',
               'convergence_check_interval': 100,  # Fix convergence test problem
@@ -650,13 +650,12 @@ def load_model(objname, field, agelims=[], **extras):
         if plop.startswith(str(objname)) and plop.endswith(".h5"):
             print(str(objname))
             get = gmd.printer(get_out + plop)  # [mass, dust, metal, gasmet]
-    model_params[n.index('logmass')]['init'] = 9.  # get[0]
+    model_params[n.index('logmass')]['init'] = 9.9  # 9.  # get[0]
     model_params[n.index('dust2')]['init'] = 0.3  # get[1]
-    model_params[n.index('logzsol')]['init'] = -1.7  # get[2]
+    model_params[n.index('logzsol')]['init'] = -0.06  # -1.7  # get[2]
     model_params[n.index('gas_logz')]['init'] = get[3]
 
     # SET UP AGEBINS
-
     model_params[n.index('agebins')]['N'] = ncomp
     model_params[n.index('agebins')]['init'] = agebins.T
 
@@ -669,7 +668,7 @@ def load_model(objname, field, agelims=[], **extras):
                                                            # NOTE: ncomp instead of ncomp-1 makes the prior take into
                                                            # account the implicit Nth variable too
                                                           }
-    eelg_frac1 = 0.9  # mfrac in most recent bin
+    eelg_frac1 = 0.3  # mfrac in most recent bin
     eelg_frac2 = 0.05  # mfrac in second most recent bin
     sf_inits = np.zeros(ncomp-1)+(1.-(eelg_frac1 + eelg_frac2))/(ncomp-2.)
     sf_inits[0] = eelg_frac1
