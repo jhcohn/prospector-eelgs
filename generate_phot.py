@@ -70,43 +70,44 @@ with open(newphot, 'w+') as new:
     new.write('\n')
 
 # GENERATE PHOTOMETRY FROM ALL THE PARAM FILES I JUST MADE WITH GENERATE_PARAM.PY
-for m in range(len(masses)):
-    print(m, 'm!')
-    for d in range(len(dusts)):
-        for z in range(len(mets)):
-            for f in range(len(sfr1)):
-                pset = str(int(masses[m] * 10)) + '_' + str(int(dusts[d] * 100)) + '_' + str(int(mets[z] * -10)) \
-                       + '_' + str(int(sfr1[f] * 100))
-                print(pset)
-                parfile = 'testpars/sfhtest_' + pset + '_params.py'
 
-                sargv = sys.argv
-                argdict = {'param_file': parfile}
-                clargs = model_setup.parse_args(sargv, argdict=argdict)
-                run_params = model_setup.get_run_params(argv=sargv, **clargs)
-                print('runpars')
-                # --------------
-                # Globals
-                # --------------
-                # SPS Model instance as global
-                sps = model_setup.load_sps(**run_params)
-                # GP instances as global
-                # spec_noise, phot_noise = model_setup.load_gp(**run_params)
-                # Model as global
-                global_model = model_setup.load_model(**run_params)
-                # Obs as global
-                global_obs = model_setup.load_obs(**run_params)
+for x in range(200):
+    parfile = 'bettertest/sfhtest_' + str(x) + '_params.py'
+    pset = None
+    with open(parfile, 'r') as pfile:
+        for line in pfile:
+            if line.startswith('# Codename: '):
+                pset = line[12:]
+    print('pset', pset)
+    print(parfile, x)
 
-                mu, phot, x = global_model.mean_model(global_model.initial_theta, global_obs, sps=sps)
+    sargv = sys.argv
+    argdict = {'param_file': parfile}
+    clargs = model_setup.parse_args(sargv, argdict=argdict)
+    run_params = model_setup.get_run_params(argv=sargv, **clargs)
+    print('runpars')
+    # --------------
+    # Globals
+    # --------------
+    # SPS Model instance as global
+    sps = model_setup.load_sps(**run_params)
+    # GP instances as global
+    # spec_noise, phot_noise = model_setup.load_gp(**run_params)
+    # Model as global
+    global_model = model_setup.load_model(**run_params)
+    # Obs as global
+    global_obs = model_setup.load_obs(**run_params)
 
-                phot *= 3631 * 10 ** 6  # maggies to uJy
+    mu, phot, other = global_model.mean_model(global_model.initial_theta, global_obs, sps=sps)
 
-                # print(diff)
-                with open(newphot, 'a') as new:
-                    new.write(pset + ' ')  # new.write(sfh_style + ' ')  # (str(obj) + ' ')
-                    for k in range(len(phot)):
-                        new.write(str(phot[k]) + ' ')
-                    new.write('\n')
+    phot *= 3631 * 10 ** 6  # maggies to uJy
+
+    # print(diff)
+    with open(newphot, 'a') as new:
+        new.write(str(x) + ' ')  # new.write(sfh_style + ' ')  # (str(obj) + ' ')
+        for k in range(len(phot)):
+            new.write(str(phot[k]) + ' ')
+        new.write('\n')
 
 print('done!')
 # print('generated phot', phot)
