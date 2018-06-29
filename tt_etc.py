@@ -16,7 +16,8 @@ np.errstate(invalid='ignore')
 
 if __name__ == "__main__":
 
-    tt = 1  # Tiantian's galaxies
+    tt = 0  # Tiantian's galaxies
+    ttring = 1
     sfhtest = 0  # sfh test
 
     if tt:
@@ -25,6 +26,14 @@ if __name__ == "__main__":
         pars = ['eelg_fifty_params.py', 'eelg_fastnoem_params.py']
         base = ['tt' 'tfn']
         gnames = ['5519_cosmos_tt', '5593_cosmos_tt', '5475_cosmos_tt']
+        fnames = ['5519_cosmos_tfn', '5593_cosmos_tfn', '5475_cosmos_tfn']
+
+    elif ttring:
+        folders = ['out_ttring/', 'out_tfastnoem/']
+        pkls = ['pkl_ttring/', 'pkl_tfn/']
+        pars = ['eelg_ttring_params.py', 'eelg_fastnoem_params.py']
+        base = ['ttring' 'tfn']
+        gnames = ['5519001_cosmos_ttring', '5519002_cosmos_ttring', '5519003_cosmos_ttring']
         fnames = ['5519_cosmos_tfn', '5593_cosmos_tfn', '5475_cosmos_tfn']
 
     elif sfhtest:
@@ -78,6 +87,21 @@ if __name__ == "__main__":
                 for k in range(len(randomdraws[0])):  # num = 10**4?
                     second.append(randomdraws[j][k])
         print(gals[i])
+
+        ssfr050 = np.percentile(recent, [16., 50., 84.])
+        ssfr50100 = np.percentile(second, [16., 50., 84.])
+        mass = np.percentile(onedraw[0, i, :], [16., 50., 84.])
+        dust = np.percentile(onedraw[1, i, :], [16., 50., 84.])
+        met = np.percentile(onedraw[2, i, :], [16., 50., 84.])
+        gasmet = np.percentile(onedraw[3, i, :], [16., 50., 84.])
+
+        print('ssfr 0-50', ssfr050[1], '+', ssfr050[2] - ssfr050[1], '-', ssfr050[1]-ssfr050[0])
+        print('ssfr 50-100', ssfr50100[1], '+', ssfr50100[2] - ssfr50100[1], '-', ssfr50100[1]-ssfr50100[0])
+        print('mass', mass[1], '+', mass[2]-mass[1], '-', mass[1]-mass[0])
+        print('dust', dust[1] / 1.086, '+', (dust[2]-dust[1]) / 1.086, '-', (dust[1]-dust[0]) / 1.086)
+        print('met', 10**met[1], '+', 10**met[2]-10**met[1], '-', 10**met[1]-10**met[0])
+        print('gasmet', 10**gasmet[1], '+', 10**gasmet[2]-10**gasmet[1], '-', 10**gasmet[1]-10**gasmet[0])
+        '''
         print('ssfr 0-50', np.percentile(recent, [16., 50., 84.]))
         print('ssfr 50-100', np.percentile(second, [16., 50., 84.]))
         print('mass', np.percentile(onedraw[0, i, :], [16., 50., 84.]))
@@ -90,44 +114,4 @@ if __name__ == "__main__":
         print('tage', np.percentile(onedrawf[1, i, :], [16., 50., 84.]))
         print('logtau', np.percentile(onedrawf[2, i, :], [16., 50., 84.]))
         print('dust', np.percentile(onedrawf[3, i, :], [16., 50., 84.]))
-
-'''
-5519_cdfs_tt_1529681589_mcmc.h5
-('ssfr 0-50', array([  2.13811580e-09,   2.65041068e-09,   4.06467211e-09]))
-('ssfr 50-100', array([  3.35884165e-10,   1.28210011e-09,   2.88002932e-09]))
-('mass', array([ 8.84616123,  8.91384125,  8.98551491]))
-('dust', array([ 0.09309613,  0.21738216,  0.367716  ]))
-('met', array([-0.45945215, -0.12037901,  0.09563315]))
-('gasmet', array([-1.57574482, -0.74148431, -0.1373779 ]))
-5519_cdfs_tfast_1529684132_mcmc.h5
-('mass', array([ 8.80425129,  8.85554743,  8.89594406]))
-('tage', array([ 2.45612302,  3.50806594,  4.18618896]))
-('logtau', array([-1.34073757,  0.10544156,  1.38699596]))
-('dust', array([ 0.32267835,  0.37998955,  0.47563315]))
-
-5593_cdfs_tt_1529686734_mcmc.h5
-('ssfr 0-50', array([  6.97110150e-10,   8.26257842e-10,   9.83950533e-10]))
-('ssfr 50-100', array([  5.47038084e-11,   2.46552797e-10,   7.36842120e-10]))
-('mass', array([ 8.10925735,  8.21538925,  8.30441715]))
-('dust', array([ 0.03640653,  0.10723628,  0.20377764]))
-('met', array([-0.0227099 ,  0.09697676,  0.161579  ]))
-('gasmet', array([-1.80078944, -1.40309417, -1.1121323 ]))
-5593_cdfs_tfast_1529689965_mcmc.h5
-('mass', array([ 8.04089443,  8.09354305,  8.14443062]))
-('tage', array([ 2.99748585,  3.92401087,  4.79658571]))
-('logtau', array([-1.45291759, -0.17301916,  1.31309599]))
-('dust', array([ 0.033387  ,  0.10405507,  0.19853153]))
-
-5475_cdfs_tt_1529681672_mcmc.h5
-('ssfr 0-50', array([  7.65770823e-11,   1.17383962e-10,   1.70387840e-10]))
-('ssfr 50-100', array([  1.37224271e-11,   6.51601882e-11,   1.95537203e-10]))
-('mass', array([ 9.51058006,  9.58273792,  9.64859978]))
-('dust', array([ 0.03305917,  0.12124067,  0.26184136]))
-('met', array([-0.23366278, -0.00958648,  0.13142096]))
-('gasmet', array([-0.89538906, -0.08187881,  0.28848711]))
-5475_cdfs_tfast_1529684086_mcmc.h5
-('mass', array([ 9.38911087,  9.43760014,  9.48172237]))
-('tage', array([ 1.67573083,  2.15706217,  2.42894878]))
-('logtau', array([-1.28101252,  0.04709384,  1.38593617]))
-('dust', array([ 0.31577208,  0.36668095,  0.44947072]))
-'''
+        '''

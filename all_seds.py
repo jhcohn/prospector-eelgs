@@ -11,21 +11,27 @@ import uvj
 home = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
 eelgs = 0  # True=1
 tt = 0
-tfast = 1
+tfast = 0
+ttring = 1
 sfh = 0  # if not sfh, then seds
 chi_stuff = 0
 folders = ['pkl_tt', 'pkl_tfn']  # ['pkl_masstest', 'pkl_ncorr']
 # ['pkl_efix', 'pkl_nvary']  # ['pkl_efifty', 'pkl_nvary']  # ['pkl_evar', 'pkl_nvary']  # ['pkl_emask', 'pkl_nmask']
-file = 'tt'  # 'tfn'  # 'masstest'  # 'fifty'  # 'vary'  # 'newmask'
+file = 'masstest'  # 'fifty'  # 'vary'  # 'newmask'
 fs = 20  # 30
 fs_text = 30
 textx = 1100
 texty = 15  # 30  # 300  # 500
+inc_uvj = True
 
 objs = []
 fields = []
 count = 0
 if eelgs:
+    xmin = 10 ** 3
+    xmax = 3.5 * 10 ** 4  # 2.5 * 10 ** 4
+    ymin = 5 * 10 ** -2  # 5*10**-3  # 10**-2  # 10 ** -1  # 6*10**-2
+    ymax = 200  # 5*10**2  # 8*10**3  # 4 * 10 ** 3  # 10**4
     folder = folders[0]
     galxs = open(home + 'eelg_specz_ids1', 'r')  # open(base + 'specz_ids', 'r')
     for line in galxs:
@@ -56,12 +62,31 @@ elif tt:
     file = 'tt'
     objs = ['5519', '5593', '5475']
     fields = ['cosmos', 'cosmos', 'cosmos']
+    xmin = 10 ** 3
+    xmax = 3.5 * 10 ** 4  # 2.5 * 10 ** 4
+    ymin = 5 * 10 ** -2  # 5*10**-3  # 10**-2  # 10 ** -1  # 6*10**-2
+    ymax = 200  # 5*10**2  # 8*10**3  # 4 * 10 ** 3  # 10**4
 elif tfast:
     # galxs = ['5519_cdfs_tt', '5593_cdfs_tt', '547_cdfs_tt']
     folder = 'pkl_tfn'
     file = 'tfn'
     objs = ['5519', '5593', '5475']
     fields = ['cosmos', 'cosmos', 'cosmos']
+    xmin = 10 ** 3
+    xmax = 3.5 * 10 ** 4  # 2.5 * 10 ** 4
+    ymin = 5 * 10 ** -2  # 5*10**-3  # 10**-2  # 10 ** -1  # 6*10**-2
+    ymax = 200  # 5*10**2  # 8*10**3  # 4 * 10 ** 3  # 10**4
+elif ttring:
+    # galxs = ['5519_cdfs_tt', '5593_cdfs_tt', '547_cdfs_tt']
+    folder = 'pkl_ttring'
+    file = 'ttring'
+    objs = ['5519001', '5519002', '5519003']
+    fields = ['cosmos', 'cosmos', 'cosmos']
+    inc_uvj = False
+    xmin = 10 ** 3
+    xmax = 10 ** 4  # 2.5 * 10 ** 4
+    ymin = 5 * 10 ** -2  # 5*10**-3  # 10**-2  # 10 ** -1  # 6*10**-2
+    ymax = 500  # 5*10**2  # 8*10**3  # 4 * 10 ** 3  # 10**4
 else:
     folder = folders[1]
     galxs = open(home + 'lbg_ids1', 'r')
@@ -193,24 +218,22 @@ for i in range(len(objs)):
             ax1.legend(numpoints=1, loc='upper left', prop={'size': 20})  # , line2) ... , r'$\chi$']
             # plt.subplots_adjust(hspace=.0)
 
-            # inset_axes(ax1, width=8 * 0.32, height=8 * 0.28, loc=3, bbox_to_anchor=(1.0,1.0))
-            # ax4 = fig.add_axes([0.75, 0.36, 0.14, 0.21])  # left, bottom, width, height
-            ax4 = fig.add_axes([0.65, 0.66, 0.14, 0.21])  # left, bottom, width, height
-            # NOTE: height = 0.875 width (3.5 units vs 4 units) 20%/0.875=0.22857 --> if height 28%, set width to 32%
-            # create inset axis: width (%), height (inches), location
-            # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right),
-            # loc=9 (upper center)
-            # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
-            uvj.uvj_plot(-1, 'all', objlist=[obj + '_' + field], title=False, labels=False, lims=True,
-                         size=20, show=False, col=['purple'])
-            print('uvj1')
+            if inc_uvj:
+                # inset_axes(ax1, width=8 * 0.32, height=8 * 0.28, loc=3, bbox_to_anchor=(1.0,1.0))
+                # ax4 = fig.add_axes([0.75, 0.36, 0.14, 0.21])  # left, bottom, width, height
+                ax4 = fig.add_axes([0.65, 0.66, 0.14, 0.21])  # left, bottom, width, height
+                # NOTE: height = 0.875 width (3.5 units vs 4 units) 20%/0.875=0.22857 --> if height 28%, set width to 32%
+                # create inset axis: width (%), height (inches), location
+                # loc=1 (upper right), loc=2 (upper left) --> loc=3 (lower left), loc=4 (lower right); loc=7 (center right),
+                # loc=9 (upper center)
+                # https://stackoverflow.com/questions/10824156/matplotlib-legend-location-numbers
+                uvj.uvj_plot(-1, 'all', objlist=[obj + '_' + field], title=False, labels=False, lims=True,
+                             size=20, show=False, col=['purple'])
+                print('uvj1')
 
             plt.subplots_adjust(wspace=.0, hspace=.0)
 
-            xmin = 10 ** 3
-            xmax = 3.5*10**4  # 2.5 * 10 ** 4
-            ymin = 5*10**-2  # 5*10**-3  # 10**-2  # 10 ** -1  # 6*10**-2
-            ymax = 200  # 5*10**2  # 8*10**3  # 4 * 10 ** 3  # 10**4
+
             ax1.set_xlim(xmin, xmax)  # 700, xmax
             ax1.set_ylim(ymin, ymax)
             ax3.set_ylim(-5, 5.)
