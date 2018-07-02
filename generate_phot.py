@@ -32,54 +32,59 @@ def get_names(field):
 
     return photname, zname, filters
 
+newphot = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_all'
+photbase = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_'
+photc = photbase + 'cosmos'
+photu = photbase + 'uds'
+photf = photbase + 'cdfs'
 
-obj = 11063  #12533  # 15124  # 20366  # 12533  # 11462  # 12552  # 12105  # 21442
-field = 'cosmos'  # 'cdfs'# 'cosmos'  # 'cdfs'  # 'cosmos'  # 'cdfs'
-'''
-sfh_style = str(obj) + '_set8'
-set9 = 'set9_94_04_17_68_07'
-set8 = 'set8_99_03_006_30_05'  # cdfs 12533
-set7 = 'set7_94_03_17_66_05'
-set6 = 'set6_94_03_17_15_05'
-set5 = 'set5_97_04_20_20_05'
-set4 = 'set4_95_03_17_60_05'
-set3 = 'set3_95_00_10_40_05'
-set2 = 'set2_10_03_17_30_10'  # log(M)=10, dust=0.3, log(Z_sol)=-1.7, sfr_frac_msotrecent=0.30, sfr_fracsecond=0.10
-set1 = 'set1_9_03_17_90_05'
-# =logmass of 9., dust2 of 0.3, logzsol of -1.7, 0.90 mfrac in most recent bin, 0.05 mfrac in second most recent bin
-
-pset = set8
-'''
-
-masses = np.linspace(9., 9.8, 5)  # [9. 9.1 ... 9.8]  (...9); with 5 instead: 9., 9.2, 9.4, 9.6, 9.8
-dusts = np.linspace(0.15, 0.55, 3)  # [0.1 0.2 ... 0.6]; with 5 instead (0.15:0.55): 0.15, 0.25, ..., 0.55
-# 3: 0.15, 0.35, 0.55
-mets = np.linspace(-2., -1.5, 3)  # [-2. -1.75 -1.5]; (with5: [-2 -1.75 .. -1.])
-sfr1 = np.linspace(0.05, 0.45, 5)  # [0.1 0.2 ... 0.6]  # 5-45%
-# sfr2 = np.linspace(0.05, 0.2, 4)  # [0.05 0.1 0.15 0.2]  # NOTE: keep sfr2 at 0.05
-newphot = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_all' #\
-#           + str(int(masses[m] * 10)) + '_' + str(int(dusts[d] * 100)) + '_' + str(int(mets[z] * -10)) \
-#           + '_' + str(int(sfr1[f] * 100))
-
-photname, zname, filters = get_names(field)  # FIELD
-
-with open(newphot, 'w+') as new:
+photname, zname, cfilters = get_names('cosmos')  # FIELD
+uphotname, uzname, ufilters = get_names('uds')  # FIELD
+fphotname, fzname, ffilters = get_names('cdfs')  # FIELD
+with open(photc, 'w+') as new:
     new.write('# id ')
-    for i in range(len(filters)):
-        new.write('f_' + filters[i] + ' ')
+    for i in range(len(cfilters)):
+        new.write('f_' + cfilters[i] + ' ')
     new.write('\n')
-
+with open(photu, 'w+') as new:
+    new.write('# id ')
+    for i in range(len(dfilters)):
+        new.write('f_' + dfilters[i] + ' ')
+    new.write('\n')
+with open(photf, 'w+') as new:
+    new.write('# id ')
+    for i in range(len(ffilters)):
+        new.write('f_' + ffilters[i] + ' ')
+    new.write('\n')
 # GENERATE PHOTOMETRY FROM ALL THE PARAM FILES I JUST MADE WITH GENERATE_PARAM.PY
 
 for x in range(200):
-    parfile = 'bettertest/sfhtest_' + str(x) + '_params.py'
+    parfile = 'besttest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     pset = None
+    field = ''
     with open(parfile, 'r') as pfile:
         for line in pfile:
             if line.startswith('# Codename: '):
                 pset = line[12:]
+            elif line.startswith('# Identity: '):
+                counterl = 0
+                for l in line:
+                    if l == ' ' or l == '_':
+                        counterl += 1
+                    elif counterl == 2:
+                        field += l
     print('pset', pset)
+    print('field', field)
     print(parfile, x)
+
+    if field == 'cosmos':
+        usephot = photc
+    elif field == 'cdfs':
+        usephot = photf
+    elif field == 'uds':
+        usephot = photu
+    else:
+        print('WARNING', 'field = ' + field)
 
     sargv = sys.argv
     argdict = {'param_file': parfile}
@@ -103,27 +108,11 @@ for x in range(200):
     phot *= 3631 * 10 ** 6  # maggies to uJy
 
     # print(diff)
-    with open(newphot, 'a') as new:
-        new.write(str(x) + ' ')  # new.write(sfh_style + ' ')  # (str(obj) + ' ')
+    with open(usephot, 'a') as new:
+        new.write(str(x) + ' ')
         for k in range(len(phot)):
             new.write(str(phot[k]) + ' ')
         new.write('\n')
+        print('look!')
 
 print('done!')
-# print('generated phot', phot)
-# print(str(obj) + ' flux', flux)
-# print('cat flux', flux)
-
-'''
-phot2 = []
-with open(newphot, 'r') as newp:
-    for line in newp:
-        if line[0] != '#':
-            cols = line.split()
-            for l in range(len(cols)):
-                if l == 0:
-                    pass
-                else:
-                    phot2.append(cols[l])
-print(np.squeeze(phot2))  # should be identical to phot and tot?
-'''

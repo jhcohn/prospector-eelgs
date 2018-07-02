@@ -32,8 +32,8 @@ run_params = {'verbose': True,
               'interp_type': 'logarithmic',
               'agelims': [0.0, 8.0, 8.5, 9.0, 9.5, 9.8, 10.0],  # NEW (see load_model)
               # Data info
-              'field': 'cdfs',#'cosmos',  #  'cosmos',
-              'objname': '12533',  #'11063',  # BUCKET: update objname, field each time!
+              'field': 'cosmos',  # 'cdfs',#'cosmos',  #  'cosmos',
+              'objname': '11063',  # '12533',  #'11063',  # BUCKET: update objname, field each time!
               'photname': '',
               'zname': '',
               'convergence_check_interval': 100,  # Fix convergence test problem
@@ -572,7 +572,7 @@ class FracSFH(FastStepBasis):  # NEW CLASS
     def get_galaxy_spectrum(self, **params):
         self.update(**params)
 
-        # here's the custom fractional stuff
+        # custom fractional stuff
         fractions = np.array(self.params['sfr_fraction'])
         bin_fractions = np.append(fractions, (1 - np.sum(fractions)))
         time_per_bin = []
@@ -637,7 +637,7 @@ def load_model(objname, field, agelims=[], **extras):
                np.log10(tuniv*1e9)]
     ncomp = len(agelims) - 1
     agebins = np.array([agelims[:-1], agelims[1:]])  # why agelims[1:] instead of agelims[0:]?
-    print(agebins, 'grab these agebins')
+    # print(agebins, 'grab these agebins')
 
     # INSERT REDSHIFT INTO MODEL PARAMETER DICTIONARY
     zind = n.index('zred')
@@ -648,7 +648,7 @@ def load_model(objname, field, agelims=[], **extras):
     get_out = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/out_efico/'
     for plop in os.listdir(get_out):
         if plop.startswith(str(objname)) and plop.endswith(".h5"):
-            print(str(objname))
+            # print(str(objname))
             get = gmd.printer(get_out + plop)  # [mass, dust, metal, gasmet]
     model_params[n.index('logmass')]['init'] = 9.9  # 9.  # get[0]
     model_params[n.index('dust2')]['init'] = 0.3  # get[1]
@@ -673,7 +673,7 @@ def load_model(objname, field, agelims=[], **extras):
     sf_inits = np.zeros(ncomp-1)+(1.-(eelg_frac1 + eelg_frac2))/(ncomp-2.)
     sf_inits[0] = eelg_frac1
     sf_inits[1] = eelg_frac2
-    print(sf_inits, 'look at me!!!')
+    # print(sf_inits, 'look at me!!!')
 
     model_params[n.index('sfr_fraction')]['init'] = sf_inits  # np.zeros(ncomp-1)+1./ncomp
     model_params[n.index('sfr_fraction')]['init_disp'] = 0.02
@@ -681,8 +681,8 @@ def load_model(objname, field, agelims=[], **extras):
     # CREATE MODEL
     model = BurstyModel(model_params)
     print('model')
-    print(model_params)
-    print(model_params[n.index('sfr_fraction')])
+    # print(model_params)
+    # print(model_params[n.index('sfr_fraction')])
 
     return model
 

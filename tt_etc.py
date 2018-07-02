@@ -29,12 +29,12 @@ if __name__ == "__main__":
         fnames = ['5519_cosmos_tfn', '5593_cosmos_tfn', '5475_cosmos_tfn']
 
     elif ttring:
-        folders = ['out_ttring/', 'out_tfastnoem/']
-        pkls = ['pkl_ttring/', 'pkl_tfn/']
+        folders = ['out_ttring2/', 'out_tfastnoem/']
+        pkls = ['pkl_ttring2/', 'pkl_tfn/']
         pars = ['eelg_ttring_params.py', 'eelg_fastnoem_params.py']
-        base = ['ttring' 'tfn']
-        gnames = ['5519001_cosmos_ttring', '5519002_cosmos_ttring', '5519003_cosmos_ttring']
-        fnames = ['5519_cosmos_tfn', '5593_cosmos_tfn', '5475_cosmos_tfn']
+        base = ['ttring2' 'tfn']
+        gnames = ['5519001_cosmos_ttring2', '5519002_cosmos_ttring2', '5519003_cosmos_ttring2', '5519_cosmos_ttring2']
+        fnames = ['5519_cosmos_tfn', '5593_cosmos_tfn', '5475_cosmos_tfn', '5519_cosmos_tfn']
 
     elif sfhtest:
         folders = ['out_simsfh/', 'out_simsfh/']

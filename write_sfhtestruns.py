@@ -27,8 +27,8 @@ line12 = 'source /home/joncohn/myfsps.sh\n\n'
 
 lines = [line1, line2, line3, line4, line5, line6, line7, line8, line9, line10, line11, line12]
 
-e_nums = [str(int(num)) for num in np.arange(1, 100)]  # ['1', ..., '10']
-newnames = ['eelg_' + this + 'runs' + n + '.lsf' for n in e_nums]
+# e_nums = [str(int(num)) for num in np.arange(1, 100)]  # ['1', ..., '10']
+# newnames = ['eelg_' + this + 'runs' + n + '.lsf' for n in e_nums]
 # NOTE: ALL GENERATED PHOT WAS BASED ON COSMOS-11063
 
 idx = 0
