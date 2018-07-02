@@ -12,7 +12,8 @@ import os
 np.errstate(invalid='ignore')
 
 
-def md(sample_results, start=0, thin=1, percs=True, masstest=False, fast=False, five=False, quiet=False, draw1=False):
+def md(sample_results, start=0, thin=1, percs=True, sfhtest=False, masstest=False, fast=False, five=False, quiet=False,
+       draw1=False):
     """Make a triangle plot of the (thinned, latter) samples of the posterior
     parameter space.  Optionally make the plot only for a supplied subset of
     the parameters.
@@ -44,6 +45,14 @@ def md(sample_results, start=0, thin=1, percs=True, masstest=False, fast=False, 
         if parnames[7] == u'logzsol':
             metal = np.percentile(flatchain[:, 7], [16, 50, 84])[1]
         ret = [mass, dust, metal, gasmet]
+    elif sfhtest and draw1:
+        mass = np.random.choice(flatchain[:, 0], size=(10**3))
+        ssfr1 = np.random.choice(flatchain[:, 1], size=(10**3))
+        ssfr2 = np.random.choice(flatchain[:, 2], size=(10**3))
+        dust = np.random.choice(flatchain[:, 6], size=(10**3))
+        gasmet = np.random.choice(flatchain[:, -1], size=(10**3))
+        metal = np.random.choice(flatchain[:, 7], size=(10**3))
+        ret = np.asarray([mass, dust, metal, gasmet, ssfr1, ssfr2])
     elif masstest:
         mass = np.percentile(flatchain[:, 0], [16, 50, 84])[1]
         dust = np.percentile(flatchain[:, 6], [16, 50, 84])[1]
@@ -57,6 +66,12 @@ def md(sample_results, start=0, thin=1, percs=True, masstest=False, fast=False, 
         ret.append(dust)
         ret.append(metal)
         ret.append(gasmet)
+    elif draw1 and fast:
+        mass = np.random.choice(flatchain[:, 0], size=(10**3))
+        tage = np.random.choice(flatchain[:, 1], size=(10**3))
+        logtau = np.random.choice(flatchain[:, 2], size=(10**3))
+        dust = np.random.choice(flatchain[:, 3], size=(10**3))
+        ret = np.asarray([mass, tage, logtau, dust])
     elif draw1:
         mass = np.random.choice(flatchain[:, 0], size=(10**3))
         dust = np.random.choice(flatchain[:, 6], size=(10**3))
@@ -69,7 +84,7 @@ def md(sample_results, start=0, thin=1, percs=True, masstest=False, fast=False, 
         logtau = np.percentile(flatchain[:, 2], [16, 50, 84])[1]
         dust = np.percentile(flatchain[:, 3], [16, 50, 84])[1]
         ret = np.asarray([mass, tage, logtau, dust])
-    elif fivemet:
+    elif five:
         mass = np.percentile(flatchain[:, 0], [16, 50, 84])[1]
         dust = np.percentile(flatchain[:, 6], [16, 50, 84])[1]
         ret = np.asarray([mass, dust])
@@ -86,7 +101,7 @@ def md(sample_results, start=0, thin=1, percs=True, masstest=False, fast=False, 
     return ret
 
 
-def printer(out_file, percs=True, masstest=False, fast=False, five=False, quiet=False, draw1=False):
+def printer(out_file, percs=True, sfhtest=False, masstest=False, fast=False, five=False, quiet=False, draw1=False):
     if not quiet:
         print(out_file)
         print(masstest)
@@ -94,7 +109,8 @@ def printer(out_file, percs=True, masstest=False, fast=False, five=False, quiet=
     # ''' #
 
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
-    return md(res, start=-1000, thin=5, percs=percs, masstest=masstest, fast=fast, five=five, quiet=quiet, draw1=draw1)  # -650
+    return md(res, start=-1000, thin=5, percs=percs, sfhtest=sfhtest, masstest=masstest, fast=fast, five=five,
+              quiet=quiet, draw1=draw1)  # -650
     # set start by when kl converges!  # returns mass, dust, stellar Z, gas Z
 
 
@@ -106,7 +122,11 @@ if __name__ == "__main__":
     tenmet = 0
     fast = 0
     masstest = 0
-    fivemet = 1
+    fivemet = 0
+    tt = 0
+    sfhtest = 1
+
+    massmatch = 0
 
     if corr:
         folders = ['out_ecorr/', 'out_ncorr/']
@@ -137,48 +157,23 @@ if __name__ == "__main__":
         pars = ['eelg_masstest_params.py', 'eelg_fifty_params.py']
         base = ['masstest', 'fico']
         obj = '12105'  # '12552'  # '12105'  # '21442'
-    '''
-    elif vary:
-        folders = ['out_evar/', 'out_nvary/']
-        pars = ['eelg_varymet_params.py', 'eelg_varymet_params.py']
-        base = 'vary'
-    elif fifty:
-        folders = ['out_efifty/', 'out_efifty/']  # out_nfifty
-        pars = ['eelg_fifty_params.py', 'eelg_fifty_params.py']
-        base = 'fifty'
-    elif fix:
-        folders = ['out_efix/', 'out_efifty/']  # out_nfifty
-        pars = ['eelg_fixedmet_params.py', 'eelg_fifty_params.py']
-        base = 'fix'
-    elif newu:
-        folders = ['out_enewu/', 'out_enewu/']  # out_nfifty
-        pars = ['eelg_newu_params.py', 'eelg_newu_params.py']
-        base = 'newu'
-    elif others:
-        folders = ['out_ethvary/', 'out_nthvary/']
-        pars = ['eelg_thvary_params.py', 'eelg_thvary_params.py']
-        base = 'thvary'
-    elif short:
-        folders = ['out_eshort/', 'out_nshort/']
-        pars = ['eelg_short_params.py', 'eelg_short_params.py']
-    else:
-        folders = ['out_fixedmet/', 'out_noelg/']
-        pars = ['eelg_fixedmet_params.py', 'noelg_multirun_params.py']
-    '''
+    elif sfhtest:
+        folders = ['out_simsfh/', 'out_sfhtest/']
+        pars = ['eelg_simsfh_params.py', 'eelg_test0_params.py']
+        base = ['9_03_17_15_05', 'sfhtest']
+        obj = '11063'
 
     eelgs1 = []
-    if masstest:
-        oute = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + folders[0]
-        for file in os.listdir(oute):
+    oute = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + folders[0]
+    for file in os.listdir(oute):
+        if masstest or sfhtest:
             if file.endswith(".h5") and file.startswith(obj):
                 eelgs1.append(file)
-    else:
-        oute = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + folders[0]
-        for file in os.listdir(oute):
+        else:
             if file.endswith(".h5"):
                 eelgs1.append(file)
 
-    ### NEW COMP
+    # LIST GALAXIES IN EELG COMPOSITE SED
     eelg_list = open('eelg_specz_ids1', 'r')
     comp = []
     for line in eelg_list:
@@ -194,6 +189,7 @@ if __name__ == "__main__":
                 comp.append(str(int(cols[0])) + '_cdfs_' + base[0])  # base[1] = noelg (or nother)
     eelg_list.close()
 
+    # MAKE SURE ALL THE GALAXIES IN THE COMPOSITE SED HAVE BEEN RUN THROUGH PROSPECTOR
     eelgs = []
     count = 0
     for file in eelgs1:
@@ -203,12 +199,12 @@ if __name__ == "__main__":
                 print(file)
                 eelgs.append(file)
     print(count)
-    ### END NEW COMP
 
+    # LIST GALAXIES IN SFG COMPOSITE SED
     lbgs = []
     outl = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + folders[1]
     countl = 0
-    if masstest:
+    if masstest or sfhtest:
         for file in os.listdir(outl):
             if file.endswith(".h5") and file.startswith(obj):
                 lbgs.append(file)
@@ -220,82 +216,140 @@ if __name__ == "__main__":
                 countl += 1
     print(countl)
 
-    if fivemet:
-        get_e = np.zeros(shape=(2, len(eelgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as eelgs
-    else:
-        get_e = np.zeros(shape=(4, len(eelgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as eelgs
-    onedraw = np.zeros(shape=(4, len(eelgs), 10**3))  # *10**3))
-    for i in range(len(eelgs)):
-        if os.path.exists(oute + eelgs[i]):
-            if fast:
-                print('hmm')
-                get_e[:, i] = printer(oute + eelgs[i], percs=False, fast=fast)
-                print('hmm')
-            elif fivemet:
-                get_e[:, i] = printer(oute + eelgs[i], percs=False, fast=fast, five=fivemet)
-            else:
-                get_e[:, i] = printer(oute + eelgs[i])
-                print(eelgs[i], get_e[0, i])
+    # IF COMPARING MASS-MATCHED SUBSAMPLES
+    if massmatch:
+        mass1, dust1, met1, ssfrs1 = [], [], [], []
+        counter = 0
+        counter2 = 0
+        lims = [9.7, 9.9]  # set mass range on which to compare (ranges are ~equivalent at 9.7 < log(M) < 9.9)
+        for i in range(len(eelgs)):
+            # print(eelgs[i], 'look!')
+            get = printer(oute + eelgs[i], percs=True)  # median mass, dust, gasmet, metallicity
+
+            # IF mass is within limits (i.e.if part of mass-matched subsample)
+            if lims[0] <= get[0] <= lims[1]:  # 9.55 <= x1[i] <= 9.9:
+                counter += 1
+                mass1.append(get[0])
+                dust1.append(get[1])
+                met1.append(get[2])
+
+                with open('eelg_ssfrs.txt', 'r') as ssfr:
+                    for line in ssfr:
+                        if line[0] != '#':
+                            cols = line.split()
+                            # print(cols[0], eelgs[i])
+                            if eelgs[i].startswith(cols[0]):
+                                # print(cols[0], 'hey!')
+                                ssfrs1.append(float(cols[1]) * 10 ** 9)  # ssfrs are stored in 2nd column in file
+                            # convert to Gyr^-1
+                            # counter += 1
+        mass2, dust2, met2, ssfrs2 = [], [], [], []
+        for i in range(len(lbgs)):
+            get = printer(outl + lbgs[i], percs=True)  # median mass, dust, gasmet, metallicity
+
+            if lims[0] <= get[0] <= lims[1]:  # 9.55 <= x1[i] <= 9.9:
+                counter2 += 1
+                mass2.append(get[0])
+                dust2.append(get[1])
+                met2.append(get[2])
+
+                with open('sfg_ssfrs.txt', 'r') as ssfr:
+                    for line in ssfr:
+                        if line[0] != '#':
+                            cols = line.split()
+                            if lbgs[i].startswith(cols[0]):
+                                ssfrs2.append(float(cols[1]) * 10 ** 9)  # ssfrs are stored in 2nd column in file
+                            # convert to Gyr^-1
+                            # counter += 1
+
+        print(counter)
+        print('mass1', np.percentile(mass1, [16., 50., 84.]))
+        print('dust1', np.percentile(dust1, [16., 50., 84.]))
+        print('met1', np.percentile(met1, [16., 50., 84.]))
+        print('ssfrs1', np.percentile(ssfrs1, [16., 50., 84.]))
+        print(counter2)
+        print('mass2', np.percentile(mass2, [16., 50., 84.]))
+        print('dust2', np.percentile(dust2, [16., 50., 84.]))
+        print('met2', np.percentile(met2, [16., 50., 84.]))
+        print('ssfrs2', np.percentile(ssfrs2, [16., 50., 84.]))
+
+    else:  # ELSE IF NOT MASS-MATCH
+        if fivemet:  # if using fixed met: Z_sol / 5
+            get_e = np.zeros(shape=(2, len(eelgs)))  # 2 rows (dust, mass), each row as long as eelgs
+        else:
+            get_e = np.zeros(shape=(4, len(eelgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as eelgs
+        onedraw = np.zeros(shape=(4, len(eelgs), 10**3))  # *10**3))
+        for i in range(len(eelgs)):
+            if os.path.exists(oute + eelgs[i]):
+                if fast:
+                    print('hmm')
+                    get_e[:, i] = printer(oute + eelgs[i], percs=False, fast=fast)
+                    print('hmm')
+                elif fivemet:
+                    get_e[:, i] = printer(oute + eelgs[i], percs=False, fast=fast, five=fivemet)
+                else:
+                    get_e[:, i] = printer(oute + eelgs[i])
+                    print(eelgs[i], get_e[0, i])
+                    # for k in range(10**3):
+                    onedraw[:, i, :] = printer(oute + eelgs[i], percs=False, fast=fast, five=fivemet, draw1=True)
+
+        masse = np.percentile(get_e[0], [16., 50., 84.])
+        duste = np.percentile(get_e[1], [16., 50., 84.])
+        print(masse)
+        print(duste)
+        mete = np.percentile(get_e[2], [16., 50., 84.])
+        gasmete = np.percentile(get_e[3], [16., 50., 84.])
+
+        # '''
+        get_l = np.zeros(shape=(4, len(lbgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as lbgs
+        onedraw_l = np.zeros(shape=(4, len(lbgs), 10**3))  # * 10**3))
+        for i in range(len(lbgs)):
+            if os.path.exists(outl + lbgs[i]):
+                get_l[:, i] = printer(outl + lbgs[i])
                 # for k in range(10**3):
-                onedraw[:, i, :] = printer(oute + eelgs[i], percs=False, fast=fast, five=fivemet, draw1=True)
+                onedraw_l[:, i, :] = printer(outl + lbgs[i], percs=False, draw1=True)
 
-    masse = np.percentile(get_e[0], [16., 50., 84.])
-    duste = np.percentile(get_e[1], [16., 50., 84.])
-    print(masse)
-    print(duste)
-    mete = np.percentile(get_e[2], [16., 50., 84.])
-    gasmete = np.percentile(get_e[3], [16., 50., 84.])
+        means = np.zeros(shape=(4, 10**3))
+        for m in range(4):
+            for k in range(10**3):
+                means[m, k] = np.mean(onedraw[m, :, k])
+        means_l = np.zeros(shape=(4, 10**3))
+        for m in range(4):
+            for k in range(10**3):
+                means_l[m, k] = np.mean(onedraw_l[m, :, k])
 
-    # '''
-    get_l = np.zeros(shape=(4, len(lbgs)))  # 4 rows (dust, mass, gaslogz, logzsol), each row as long as lbgs
-    onedraw_l = np.zeros(shape=(4, len(lbgs), 10**3))  # * 10**3))
-    for i in range(len(lbgs)):
-        if os.path.exists(outl + lbgs[i]):
-            get_l[:, i] = printer(outl + lbgs[i])
-            # for k in range(10**3):
-            onedraw_l[:, i, :] = printer(outl + lbgs[i], percs=False, draw1=True)
+        mass = np.percentile(get_l[0], [16., 50., 84.])
+        dust = np.percentile(get_l[1], [16., 50., 84.])
+        met = np.percentile(get_l[2], [16., 50., 84.])
+        gasmet = np.percentile(get_l[3], [16., 50., 84.])
+        # '''
 
-    means = np.zeros(shape=(4, 10**3))
-    for m in range(4):
-        for k in range(10**3):
-            means[m, k] = np.mean(onedraw[m, :, k])
-    means_l = np.zeros(shape=(4, 10**3))
-    for m in range(4):
-        for k in range(10**3):
-            means_l[m, k] = np.mean(onedraw_l[m, :, k])
+        print('masse', masse)
+        print('duste', duste)
+        print('mete', mete)
+        print('gasmete', gasmete)
+        # '''
+        print('mass', mass)
+        print('dust', np.percentile(get_l[1], [16., 50., 84.]))
+        print('met', np.percentile(get_l[2], [16., 50., 84.]))
+        print('gasmet', np.percentile(get_l[3], [16., 50., 84.]))
+        # '''
 
-    mass = np.percentile(get_l[0], [16., 50., 84.])
-    dust = np.percentile(get_l[1], [16., 50., 84.])
-    met = np.percentile(get_l[2], [16., 50., 84.])
-    gasmet = np.percentile(get_l[3], [16., 50., 84.])
-    # '''
-
-    print('masse', masse)
-    print('duste', duste)
-    print('mete', mete)
-    print('gasmete', gasmete)
-    # '''
-    print('mass', mass)
-    print('dust', np.percentile(get_l[1], [16., 50., 84.]))
-    print('met', np.percentile(get_l[2], [16., 50., 84.]))
-    print('gasmet', np.percentile(get_l[3], [16., 50., 84.]))
-    # '''
-
-    print('errors on means:')
-    params = ['mass', 'dust', 'met', 'gasmet']
-    for eom in range(4):
-        print(params[eom] + 'e', np.percentile(means[eom, :], [16., 50., 84.]))
-    for eoml in range(4):
-        print(params[eoml] + 'l', np.percentile(means_l[eoml, :], [16., 50., 84.]))
-    #print('masse', np.percentile(onedraw[0,:,:], [16., 50., 84.]))
-    #print('duste', np.percentile(onedraw[1,:,:], [16., 50., 84.]))
-    #print('mete', np.percentile(onedraw[2,:,:], [16., 50., 84.]))
-    #print('gasmete', np.percentile(onedraw[3,:,:], [16., 50., 84.]))
-    #e_on_mean = np.zeros(shape=(4, len(eelgs), 3))
-    #print('massl', np.percentile(onedraw_l[0,:,:], [16., 50., 84.]))
-    #print('dustl', np.percentile(onedraw_l[1,:,:], [16., 50., 84.]))
-    #print('metl', np.percentile(onedraw_l[2,:,:], [16., 50., 84.]))
-    #print('gasmetl', np.percentile(onedraw_l[3,:,:], [16., 50., 84.]))
+        print('errors on means:')
+        params = ['mass', 'dust', 'met', 'gasmet']
+        for eom in range(4):
+            print(params[eom] + 'e', np.percentile(means[eom, :], [16., 50., 84.]))
+        for eoml in range(4):
+            print(params[eoml] + 'l', np.percentile(means_l[eoml, :], [16., 50., 84.]))
+        #print('masse', np.percentile(onedraw[0,:,:], [16., 50., 84.]))
+        #print('duste', np.percentile(onedraw[1,:,:], [16., 50., 84.]))
+        #print('mete', np.percentile(onedraw[2,:,:], [16., 50., 84.]))
+        #print('gasmete', np.percentile(onedraw[3,:,:], [16., 50., 84.]))
+        #e_on_mean = np.zeros(shape=(4, len(eelgs), 3))
+        #print('massl', np.percentile(onedraw_l[0,:,:], [16., 50., 84.]))
+        #print('dustl', np.percentile(onedraw_l[1,:,:], [16., 50., 84.]))
+        #print('metl', np.percentile(onedraw_l[2,:,:], [16., 50., 84.]))
+        #print('gasmetl', np.percentile(onedraw_l[3,:,:], [16., 50., 84.]))
 
 '''
 RUNNING WITH:

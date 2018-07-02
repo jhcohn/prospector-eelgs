@@ -35,7 +35,9 @@ idx = 0
 for z in range(100):
     name = 'eelg_' + this + 'runs' + str(z) + '.lsf'
     parfile = 'eelg_test' + str(z) + '_params.py'  # modified from 'eelg_fifty_params.py' on the cluster
+    parfile2 = 'eelg_test' + str(z+100) + '_params.py'
     run_name = 'mpirun -n 4 python prospector.py --param_file=' + parfile + ' --niter=2500 --outfile=out_sfhtest/'
+    run_name2 = 'mpirun -n 4 python prospector.py --param_file=' + parfile2 + ' --niter=2500 --outfile=out_sfhtest/'
 
     newfile = open(base + 'copy_stuff/' + name, 'w+')
     lines[1] = '#BSUB -J ' + name + '\n'  # lines[1] = line2
@@ -46,7 +48,7 @@ for z in range(100):
     newfile.write(run_name + obj + '_' + field + '_' + this + '_' + str(z) + ' --field=' + field + ' --objname=' +
                   str(z) + '\n' + '\n')
 
-    newfile.write(run_name + obj + '_' + field + '_' + this + '_' + str(z+100) + ' --field=' + field + ' --objname=' +
+    newfile.write(run_name2 + obj + '_' + field + '_' + this + '_' + str(z+100) + ' --field=' + field + ' --objname=' +
                   str(z+100) + '\n' + '\n')
     newfile.close()
 

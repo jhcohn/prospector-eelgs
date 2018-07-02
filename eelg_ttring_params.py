@@ -145,8 +145,8 @@ uds_filts = mega_u + ukidss_1 + subaru_V + ukidss_2 + fstar + jhk + KsHI + hst +
 
 def get_names(field):
     if field == 'cosmos':
-        photname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/photo_id5519_zfourge_input.dat.awk'
-        # photname = '/scratch/user/joncohn/cosmos.v1.3.8.cat'
+        photname = '/home/jonathan/cosmos/cosmos.v1.3.8.cat'
+        testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/photo_id5519_zfourge_input.dat.awk'
         zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'
         filternames = cos_filternames
         filts = cos_filts
@@ -163,7 +163,7 @@ def get_names(field):
         filternames = uds_filternames
         filts = uds_filts
 
-    return photname, zname, filternames, filts
+    return photname, testphotname, zname, filternames, filts
 
 
 def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
@@ -174,16 +174,22 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     zp_err: inflate the errors by the zeropoint offsets from Skelton+14
     """
 
-    photname, zname, filternames, filts = get_names(field)
+    photname, testphotname, zname, filternames, filts = get_names(field)
 
     # OPEN FILE, LOAD DATA
+    with open(testphotname, 'r') as f:
+        hdr = f.readline().split()
+    dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
+    dat = np.loadtxt(testphotname, comments='#', delimiter=' ', dtype=dtype)
+
     with open(photname, 'r') as f:
         hdr = f.readline().split()
     dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
-    dat = np.loadtxt(photname, comments='#', delimiter=' ', dtype=dtype)
+    bigdat = np.loadtxt(photname, comments='#', delimiter=' ', dtype=dtype)
 
     # EXTRACT FILTERS, FLUXES, ERRORS FOR OBJECT
     obj_idx = (dat['id'] == objname)
+    print(dat['id'], objname)
     # print(dat[obj_idx]['id'], 'idx')
 
     filters = np.array(filts)  # [f[2:] for f in dat.dtype.names if f[0:2] == 'f_'])
@@ -198,11 +204,11 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     with open(zname, 'r') as f:
         hdr = f.readline().split()
     dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
-    #zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype)
+    # zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype)
     #zred = zout['z_spec'][obj_idx][0]  # use z_spec
     #if zred == -99:  # if z_spec doesn't exist
     #    zred = zout['z_peak'][obj_idx][0]  # use z_phot
-    zred = 2.18  # hack for cosmos5519
+    zred = 2.1927  # hack for cosmos5519
     wave_eff = np.array([filt.wave_effective for filt in obs['filters']])
 
     width = np.array([filt.effective_width for filt in obs['filters']])  # get effective width of each filter
@@ -222,7 +228,11 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
                        or ((range_rest[i][0] < 1260) & (range_rest[i][1] > 1260)))
     # print('mask', ly_mask)  # mask out ly_alpha and all points blueward of 1216
     flux = np.squeeze([dat[obj_idx]['f_' + f] for f in filternames])
-    unc = np.squeeze([dat[obj_idx]['e_' + f] for f in filternames])
+    print(obj_idx, 'idx')
+    print(dat[obj_idx]['f_B'])
+    print(flux, 'flux')
+    gal_idx = (bigdat['id'] == '5519')
+    unc = np.squeeze([bigdat[gal_idx]['e_' + f] for f in filternames])
 
     # DEFINE PHOTOMETRIC MASK< CONVERT TO MAGGIES
     phot_mask = (flux != -99.0)
@@ -554,7 +564,7 @@ def load_model(objname, field, agelims=[], **extras):
     # REDSHIFT
     # open file, load data
 
-    photname, zname, filtername, filts = get_names(field)
+    photname, testphotname, zname, filtername, filts = get_names(field)
 
     with open(photname, 'r') as f:
         hdr = f.readline().split()
@@ -570,7 +580,7 @@ def load_model(objname, field, agelims=[], **extras):
     # zred = zout['z_spec'][idx][0]  # use z_spec
     # if zred == -99:  # if z_spec doesn't exist
     #     zred = zout['z_peak'][idx][0]  # use z_phot
-    zred = 2.18  # hack for 5519
+    zred = 2.1927  # hack for cosmos5519
 
     print(zred, 'zred')
 
