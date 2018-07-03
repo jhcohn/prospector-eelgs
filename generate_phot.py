@@ -48,8 +48,8 @@ with open(photc, 'w+') as new:
     new.write('\n')
 with open(photu, 'w+') as new:
     new.write('# id ')
-    for i in range(len(dfilters)):
-        new.write('f_' + dfilters[i] + ' ')
+    for i in range(len(ufilters)):
+        new.write('f_' + ufilters[i] + ' ')
     new.write('\n')
 with open(photf, 'w+') as new:
     new.write('# id ')

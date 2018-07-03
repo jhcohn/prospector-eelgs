@@ -36,9 +36,41 @@ for z in range(100):
     name = 'eelg_' + this + 'runs' + str(z) + '.lsf'
     parfile = 'eelg_test' + str(z) + '_params.py'  # modified from 'eelg_fifty_params.py' on the cluster
     parfile2 = 'eelg_test' + str(z+100) + '_params.py'
+    genfile = 'besttest/sfhtest_' + str(z) + '_params.py'
+    genfile2 = 'besttest/sfhtest_' + str(z+100) + '_params.py'
     run_name = 'mpirun -n 4 python prospector.py --param_file=' + parfile + ' --niter=2500 --outfile=out_sfhtest/'
     run_name2 = 'mpirun -n 4 python prospector.py --param_file=' + parfile2 + ' --niter=2500 --outfile=out_sfhtest/'
 
+    field = ''
+    obj = ''
+    with open(genfile, 'r') as pfile:
+        for line in pfile:
+            if line.startswith('# Codename: '):
+                pset = line[12:]
+            elif line.startswith('# Identity: '):
+                counterl = 0
+                for l in line:
+                    if l == ' ' or l == '_':
+                        counterl += 1
+                    elif counterl == 2:
+                        field += l
+                    elif counterl == 3:
+                        obj += l
+    field2 = ''
+    obj2 = ''
+    with open(genfile2, 'r') as pfile:
+        for line in pfile:
+            if line.startswith('# Codename: '):
+                pset = line[12:]
+            elif line.startswith('# Identity: '):
+                counterl = 0
+                for l in line:
+                    if l == ' ' or l == '_':
+                        counterl += 1
+                    elif counterl == 2:
+                        field2 += l
+                    elif counterl == 3:
+                        obj2 += l
     newfile = open(base + 'copy_stuff/' + name, 'w+')
     lines[1] = '#BSUB -J ' + name + '\n'  # lines[1] = line2
     lines[9] = '#BSUB -o ' + name[:-4] + '_out.%J\n\n'
@@ -48,8 +80,8 @@ for z in range(100):
     newfile.write(run_name + obj + '_' + field + '_' + this + '_' + str(z) + ' --field=' + field + ' --objname=' +
                   str(z) + '\n' + '\n')
 
-    newfile.write(run_name2 + obj + '_' + field + '_' + this + '_' + str(z+100) + ' --field=' + field + ' --objname=' +
-                  str(z+100) + '\n' + '\n')
+    newfile.write(run_name2 + obj2 + '_' + field2 + '_' + this + '_' + str(z+100) + ' --field=' + field2
+                  + ' --objname=' + str(z+100) + '\n' + '\n')
     newfile.close()
 
     newpfile = open(base + 'copy_stuff/' + 'eelg_test' + str(z) + '_params.py', 'w+')
@@ -62,12 +94,24 @@ for z in range(100):
             elif line_etp.startswith("        photname = '/home/jonathan/"):
                     newpfile.write("        photname = '/scratch/user/joncohn/cosmos.v1.3.8.cat'\n")
                     newpfile2.write("        photname = '/scratch/user/joncohn/cosmos.v1.3.8.cat'\n")
-            elif line_etp.startswith("        testphotname = '/home/jonathan/"):
-                newpfile.write("        testphotname = '/scratch/user/joncohn/sfhphot_all'\n")
-                newpfile2.write("        testphotname = '/scratch/user/joncohn/sfhphot_all'\n")
+            elif line_etp.startswith("        testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_cosmos'"):
+                newpfile.write("        testphotname = '/scratch/user/joncohn/sfhphot_cosmos'\n")
+                newpfile2.write("        testphotname = '/scratch/user/joncohn/sfhphot_cosmos'\n")
+            elif line_etp.startswith("        testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_cdfs'"):
+                newpfile.write("        testphotname = '/scratch/user/joncohn/sfhphot_cdfs'\n")
+                newpfile2.write("        testphotname = '/scratch/user/joncohn/sfhphot_cdfs'\n")
+            elif line_etp.startswith("        testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_uds'"):
+                newpfile.write("        testphotname = '/scratch/user/joncohn/sfhphot_uds'\n")
+                newpfile2.write("        testphotname = '/scratch/user/joncohn/sfhphot_uds'\n")
             elif line_etp.startswith("        zname = '/home/jonathan/"):
                 newpfile.write("        zname = '/scratch/user/joncohn/cosmos.v1.3.6.awk.zout'\n")
                 newpfile2.write("        zname = '/scratch/user/joncohn/cosmos.v1.3.6.awk.zout'\n")
+            elif line_etp.startswith("              'field':"):
+                newpfile.write("              'field': '" + field + "',\n")
+                newpfile2.write("              'field': '" + field2 + "',\n")
+            elif line_etp.startswith("              'objname':"):
+                newpfile.write("              'objname': '" + obj + "',\n")
+                newpfile2.write("              'objname': '" + obj2 + "',\n")
             else:
                 newpfile.write(line_etp)
                 newpfile2.write(line_etp)

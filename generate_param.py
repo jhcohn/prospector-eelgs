@@ -34,9 +34,9 @@ for x in range(200):
     for line in orig.readlines():  # for each line in original param file
         towrite = line  # copy the line over, unless I need to change it:
         if line.startswith("              'field':"):
-            towrite = "              'field': " + field + '\n'
+            towrite = "              'field': '" + field + "', \n"
         elif line.startswith("              'objname':"):
-            towrite = "              'objname': " + obj + '\n'
+            towrite = "              'objname': '" + str(obj) + "',\n"
         elif line.startswith("    model_params[n.index('logmass')]['init']"):
             towrite = "    model_params[n.index('logmass')]['init'] = " + mstr + '\n'
         elif line.startswith("    model_params[n.index('dust2')]['init']"):
@@ -49,7 +49,7 @@ for x in range(200):
             towrite = "    eelg_frac2 = " + s2str + '\n'
         writenew.write(towrite)  # + '\n')
     writenew.write('# Codename: ' + mstr + '_' + dstr + '_' + zstr + '_' + s1str + '_' + s2str + '\n')
-    writenew.write('# Identity: ' + field + '_' + obj)
+    writenew.write("# Identity: " + field + "_" + str(obj))
     orig.close()
     writenew.close()
 

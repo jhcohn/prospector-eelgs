@@ -146,19 +146,21 @@ uds_filts = mega_u + ukidss_1 + subaru_V + ukidss_2 + fstar + jhk + KsHI + hst +
 def get_names(field):
     if field == 'cosmos':
         photname = '/home/jonathan/cosmos/cosmos.v1.3.8.cat'
-        testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_all'
+        testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_cosmos'
         zname = '/home/jonathan/cosmos/cosmos.v1.3.6.awk.zout'
         filternames = cos_filternames
         filts = cos_filts
 
     elif field == 'cdfs':
         photname = '/scratch/user/joncohn/cdfs.v1.6.11.cat'
+        testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_cdfs'
         zname = '/scratch/user/joncohn/cdfs.v1.6.9.awk.zout'
         filternames = cdfs_filternames
         filts = cdfs_filts
 
     elif field == 'uds':
         photname = '/scratch/user/joncohn/uds.v1.5.10.cat'
+        testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_uds'
         zname = '/scratch/user/joncohn/uds.v1.5.8.awk.zout'
         filternames = uds_filternames
         filts = uds_filts
@@ -244,7 +246,10 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
 
     flux = np.asarray(flux)
     # flux = np.squeeze([testdat[obj_idx]['f_' + f] for f in filternames])
-    unc = np.squeeze([dat[zred_idx]['e_' + f] for f in filternames])
+    import random
+
+    unc = np.random.normal(0., flux * 0.05)
+    # unc = np.squeeze([dat[zred_idx]['e_' + f] for f in filternames])
 
     print(flux, 'look at flux!')
 
@@ -640,6 +645,6 @@ model_type = BurstyModel
 
 '''
 RUNNING WITH
-mpirun -n 4 python prospector.py --param_file=eelg_vtestt_params.py --outfile=1824_cosmos_fixedmet --niter=2500
+mpirun -n 4 python prospector.py --param_file=eelg_test_params.py --outfile=1824_cosmos_test --niter=2500
 --field=cosmos --objname=1824
 '''
