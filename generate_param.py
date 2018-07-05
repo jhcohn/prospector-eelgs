@@ -2,20 +2,23 @@ import random
 import stellar_ages as sa
 
 copyfrom = 'eelg_sfhtest_params.py'
-m_pri = [8.8, 10.]
-d_pri = [0.1, 0.6]
-z_pri = [-2., -1.]
-s1_pri = [0.05, 0.8]
-s2_pri = [0.05, 0.8]
+m_pri = [8., 11.]  # [8.8, 10.]  # [8., 11.]
+d_pri = [0., 2.0]  # [0.1, 0.6]  # [0.0, 2.0]
+z_pri = [-2., 0.]  # [-2., -1.]  # [-2., 0.19]
+s1_pri = [0.01, 0.99]  # [0.05, 0.8]  # [0., 1.]
+s2_pri = [0.01, 0.99]  # [0.05, 0.8]  # [0., 1.] (with min still)
+red_pri = [2.5, 4.0]
 base = 'fico'
 e_objs, e_fields, l_objs, l_fields = sa.get_gal_lists(base, objlists=True, normal=True)
 
 for x in range(200):
+    print(x)
     m = random.uniform(m_pri[0], m_pri[1])
     d = random.uniform(d_pri[0], d_pri[1])
     z = random.uniform(z_pri[0], z_pri[1])
     s1 = random.uniform(s1_pri[0], s1_pri[1])
     s2 = random.uniform(s2_pri[0], min([1-s1, s2_pri[1]]))  # total fractions cannot add to more than 1!
+    red = random.uniform(red_pri[0], red_pri[1])
 
     idx = random.randint(0, len(e_objs)-1)
     obj = e_objs[idx]
@@ -27,7 +30,7 @@ for x in range(200):
     s1str = str(s1)
     s2str = str(s2)
 
-    newpar = 'besttest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
+    newpar = 'newtest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     # e.g. newpar = testpars/sfhtest_0_params.py
     orig = open(copyfrom, 'r')
     writenew = open(newpar, 'w+')
@@ -47,9 +50,11 @@ for x in range(200):
             towrite = "    eelg_frac1 = " + s1str + '\n'
         elif line.startswith("    eelg_frac2 = "):
             towrite = "    eelg_frac2 = " + s2str + '\n'
+        elif line.startswith("    zred = "):
+            towrite = "    zred = " + str(red) + "\n"
         writenew.write(towrite)  # + '\n')
     writenew.write('# Codename: ' + mstr + '_' + dstr + '_' + zstr + '_' + s1str + '_' + s2str + '\n')
-    writenew.write("# Identity: " + field + "_" + str(obj))
+    writenew.write("# Identity: " + field + "_" + str(obj) + "_" + str(red))
     orig.close()
     writenew.close()
 

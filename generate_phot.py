@@ -59,7 +59,7 @@ with open(photf, 'w+') as new:
 # GENERATE PHOTOMETRY FROM ALL THE PARAM FILES I JUST MADE WITH GENERATE_PARAM.PY
 
 for x in range(200):
-    parfile = 'besttest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
+    parfile = 'newtest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     pset = None
     field = ''
     with open(parfile, 'r') as pfile:

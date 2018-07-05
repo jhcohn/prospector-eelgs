@@ -208,10 +208,11 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
         hdr = f.readline().split()
     dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
     zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype)
-    zred_idx = (zout['id'] == str(11063))
-    zred = zout['z_spec'][zred_idx][0]  # use z_spec
-    if zred == -99:  # if z_spec doesn't exist
-        zred = zout['z_peak'][zred_idx][0]  # use z_phot
+    # zred_idx = (zout['id'] == str(11063))
+    # zred = zout['z_spec'][zred_idx][0]  # use z_spec
+    # if zred == -99:  # if z_spec doesn't exist
+    #     zred = zout['z_peak'][zred_idx][0]  # use z_phot
+    zred = 3.5
     wave_eff = np.array([filt.wave_effective for filt in obs['filters']])
 
     width = np.array([filt.effective_width for filt in obs['filters']])  # get effective width of each filter
@@ -244,11 +245,19 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
                         if l > 0:
                             flux.append(float(cols[l]))
 
-    flux = np.asarray(flux)
+    # ADD RANDOM NOISE TO FLUX (gaussian):
+    noise = []
+    for noi in range(len(flux)):
+        if flux[noi] > 0.:
+            noise.append(np.random.normal(0., flux[noi] * 0.05))
+        else:
+            noise.append(0.)
+    # noise = [np.random.normal(0., f * 0.05) for f in flux]  # note: still an issue?
+    flux = np.asarray([flux[fl] + noise[fl] for fl in range(len(flux))])
     # flux = np.squeeze([testdat[obj_idx]['f_' + f] for f in filternames])
-    import random
 
-    unc = np.random.normal(0., flux * 0.05)
+    # GENERATE RANDOM ERROR ON EACH PHOTOMETRIC DATAPOINT
+    unc = np.asarray([np.random.uniform(0.0, f * 0.1) for f in flux])
     # unc = np.squeeze([dat[zred_idx]['e_' + f] for f in filternames])
 
     print(flux, 'look at flux!')
@@ -595,11 +604,11 @@ def load_model(objname, field, agelims=[], **extras):
     dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
     zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
 
-    idx = dat['id'] == str(11063)  # creates array of True/False: True when dat[id] = objname
-    zred = zout['z_spec'][idx][0]  # use z_spec
-    if zred == -99:  # if z_spec doesn't exist
-        zred = zout['z_peak'][idx][0]  # use z_phot
-
+    # idx = dat['id'] == str(11063)  # creates array of True/False: True when dat[id] = objname
+    # zred = zout['z_spec'][idx][0]  # use z_spec
+    # if zred == -99:  # if z_spec doesn't exist
+    #     zred = zout['z_peak'][idx][0]  # use z_phot
+    zred = 3.5
     print(zred, 'zred')
 
     # CALCULATE AGE OF THE UNIVERSE (TUNIV) AT REDSHIFT ZRED

@@ -1,11 +1,10 @@
 import numpy as np
-import math
 
-obj = str(11063)
-field = 'cosmos'
+# obj = str(11063)
+# field = 'cosmos'
 this = 'sfhtest'
 
-time = '25:00'
+time = '30:00'
 
 base = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
 # newfile = open(base + 'lbg_otherruns.sh', 'w+')  # (base + 'lbg_runs.sh', 'w+')
@@ -36,13 +35,14 @@ for z in range(100):
     name = 'eelg_' + this + 'runs' + str(z) + '.lsf'
     parfile = 'eelg_test' + str(z) + '_params.py'  # modified from 'eelg_fifty_params.py' on the cluster
     parfile2 = 'eelg_test' + str(z+100) + '_params.py'
-    genfile = 'besttest/sfhtest_' + str(z) + '_params.py'
-    genfile2 = 'besttest/sfhtest_' + str(z+100) + '_params.py'
+    genfile = 'newtest/sfhtest_' + str(z) + '_params.py'
+    genfile2 = 'newtest/sfhtest_' + str(z+100) + '_params.py'
     run_name = 'mpirun -n 4 python prospector.py --param_file=' + parfile + ' --niter=2500 --outfile=out_sfhtest/'
     run_name2 = 'mpirun -n 4 python prospector.py --param_file=' + parfile2 + ' --niter=2500 --outfile=out_sfhtest/'
 
     field = ''
     obj = ''
+    red = ''
     with open(genfile, 'r') as pfile:
         for line in pfile:
             if line.startswith('# Codename: '):
@@ -56,8 +56,11 @@ for z in range(100):
                         field += l
                     elif counterl == 3:
                         obj += l
+                    elif counterl == 4:
+                        red += l
     field2 = ''
     obj2 = ''
+    red2 = ''
     with open(genfile2, 'r') as pfile:
         for line in pfile:
             if line.startswith('# Codename: '):
@@ -71,6 +74,8 @@ for z in range(100):
                         field2 += l
                     elif counterl == 3:
                         obj2 += l
+                    elif counterl == 4:
+                        red2 += l
     newfile = open(base + 'copy_stuff/' + name, 'w+')
     lines[1] = '#BSUB -J ' + name + '\n'  # lines[1] = line2
     lines[9] = '#BSUB -o ' + name[:-4] + '_out.%J\n\n'
@@ -112,6 +117,9 @@ for z in range(100):
             elif line_etp.startswith("              'objname':"):
                 newpfile.write("              'objname': '" + obj + "',\n")
                 newpfile2.write("              'objname': '" + obj2 + "',\n")
+            elif line_etp.startswith("    zred = "):
+                newpfile.write("    zred = " + red + "\n")
+                newpfile2.write("    zred = " + red2 + "\n")
             else:
                 newpfile.write(line_etp)
                 newpfile2.write(line_etp)
@@ -120,3 +128,11 @@ for z in range(100):
 
     print(z, z+100)
 
+'''
+elif line_etp.startswith("    zred_idx = (zout['id']"):
+    newpfile.write("    zred_idx = (zout['id'] == str("+obj+"))\n")
+    newpfile2.write("    zred_idx = (zout['id'] == str("+obj2+"))\n")
+elif line_etp.startswith("    idx = dat['id'] == "):
+    newpfile.write("    idx = dat['id'] == str("+obj+")\n")
+    newpfile2.write("    idx = dat['id'] == str("+obj2+")\n")
+'''

@@ -198,9 +198,10 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
         hdr = f.readline().split()
     dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
     zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype)
-    zred = zout['z_spec'][obj_idx][0]  # use z_spec
-    if zred == -99:  # if z_spec doesn't exist
-        zred = zout['z_peak'][obj_idx][0]  # use z_phot
+    # zred = zout['z_spec'][obj_idx][0]  # use z_spec
+    # if zred == -99:  # if z_spec doesn't exist
+    #     zred = zout['z_peak'][obj_idx][0]  # use z_phot
+    zred = 3.5
     wave_eff = np.array([filt.wave_effective for filt in obs['filters']])
 
     width = np.array([filt.effective_width for filt in obs['filters']])  # get effective width of each filter
@@ -615,9 +616,10 @@ def load_model(objname, field, agelims=[], **extras):
     zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
 
     idx = dat['id'] == objname  # creates array of True/False: True when dat[id] = objname
-    zred = zout['z_spec'][idx][0]  # use z_spec
-    if zred == -99:  # if z_spec doesn't exist
-        zred = zout['z_peak'][idx][0]  # use z_phot
+    # zred = zout['z_spec'][idx][0]  # use z_spec
+    # if zred == -99:  # if z_spec doesn't exist
+    #     zred = zout['z_peak'][idx][0]  # use z_phot
+    zred = 3.5
 
     print(zred, 'zred')
 
