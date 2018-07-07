@@ -2,8 +2,16 @@ import random
 import stellar_ages as sa
 
 copyfrom = 'eelg_sfhtest_params.py'
+'''
 m_pri = [8., 11.]  # [8.8, 10.]  # [8., 11.]
 d_pri = [0., 2.0]  # [0.1, 0.6]  # [0.0, 2.0]
+z_pri = [-2., 0.]  # [-2., -1.]  # [-2., 0.19]
+s1_pri = [0.01, 0.99]  # [0.05, 0.8]  # [0., 1.]
+s2_pri = [0.01, 0.99]  # [0.05, 0.8]  # [0., 1.] (with min still)
+red_pri = [2.5, 4.0]
+'''
+m_pri = [8.5, 11.]  # [8.8, 10.]  # [8., 11.]
+d_pri = [0., 2.]  # [0.1, 0.6]  # [0.0, 2.0]
 z_pri = [-2., 0.]  # [-2., -1.]  # [-2., 0.19]
 s1_pri = [0.01, 0.99]  # [0.05, 0.8]  # [0., 1.]
 s2_pri = [0.01, 0.99]  # [0.05, 0.8]  # [0., 1.] (with min still)
@@ -11,7 +19,7 @@ red_pri = [2.5, 4.0]
 base = 'fico'
 e_objs, e_fields, l_objs, l_fields = sa.get_gal_lists(base, objlists=True, normal=True)
 
-for x in range(200):
+for x in range(100):  # 200
     print(x)
     m = random.uniform(m_pri[0], m_pri[1])
     d = random.uniform(d_pri[0], d_pri[1])
@@ -30,7 +38,8 @@ for x in range(200):
     s1str = str(s1)
     s2str = str(s2)
 
-    newpar = 'newtest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
+    newpar = 'ctest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
+    # newpar = 'newtest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     # e.g. newpar = testpars/sfhtest_0_params.py
     orig = open(copyfrom, 'r')
     writenew = open(newpar, 'w+')
