@@ -36,8 +36,8 @@ run_params = {'verbose': True,
               'photname': '',
               'zname': '',
               'convergence_check_interval': 100,  # Fix convergence test problem
-              'convergence_kl_threshold': 0.04,  # Fix convergence test problem
-              'do_Powell': False  # REMOVE THIS LINE, THIS IS FOR TEST
+              'convergence_kl_threshold': 0.04  # Fix convergence test problem
+              # 'do_Powell': False  # REMOVE THIS LINE, THIS IS FOR TEST
               }
 run_params['outfile'] = run_params['outfile'] + '_' + run_params['objname']  # + '_' +run_params['field']
 
@@ -184,16 +184,15 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
     dat = np.loadtxt(photname, comments='#', delimiter=' ', dtype=dtype)
 
-    '''
     with open(testphotname, 'r') as tf:
         hdr = tf.readline().split()
     tdtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
     testdat = np.loadtxt(testphotname, comments='#', delimiter=' ', dtype=tdtype)
-    '''
 
     # EXTRACT FILTERS, FLUXES, ERRORS FOR OBJECT
     # obj_idx = (dat['id'] == objname)
-    # print(dat[obj_idx]['id'], 'idx')
+    obj_idx = (testdat['id'] == objname)
+    print(testdat[obj_idx]['id'], 'idx')
 
     filters = np.array(filts)  # [f[2:] for f in dat.dtype.names if f[0:2] == 'f_'])
     # print(filters)
@@ -203,11 +202,11 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     obs['filters'] = observate.load_filters(filters)
     # try to pull out transmission curves etc. and cut all things bluewards of 1216 and remove all that touch ly-a
 
-    # NEW, MASK POINTS AROUND LY-ALPHA
-    with open(zname, 'r') as f:
-        hdr = f.readline().split()
-    dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
-    zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype)
+    # GET REDSHIFT
+    # with open(zname, 'r') as f:
+    #     hdr = f.readline().split()
+    # dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
+    # zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype)
     # zred_idx = (zout['id'] == str(11063))
     # zred = zout['z_spec'][zred_idx][0]  # use z_spec
     # if zred == -99:  # if z_spec doesn't exist
@@ -226,6 +225,7 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
         range_rest[i] = (wave_range[i][0] / (1 + zred)), (wave_range[i][1] / (1+zred))
         wave_rest.append(wave_eff[i] / (1 + zred))
 
+    # NEW, MASK POINTS AROUND LY-ALPHA
     ly_mask = []
     for i in range(len(range_rest)):
         ly_mask.append((range_rest[i][0] < 1216) or ((range_rest[i][0] < 1180) & (range_rest[i][1] > 1180))
@@ -234,6 +234,7 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
     # USE new generated photometry for flux; use typical errors for unc
 
     # newpath = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_all'
+    '''
     print(testphotname, 'path!!!')
     flux = []
     with open(testphotname, 'r') as newp:
@@ -254,7 +255,8 @@ def load_obs(field, objname, err_floor=0.05, zperr=True, **extras):
             noise.append(0.)
     # noise = [np.random.normal(0., f * 0.05) for f in flux]  # note: still an issue?
     flux = np.asarray([flux[fl] + noise[fl] for fl in range(len(flux))])
-    # flux = np.squeeze([testdat[obj_idx]['f_' + f] for f in filternames])
+    '''
+    flux = np.squeeze([testdat[obj_idx]['f_' + f] for f in filternames])
 
     # GENERATE RANDOM ERROR ON EACH PHOTOMETRIC DATAPOINT
     unc = np.asarray([np.random.uniform(0.0, f * 0.1) for f in flux])
@@ -307,6 +309,31 @@ def tie_gas_logz(logzsol=None, **extras):
 
 def transform_logtau_to_tau(tau=None, logtau=None, **extras):
     return 10**logtau
+
+
+def sfrac_to_masses(logmass=None, agebins=None, sfrac=None, **extras):  # BUCKET NEW ADDED
+    """This transforms from sfr fractions to bin mass fractions. The
+    transformation is such that sfr fractions are drawn from a Dirichlet
+    prior.  See Betancourt et al. 2010
+    :returns masses:
+        The stellar mass formed in each age bin.
+    """
+    # sfr fractions (e.g. Leja 2017)
+
+    # taken from relevant lines in get_galaxy_spectrum() in class FracSFH()
+    # fractions = np.array(self.params['sfr_fraction'])
+    fractions = np.array(sfrac)
+    bin_fractions = np.append(fractions, (1 - np.sum(fractions)))
+    time_per_bin = []
+    # for (t1, t2) in self.params['agebins']:
+    for (t1, t2) in agebins:
+        time_per_bin.append(10 ** t2 - 10 ** t1)
+    bin_fractions *= np.array(time_per_bin)
+    bin_fractions /= bin_fractions.sum()
+
+    masses = bin_fractions * (10 ** logmass)  # bin_fractions * self.params['mass']
+
+    return masses
 
 #############
 # MODEL_PARAMS
@@ -559,6 +586,17 @@ class BurstyModel(sedmodel.SedModel):  # NEW, replacing below
 
 
 class FracSFH(FastStepBasis):  # NEW CLASS
+    @property
+    def emline_wavelengths(self):
+        return self.ssp.emline_wavelengths
+
+    @property
+    def get_nebline_luminosity(self):
+        """Emission line luminosities in units of Lsun per solar mass formed
+        """
+
+        return self.ssp.emline_luminosity / self.params['mass'].sum()
+
     def get_galaxy_spectrum(self, **params):
         self.update(**params)
 

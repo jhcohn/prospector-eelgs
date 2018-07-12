@@ -34,7 +34,10 @@ def get_names(field):
 
 # newphot = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_all'
 # photbase = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_'
+'''
 photbase = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/tphot_'  # 'eephot_'
+'''
+photbase = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/eephot2_'
 photc = photbase + 'cosmos'
 photu = photbase + 'uds'
 photf = photbase + 'cdfs'
@@ -59,10 +62,16 @@ with open(photf, 'w+') as new:
     new.write('\n')
 # GENERATE PHOTOMETRY FROM ALL THE PARAM FILES I JUST MADE WITH GENERATE_PARAM.PY
 
+'''
 for x in range(100):  # 200
+'''
+for x in range(100):
     # parfile = 'newtest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     # 'eetest/sfhtest_'
+    '''
     parfile = 'ctest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
+    '''
+    parfile = 'eetest2/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     pset = None
     field = ''
     with open(parfile, 'r') as pfile:
@@ -108,7 +117,7 @@ for x in range(100):  # 200
 
     mu, phot, other = global_model.mean_model(global_model.initial_theta, global_obs, sps=sps)
 
-    phot *= 3631 * 10 ** 6  # maggies to uJy
+    phot *= 3631 * 10 ** 6.44  # maggies to catalog fluxes, so I can use the cat fluxes --> maggies code in param files
 
     # print(diff)
     with open(usephot, 'a') as new:
