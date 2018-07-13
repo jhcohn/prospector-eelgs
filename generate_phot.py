@@ -37,7 +37,8 @@ def get_names(field):
 '''
 photbase = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/tphot_'  # 'eephot_'
 '''
-photbase = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/eephot2_'
+# photbase = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/eephot2_'
+photbase = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/eehomephot_'
 photc = photbase + 'cosmos'
 photu = photbase + 'uds'
 photf = photbase + 'cdfs'
@@ -65,27 +66,33 @@ with open(photf, 'w+') as new:
 '''
 for x in range(100):  # 200
 '''
-for x in range(100):
+for x in range(2,3):
     # parfile = 'newtest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     # 'eetest/sfhtest_'
     '''
     parfile = 'ctest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     '''
-    parfile = 'eetest2/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
+    # parfile = 'eetest2/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
+    parfile = 'eehometest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     pset = None
+    codename = None
+    identity = None
     field = ''
     with open(parfile, 'r') as pfile:
         for line in pfile:
             if line.startswith('# Codename: '):
                 pset = line[12:]
+                codename = line
             elif line.startswith('# Identity: '):
                 counterl = 0
+                identity = line
                 for l in line:
                     if l == ' ' or l == '_':
                         counterl += 1
                     elif counterl == 2:
                         field += l
     print('pset', pset)
+    print(identity, codename)
     print('field', field)
     print(parfile, x)
 

@@ -20,7 +20,7 @@ e_objs, e_fields, l_objs, l_fields = sa.get_gal_lists(base, objlists=True, norma
 '''
 for x in range(100):  # 200
 '''
-for x in range(100):
+for x in range(2,50):
     print(x)
     '''
     m = random.uniform(m_pri[0], m_pri[1])
@@ -29,6 +29,16 @@ for x in range(100):
     s1 = random.uniform(s1_pri[0], s1_pri[1])
     s2 = random.uniform(s2_pri[0], min([1-s1, s2_pri[1]]))  # total fractions cannot add to more than 1!
     red = random.uniform(red_pri[0], red_pri[1])
+    # '''
+
+    '''
+    m = 9.4
+    d = 0.32
+    z = -1.7
+    s1 = 0.51
+    s2 = 0.09
+    red = 3.5
+    # Identity: cdfs_20366
     # '''
 
     m = random.uniform(em_pri[0], em_pri[1])
@@ -52,7 +62,8 @@ for x in range(100):
     '''
     newpar = 'ctest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     '''
-    newpar = 'eetest2/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
+    newpar = 'eehometest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
+    # newpar = 'eetest2/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     # newpar = 'newtest/sfhtest_' + str(x) + '_params.py'  # 'bettertest/sfhtest_' ...
     # e.g. newpar = testpars/sfhtest_0_params.py
     orig = open(copyfrom, 'r')

@@ -34,7 +34,7 @@ idx = 0
 '''
 for z in range(50):  # 100
 '''
-for z in range(100):  # 100  # 1, 25 <--for eetest for now
+for z in range(1,2):  # 100  # 1, 25 <--for eetest for now
     name = 'eelg_' + this + 'runs' + str(z) + '.lsf'
     parfile = 'eelg_test' + str(z) + '_params.py'  # modified from 'eelg_fifty_params.py' on the cluster
     '''
@@ -47,7 +47,8 @@ for z in range(100):  # 100  # 1, 25 <--for eetest for now
     # genfile = 'newtest/sfhtest_' + str(z) + '_params.py'
     # genfile2 = 'newtest/sfhtest_' + str(z+100) + '_params.py'
     '''
-    genfile = 'eetest2/sfhtest_' + str(z) + '_params.py'
+    genfile = 'eehometest/sfhtest_' + str(z) + '_params.py'
+    # genfile = 'eetest2/sfhtest_' + str(z) + '_params.py'
     run_name = 'mpirun -n 4 python prospector.py --param_file=' + parfile + ' --niter=2500 --outfile=out_sfhtest/'
     '''
     run_name2 = 'mpirun -n 4 python prospector.py --param_file=' + parfile2 + ' --niter=2500 --outfile=out_sfhtest/'
@@ -56,12 +57,16 @@ for z in range(100):  # 100  # 1, 25 <--for eetest for now
     field = ''
     obj = ''
     red = ''
+    codename = None
+    identity = None
     with open(genfile, 'r') as pfile:
         for line in pfile:
             if line.startswith('# Codename: '):
                 pset = line[12:]
+                codename = line
             elif line.startswith('# Identity: '):
                 counterl = 0
+                identity = line
                 for l in line:
                     if l == ' ' or l == '_':
                         counterl += 1
@@ -94,7 +99,10 @@ for z in range(100):  # 100  # 1, 25 <--for eetest for now
 
     newfile = open(base + 'copy_stuff/' + name, 'w+')
     '''
-    newfile = open(base + 'copy_eestuff2/' + name, 'w+')
+    # newfile = open(base + 'copy_eestuff2/' + name, 'w+')
+
+    # WRITE .LSF FILE FOR RUNNING ON THE CLUSTER
+    newfile = open(base + name, 'w+')
     lines[1] = '#BSUB -J ' + name + '\n'  # lines[1] = line2
     lines[9] = '#BSUB -o ' + name[:-4] + '_out.%J\n\n'
     for line in lines:
@@ -116,8 +124,15 @@ for z in range(100):  # 100  # 1, 25 <--for eetest for now
     newpfile2 = open(base + 'copy_stuff/' + 'eelg_test' + str(z+50) + '_params.py', 'w+')
     # newpfile2 = open(base + 'copy_stuff/' + 'eelg_test' + str(z+100) + '_params.py', 'w+')
     '''
-    newpfile = open(base + 'copy_eestuff2/' + 'eelg_test' + str(z) + '_params.py', 'w+')
+    # newpfile = open(base + 'copy_eestuff2/' + 'eelg_test' + str(z) + '_params.py', 'w+')
+    newpfile = open(base + 'eelg_test' + str(z) + '_params.py', 'w+')
     newpfile2 = open(base + 'deleteme', 'w+')
+    cluster = False
+    if cluster:
+        loc = '/scratch/user/joncohn/'
+    else:
+        loc = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/'
+
     with open('eelg_test_params.py', 'r') as etp:
         for line_etp in etp:
             if line_etp.startswith("                if cols[0] == "):
@@ -145,8 +160,9 @@ for z in range(100):  # 100  # 1, 25 <--for eetest for now
                 # newpfile2.write("        testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/eephot_cdfs'\n")
                 # newpfile.write("        testphotname = '/scratch/user/joncohn/sfhphot_cdfs'\n")
                 # newpfile2.write("        testphotname = '/scratch/user/joncohn/sfhphot_cdfs'\n")
-                newpfile.write("        testphotname = '/scratch/user/joncohn/eephot2_cdfs'\n")
-                newpfile2.write("        testphotname = '/scratch/user/joncohn/eephot2_cdfs'\n")
+                newpfile.write("        testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/eehomephot_cdfs'\n")
+                #newpfile.write("        testphotname = '/scratch/user/joncohn/eephot2_cdfs'\n")
+                #newpfile2.write("        testphotname = '/scratch/user/joncohn/eephot2_cdfs'\n")
             elif line_etp.startswith("        testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_uds'"):
                 '''
                 newpfile.write("        testphotname = '/scratch/user/joncohn/tphot_uds'\n")
