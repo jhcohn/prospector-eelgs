@@ -152,16 +152,16 @@ def get_names(field):
         filts = cos_filts
 
     elif field == 'cdfs':
-        photname = '/scratch/user/joncohn/cdfs.v1.6.11.cat'
+        photname = '/home/jonathan/cdfs/cdfs.v1.6.11.cat'
         testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_cdfs'
-        zname = '/scratch/user/joncohn/cdfs.v1.6.9.awk.zout'
+        zname = '/home/jonathan/cdfs/cdfs.v1.6.9.awk.zout'
         filternames = cdfs_filternames
         filts = cdfs_filts
 
     elif field == 'uds':
-        photname = '/scratch/user/joncohn/uds.v1.5.10.cat'
+        photname = '/home/jonathan/uds/uds.v1.5.10.cat'
         testphotname = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfhphot_uds'
-        zname = '/scratch/user/joncohn/uds.v1.5.8.awk.zout'
+        zname = '/home/jonathan/uds/uds.v1.5.8.awk.zout'
         filternames = uds_filternames
         filts = uds_filts
 
@@ -632,6 +632,7 @@ def load_model(objname, field, agelims=[], **extras):
 
     photname, testphotname, zname, filtername, filts = get_names(field)
 
+    '''
     with open(photname, 'r') as f:
         hdr = f.readline().split()
     dtype = np.dtype([(hdr[1], 'S20')] + [(n, np.float) for n in hdr[2:]])
@@ -641,6 +642,7 @@ def load_model(objname, field, agelims=[], **extras):
         hdr_z = fz.readline().split()
     dtype_z = np.dtype([(hdr_z[1], 'S20')] + [(n, np.float) for n in hdr_z[2:]])
     zout = np.loadtxt(zname, comments='#', delimiter=' ', dtype=dtype_z)
+    '''
 
     # idx = dat['id'] == str(11063)  # creates array of True/False: True when dat[id] = objname
     # zred = zout['z_spec'][idx][0]  # use z_spec
