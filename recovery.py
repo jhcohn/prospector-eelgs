@@ -275,6 +275,106 @@ if __name__ == "__main__":
                      color=color, markersize=sz)
         # '''
 
+    # '''
+    # FILL IN TH GAPS-LIKE RECOVERY
+    efold = 'out_fillsfhtest/'  # 'out_newsfhtest/'  # 'out_sfhhometest1/'# 'out_eetest2/'  # out_eetest
+    egals = {}
+    # eoute = '/home/jonathan/' + efold # '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + efold
+    eoute = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + efold
+    # pkls = git + pkl
+    ekeys = []
+    for file in os.listdir(eoute):
+        c = 0
+        key = ''
+        for char in file:
+            if char == '_':
+                c += 1
+            elif c == 3:
+                key += char
+        if file.endswith(".h5") and float(key) < 200:
+            egals[key] = file
+            ekeys.append(key)
+    # NOTE: for eetest2 these three all had len(12, 6[, 10**3])  # len(1, 6[, 10**3])
+    eonedraw = np.zeros(shape=(10, 6, 10 ** 3))  # *10**3))  # [mass, dust, metal, gasmet, ssfr1, ssfr2]
+    eoffsets = np.zeros(shape=(10, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
+    emeds = np.zeros(shape=(10, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
+    for i in range(10):  # (len(egals)):  # (12): # for each galaxy (0 through 99)
+        # i = allkeys[ind]
+        print(i, egals[str(i)])  # i = key
+        # j = 0
+        if os.path.exists(eoute + egals[str(i)]):
+            # eonedraw[i, :, :] = gmd.printer(eoute + egals[str(i)], percs=False, sfhtest=True, draw1=True)  # BUCKET BREAK
+            eonedraw[i, :, :] = gmd.printer(eoute + egals[str(i)], percs=False, sfhtest=True, draw1=True)
+        # pars = git + 'eetest2/sfhtest_' + str(i) + '_params.py'  # eetest2
+        # pars = git + 'new/sfhtest_' + str(i) + '_params.py'  # 'eehometest/sfhtest_' + str(i) + '_params.py'  # eetest2
+        pars = git + 'fill/sfhtest_' + str(i) + '_params.py'
+        # i = j
+        with open(pars, 'r') as parfile:
+            for line in parfile:
+                if line.startswith("# Codename: "):
+                    spaces = 0
+                    inmass, indust, inmet, insfr1, insfr2 = '', '', '', '', ''
+                    for char in line:
+                        if char == ' ' or char == '_':
+                            spaces += 1
+                        elif spaces == 2:
+                            inmass += char
+                        elif spaces == 3:
+                            indust += char
+                        elif spaces == 4:
+                            inmet += char
+                        elif spaces == 5:
+                            insfr1 += char
+                        elif spaces == 6:
+                            insfr2 += char
+                elif line.startswith("# Identity: "):
+                    ispaces = 0
+                    zred = ''
+                    for char in line:
+                        if char == ' ' or char == '_':
+                            ispaces += 1
+                        elif ispaces == 4:
+                            zred += char
+        zred = float(zred)
+        print(zred, 'zred')
+        mass = np.percentile(eonedraw[i, 0, :], [16., 50., 84.])
+        # print(mass, 'mass')
+        dust = np.percentile(eonedraw[i, 1, :], [16., 50., 84.])
+        met = np.percentile(eonedraw[i, 2, :], [16., 50., 84.])
+        gasmet = np.percentile(eonedraw[i, 3, :], [16., 50., 84.])
+        sfr1 = np.percentile(eonedraw[i, 4, :], [16., 50., 84.])
+        sfr2 = np.percentile(eonedraw[i, 5, :], [16., 50., 84.])
+        ratio = []
+        for k in range(10**3):
+            ratio.append(eonedraw[i, 4, np.random.randint(0, 999)] / eonedraw[i, 5, np.random.randint(0, 999)])
+        sfr_ratio = np.percentile(ratio, [16., 50., 84.])
+        eoffsets[i, 0] = mass[1] - float(inmass)
+        eoffsets[i, 1] = dust[1] - float(indust)
+        eoffsets[i, 2] = 10 ** met[1] - 10 ** float(inmet)
+        eoffsets[i, 3] = sfr1[1] - float(insfr1)
+        eoffsets[i, 4] = sfr2[1] - float(insfr2)
+        eoffsets[i, 5] = sfr1[1] / sfr2[1] - float(insfr1) / float(insfr2)
+        emeds[i, 0] = mass[1]
+        emeds[i, 1] = dust[1]
+        emeds[i, 2] = 10 ** met[1]
+        emeds[i, 3] = sfr1[1]
+        emeds[i, 4] = sfr2[1]
+        emeds[i, 5] = sfr1[1] / sfr2[1]
+        color = 'b'
+        fmt = 'o'
+        sz = 6
+        ax1.errorbar(float(inmass), mass[1], yerr=np.array([[mass[1] - mass[0], mass[2] - mass[1]]]).T, fmt=fmt,
+                     color=color, markersize=sz)
+        ax2.errorbar(float(indust) / 1.086, dust[1] / 1.086,
+                     yerr=np.array([[(dust[1] - dust[0])/1.086, (dust[2] - dust[1])/1.086]]).T, fmt=fmt,
+                     color=color, markersize=sz)
+        ax3.errorbar(float(insfr1), sfr1[1], yerr=np.array([[sfr1[1] - sfr1[0], sfr1[2] - sfr1[1]]]).T, fmt=fmt,
+                     color=color, markersize=sz)
+        ax4.errorbar(float(insfr1) / float(insfr2), sfr_ratio[1],
+                     yerr=np.array([[sfr_ratio[1] - sfr_ratio[0], sfr_ratio[2] - sfr_ratio[1]]]).T, fmt=fmt,
+                     color=color, markersize=sz)
+        # '''
+
     # SET UP AXES:
     axes = [ax1, ax2, ax3, ax4]
     for ax in axes:
