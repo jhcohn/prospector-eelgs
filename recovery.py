@@ -195,10 +195,10 @@ if __name__ == "__main__":
             egals[key] = file
             ekeys.append(key)
     # NOTE: for eetest2 these three all had len(12, 6[, 10**3])  # len(1, 6[, 10**3])
-    eonedraw = np.zeros(shape=(20, 6, 10 ** 3))  # *10**3))  # [mass, dust, metal, gasmet, ssfr1, ssfr2]
-    eoffsets = np.zeros(shape=(20, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
-    emeds = np.zeros(shape=(20, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
-    for i in range(20):# (len(egals)):  # (12): # for each galaxy (0 through 99)
+    eonedraw = np.zeros(shape=(100, 6, 10 ** 3))  # *10**3))  # [mass, dust, metal, gasmet, ssfr1, ssfr2]
+    eoffsets = np.zeros(shape=(100, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
+    emeds = np.zeros(shape=(100, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
+    for i in range(100):  # (len(egals)):  # (12): # for each galaxy (0 through 99)
         # i = allkeys[ind]
         print(i, egals[str(i)])  # i = key
         # j = 0

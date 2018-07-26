@@ -213,10 +213,10 @@ if __name__ == "__main__":
             egals[key] = file
             ekeys.append(key)
     # NOTE: for eetest2 these three all had len(12, 6[, 10**3])  # len(1, 6[, 10**3])
-    eonedraw = np.zeros(shape=(20, 6, 10 ** 3))  # *10**3))  # [mass, dust, metal, gasmet, ssfr1, ssfr2]
-    eoffsets = np.zeros(shape=(20, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
-    emeds = np.zeros(shape=(20, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
-    for i in range(20):# (len(egals)):  # (12): # for each galaxy (0 through 99)
+    eonedraw = np.zeros(shape=(100, 6, 10 ** 3))  # *10**3))  # [mass, dust, metal, gasmet, ssfr1, ssfr2]
+    eoffsets = np.zeros(shape=(100, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
+    emeds = np.zeros(shape=(100, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
+    for i in range(100):# (len(egals)):  # (12): # for each galaxy (0 through 99)
         # i = allkeys[ind]
         print(i, egals[str(i)])  # i = key
         # j = 0
@@ -280,15 +280,15 @@ if __name__ == "__main__":
         emeds[i, 5] = sfr1[1] / sfr2[1]
         color = 'b'
         fmt = 'o'
-        sz = 10
+        sz = 6
         ax1.errorbar(float(inmass), mass[1], yerr=np.array([[mass[1] - mass[0], mass[2] - mass[1]]]).T, fmt=fmt,
                      color=color, markersize=sz)
         ax2.errorbar(float(indust) / 1.086, dust[1] / 1.086,
                      yerr=np.array([[(dust[1] - dust[0])/1.086, (dust[2] - dust[1])/1.086]]).T, fmt=fmt,
                      color=color, markersize=sz)
         ax3.errorbar(10 ** float(inmet), 10 ** met[1],
-                     yerr=np.array([[10 ** met[1] - 10 ** met[0], 10 ** met[2] - 10 ** met[1]]]).T,
-                     fmt='*', color=color, markersize=sz)
+                     yerr=np.array([[10 ** met[1] - 10 ** met[0], 10 ** met[2] - 10 ** met[1]]]).T, fmt=fmt,
+                     color=color, markersize=sz)
         ax4.errorbar(float(insfr1), sfr1[1], yerr=np.array([[sfr1[1] - sfr1[0], sfr1[2] - sfr1[1]]]).T, fmt=fmt,
                      color=color, markersize=sz)
         ax5.errorbar(float(insfr2), sfr2[1], yerr=np.array([[sfr2[1] - sfr2[0], sfr2[2] - sfr2[1]]]).T, fmt=fmt,
