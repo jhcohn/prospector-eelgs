@@ -52,11 +52,12 @@ if __name__ == "__main__":
 
     rc('font', **{'family': 'serif', 'serif': ['Times']})
     rc('text', usetex=True)
-    fs_text = 25  # 30
-    fs = 15  # 20
-    fs_ticks = 20  # 25
+    fs_text = 20 #25  # 30
+    fs = 10#15  # 20
+    fs_ticks = 15#20  # 25
 
     l1, l2, l3, l4, l5, l6 = [[], []], [[], []], [[], []], [[], []], [[], []], [[], []]
+    sl1, sl2, sl3, sl4, sl5, sl6 = [[], []], [[], []], [[], []], [[], []], [[], []], [[], []]
 
     # get_e = np.zeros(shape=(4, len(gals)))  # 6 rows (mass, dust, logzsol, gaslogz, ssfr1, ssfr2)
     #onedraw = np.zeros(shape=(80, 6, 10**3))  # *10**3))  # [mass, dust, metal, gasmet, ssfr1, ssfr2]
@@ -295,16 +296,16 @@ if __name__ == "__main__":
             egals[key] = file
             ekeys.append(key)
     # NOTE: for eetest2 these three all had len(12, 6[, 10**3])  # len(1, 6[, 10**3])
-    eonedraw = np.zeros(shape=(10, 6, 10 ** 3))  # *10**3))  # [mass, dust, metal, gasmet, ssfr1, ssfr2]
-    eoffsets = np.zeros(shape=(10, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
-    emeds = np.zeros(shape=(10, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
+    fonedraw = np.zeros(shape=(10, 6, 10 ** 3))  # *10**3))  # [mass, dust, metal, gasmet, ssfr1, ssfr2]
+    foffsets = np.zeros(shape=(10, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
+    fmeds = np.zeros(shape=(10, 6))  # [mass, dust, metal, sfh1, sfh2, sfh1/sfh2]
     for i in range(10):  # (len(egals)):  # (12): # for each galaxy (0 through 99)
         # i = allkeys[ind]
         print(i, egals[str(i)])  # i = key
         # j = 0
         if os.path.exists(eoute + egals[str(i)]):
             # eonedraw[i, :, :] = gmd.printer(eoute + egals[str(i)], percs=False, sfhtest=True, draw1=True)  # BUCKET BREAK
-            eonedraw[i, :, :] = gmd.printer(eoute + egals[str(i)], percs=False, sfhtest=True, draw1=True)
+            fonedraw[i, :, :] = gmd.printer(eoute + egals[str(i)], percs=False, sfhtest=True, draw1=True)
         # pars = git + 'eetest2/sfhtest_' + str(i) + '_params.py'  # eetest2
         # pars = git + 'new/sfhtest_' + str(i) + '_params.py'  # 'eehometest/sfhtest_' + str(i) + '_params.py'  # eetest2
         pars = git + 'fill/sfhtest_' + str(i) + '_params.py'
@@ -337,29 +338,29 @@ if __name__ == "__main__":
                             zred += char
         zred = float(zred)
         print(zred, 'zred')
-        mass = np.percentile(eonedraw[i, 0, :], [16., 50., 84.])
+        mass = np.percentile(fonedraw[i, 0, :], [16., 50., 84.])
         # print(mass, 'mass')
-        dust = np.percentile(eonedraw[i, 1, :], [16., 50., 84.])
-        met = np.percentile(eonedraw[i, 2, :], [16., 50., 84.])
-        gasmet = np.percentile(eonedraw[i, 3, :], [16., 50., 84.])
-        sfr1 = np.percentile(eonedraw[i, 4, :], [16., 50., 84.])
-        sfr2 = np.percentile(eonedraw[i, 5, :], [16., 50., 84.])
+        dust = np.percentile(fonedraw[i, 1, :], [16., 50., 84.])
+        met = np.percentile(fonedraw[i, 2, :], [16., 50., 84.])
+        gasmet = np.percentile(fonedraw[i, 3, :], [16., 50., 84.])
+        sfr1 = np.percentile(fonedraw[i, 4, :], [16., 50., 84.])
+        sfr2 = np.percentile(fonedraw[i, 5, :], [16., 50., 84.])
         ratio = []
         for k in range(10**3):
-            ratio.append(eonedraw[i, 4, np.random.randint(0, 999)] / eonedraw[i, 5, np.random.randint(0, 999)])
+            ratio.append(fonedraw[i, 4, np.random.randint(0, 999)] / fonedraw[i, 5, np.random.randint(0, 999)])
         sfr_ratio = np.percentile(ratio, [16., 50., 84.])
-        eoffsets[i, 0] = mass[1] - float(inmass)
-        eoffsets[i, 1] = dust[1] - float(indust)
-        eoffsets[i, 2] = 10 ** met[1] - 10 ** float(inmet)
-        eoffsets[i, 3] = sfr1[1] - float(insfr1)
-        eoffsets[i, 4] = sfr2[1] - float(insfr2)
-        eoffsets[i, 5] = sfr1[1] / sfr2[1] - float(insfr1) / float(insfr2)
-        emeds[i, 0] = mass[1]
-        emeds[i, 1] = dust[1]
-        emeds[i, 2] = 10 ** met[1]
-        emeds[i, 3] = sfr1[1]
-        emeds[i, 4] = sfr2[1]
-        emeds[i, 5] = sfr1[1] / sfr2[1]
+        foffsets[i, 0] = mass[1] - float(inmass)
+        foffsets[i, 1] = dust[1] - float(indust)
+        foffsets[i, 2] = 10 ** met[1] - 10 ** float(inmet)
+        foffsets[i, 3] = sfr1[1] - float(insfr1)
+        foffsets[i, 4] = sfr2[1] - float(insfr2)
+        foffsets[i, 5] = sfr1[1] / sfr2[1] - float(insfr1) / float(insfr2)
+        fmeds[i, 0] = mass[1]
+        fmeds[i, 1] = dust[1]
+        fmeds[i, 2] = 10 ** met[1]
+        fmeds[i, 3] = sfr1[1]
+        fmeds[i, 4] = sfr2[1]
+        fmeds[i, 5] = sfr1[1] / sfr2[1]
         color = 'b'
         fmt = 'o'
         sz = 6
@@ -373,6 +374,18 @@ if __name__ == "__main__":
         ax4.errorbar(float(insfr1) / float(insfr2), sfr_ratio[1],
                      yerr=np.array([[sfr_ratio[1] - sfr_ratio[0], sfr_ratio[2] - sfr_ratio[1]]]).T, fmt=fmt,
                      color=color, markersize=sz)
+        l1[0].append(float(inmass))
+        l1[1].append(mass[1])
+        l2[0].append(float(indust))
+        l2[1].append(dust[1])
+        l3[0].append(10**float(inmet))
+        l3[1].append(10**met[1])
+        l4[0].append(float(insfr1))
+        l4[1].append(sfr1[1])
+        l5[0].append(float(insfr2))
+        l5[1].append(sfr2[1])
+        l6[0].append(float(insfr1) / float(insfr2))
+        l6[1].append(sfr1[1] / sfr2[1])
         # '''
 
     # SET UP AXES:
@@ -381,7 +394,7 @@ if __name__ == "__main__":
         ax.tick_params('x', length=3, width=1, which='both', labelsize=fs, pad=10)
         ax.tick_params('y', length=3, width=0.5, which='both', labelsize=fs)
 
-    things = ['mass', 'dust', 'met', 'ssf1','ssfr2', 'ratio']
+    things = ['mass', 'dust', 'met', 'ssf1', 'ssfr2', 'ratio']
     offs = []
     for j in range(len(offsets[0])):  # for all 5 recorded parameter offsets
         print(np.percentile(offsets[:, j], [16., 50., 84]), 'percentiles offset')
@@ -396,6 +409,8 @@ if __name__ == "__main__":
         diff.append(l1[1][j] - expected)
     perc = np.percentile(diff, [16., 50., 84.])
     print('mean offset = ' + str(offs[0]), 'scatter = ' + str(perc[2] - perc[0]))
+    ax1.text(8.9, 10.37, r'scatter=' + str("%.2f" % (perc[2] - perc[0])), fontsize=fs_text)
+    ax1.text(8.9, 10.27, r'mean offset=' + str("%.2f" % offs[0]), fontsize=fs_text)
 
     m, b = np.polyfit(l2[0], l2[1], 1)
     print(m, b, 'dust')
@@ -405,6 +420,8 @@ if __name__ == "__main__":
         diff.append(l2[1][j] - expected)
     perc = np.percentile(diff, [16., 50., 84.])
     print('mean offset = ' + str(offs[1]), 'scatter = ' + str(perc[2] - perc[0]))
+    ax2.text(0.05, 0.74, 'scatter=' + str("%.2f" % (perc[2] - perc[0])), fontsize=fs_text)
+    ax2.text(0.05, 0.69, 'mean offset=' + str("%.2f" % offs[1]), fontsize=fs_text)
 
     m, b = np.polyfit(l3[0], l3[1], 1)
     print(m, b, 'met')
@@ -423,6 +440,8 @@ if __name__ == "__main__":
         diff.append(l4[1][j] - expected)
     perc = np.percentile(diff, [16., 50., 84.])
     print('mean offset = ' + str(offs[3]), 'scatter = ' + str(perc[2] - perc[0]))
+    ax3.text(0.05, 0.694, 'scatter=' + str("%.2f" % (perc[2] - perc[0])), fontsize=fs_text)
+    ax3.text(0.05, 0.654, 'mean offset=' + str("%.2f" % offs[3]), fontsize=fs_text)
 
     m, b = np.polyfit(l5[0], l5[1], 1)
     print(m, b, 'sfr2')
@@ -441,6 +460,8 @@ if __name__ == "__main__":
         diff.append(l6[1][j] - expected)
     perc = np.percentile(diff, [16., 50., 84.])
     print('mean offset = ' + str(offs[5]), 'scatter = ' + str(perc[2] - perc[0]))
+    ax4.text(0.14, 13.5, 'scatter=' + str("%.2f" % (perc[2] - perc[0])), fontsize=fs_text)
+    ax4.text(0.14, 10., 'mean offset=' + str("%.2f" % offs[5]), fontsize=fs_text)
 
     # MASS AXES
     ax1.set_xlim(8.8, 10.5)
@@ -478,14 +499,14 @@ if __name__ == "__main__":
     # SFR RATIO AXES
     ax4.set_xscale("log")
     ax4.set_yscale("log")
-    ax4.set_xlim(0.15, 15.)
-    ax4.set_ylim(0.15, 15.)
+    ax4.set_xlim(0.1, 20.)
+    ax4.set_ylim(0.1, 20.)
     ax4.plot([10**-2., 10**2.], [10**-2., 10**2.], color='k', linestyle='--')
     ax4.set_xlabel(r'Input SFH ratio [$f_{0-50} / f_{50-100}$]', fontsize=fs_text)
     ax4.set_ylabel(r'Recovered SFH ratio [$f_{0-50} / f_{50-100}$]', fontsize=fs_text)
-    ax4.set_xticks([0.2, 0.5, 1., 2., 5., 10.])  # technically works
-    ax4.set_xticklabels([r'$0.2$', r'$0.5$', r'$1$', r'$2$', r'$5$', r'$10$'], size=fs_ticks)
-    ax4.set_yticks([0.2, 0.5, 1., 2., 5., 10.])  # technically works
-    ax4.set_yticklabels([r'$0.2$', r'$0.5$', r'$1$', r'$2$', r'$5$', r'$10$'], size=fs_ticks)
+    ax4.set_xticks([0.1, 0.2, 0.5, 1., 2., 5., 10., 20.])  # technically works
+    ax4.set_xticklabels([r'$0.1$', r'$0.2$', r'$0.5$', r'$1$', r'$2$', r'$5$', r'$10$', r'$20$'], size=fs_ticks)
+    ax4.set_yticks([0.1, 0.2, 0.5, 1., 2., 5., 10., 20.])  # technically works
+    ax4.set_yticklabels([r'$0.1$', r'$0.2$', r'$0.5$', r'$1$', r'$2$', r'$5$', r'$10$', r'$20$'], size=fs_ticks)
     plt.show()
 
