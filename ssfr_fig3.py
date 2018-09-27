@@ -80,7 +80,7 @@ def bootstrap(X, n=None, X_err=None):
         return X_resample, resample_i
 
 
-def randraw(infile, logmass, num=1000):  # num=1000
+def randraw(infile, logmass, num=10**4):  # num=1000
     """
     For a given galaxy, randraw samples the posterior num times for each point in extra_output['extras']['sfh'][i]
 
@@ -94,7 +94,7 @@ def randraw(infile, logmass, num=1000):  # num=1000
 #    draw_from_sfh = np.zeros(shape=(len(extra_output['extras']['ssfr']), num))  # shape=(22, num)  # BUCKET MASS WRONG?
     draw_from_sfh = np.zeros(shape=(len(extra_output['extras']['sfh']), num))  # shape=(22, num)
     # print(len(extra_output['extras']['ssfr']), len(extra_output['extras']['ssfr'][0]))  # 22, 2000
-    # print(len(draw_from_sfh), len(draw_from_sfh[0]))  # 22, num
+    print(len(draw_from_sfh), len(draw_from_sfh[0]))  # 22, num
 
     '''  # BUCKET MASS WRONG?
     for i in range(len(extra_output['extras']['ssfr'])):  # at each of these 22 points
@@ -103,7 +103,7 @@ def randraw(infile, logmass, num=1000):  # num=1000
     '''
     for i in range(len(extra_output['extras']['sfh'])):  # at each of these 22 points
         for j in range(num):  # randomly draw from the ssfr posterior num times
-            draw_from_sfh[i][j] = extra_output['extras']['sfh'][i][random.randint(0, num)] / (10**logmass) / 0.8
+            draw_from_sfh[i][j] = extra_output['extras']['sfh'][i][random.randint(0, 1999)] / (10**logmass) / 0.8
 
     return draw_from_sfh, extra_output['extras']['t_sfh']
 
@@ -208,7 +208,7 @@ def density_estimation(m1, m2, xs=[-1.5,2.5], ys=[-1,2.5], num=100):  # 100j
     return X, Y, Z
 
 
-def simpler(recentx, secondy, logit=False):
+def simpler(recentx, secondy, logit=False, later=False, n_samps=10**4):
     if logit:
         x = [np.log10(rx) for rx in recentx[0]]
         y = [np.log10(sy) for sy in secondy[0]]
@@ -229,10 +229,27 @@ def simpler(recentx, secondy, logit=False):
     # start with a Figure
     fig1 = plt.figure(1, figsize=(12, 12))
     cb = False
+    '''
     if cb:
         gs = gridspec.GridSpec(1, 3, width_ratios=[12, 1, 1])
         ax1 = plt.subplot(gs[0])  # plt.subplot(111)
     else:
+        ax1 = plt.subplot(111)
+    '''
+    if later:
+        gs = gridspec.GridSpec(5, 5)
+        gs.update(wspace=0, hspace=0)
+        ax1 = plt.subplot(gs[1:, :-1])
+        axHisty = plt.subplot(gs[1:, -1])
+        axHistx = plt.subplot(gs[0, :-1])
+        axHistx.set_xlim(xlims[0], xlims[1])
+        axHisty.set_ylim(ylims[0], ylims[1])
+        axHistx.set_xscale('log')
+        axHisty.set_yscale('log')
+        print('hi later')
+    else:
+        #ax1 = plt.subplot(121)
+        #ax2 = plt.subplot(122, sharex=ax1, sharey=ax1)
         ax1 = plt.subplot(111)
 
     print(xlims, ylims)
@@ -289,7 +306,7 @@ def simpler(recentx, secondy, logit=False):
         x_bins = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), np.sqrt(len(x))/2)
         y_bins = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), np.sqrt(len(x))/2)
         H1, xedges, yedges = np.histogram2d(x, y, bins=[x_bins, y_bins])
-        H1 = np.ma.masked_array(H1, H1 < len(x) / (1.5*10**3))  # 20.
+        H1 = np.ma.masked_array(H1, H1 < len(x) / (1.5*n_samps))  # 20.
         # H1 /= 19
         # ax1.pcolormesh(xedges, yedges, H1.T, cmap='Purples')
 
@@ -298,7 +315,7 @@ def simpler(recentx, secondy, logit=False):
         x_bins2 = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), np.sqrt(len(x))/2)
         y_bins2 = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), np.sqrt(len(x))/2)
         H2, xedges2, yedges2 = np.histogram2d(x2, y2, bins=[x_bins2, y_bins2])
-        H2 = np.ma.masked_array(H2, H2 < len(x2) / (2*10**3))  # 20.
+        H2 = np.ma.masked_array(H2, H2 < len(x2) / (2*n_samps))  # 20.
         # H2 /= 167.
 
         im2 = ax1.pcolormesh(xedges2, yedges2, H2.T, cmap=new_cmap2)
@@ -352,10 +369,48 @@ def simpler(recentx, secondy, logit=False):
     #ax2.plot(xlims, ylims, ls='--', color='k')  # [0., 17.]
 
     # Set up your x and y labels
-    xlabel = r'$<$SFR$_{0-50}>$/M$_{\rm tot}$ [Gyr$^{-1}$]'
-    # r'$<$SSFR$>_{0-50}$ [Gyr$^{-1}$]'  # r'SSFR, most recent bin [Gyr$^{-1}$]'
-    ylabel = r'$<$SFR$_{50-100}>$/M$_{\rm tot}$ [Gyr$^{-1}$]'
-    # r'$<$SSFR$>_{50-100}$ [Gyr$^{-1}$]'  # r'SSFR, second most recent bin [Gyr$^{-1}$]'
+    if later:
+        xlabel = r'$<$SFR$_{50-100}>$/M$_{\rm tot}$ [Gyr$^{-1}$]'
+        # r'$<$SSFR$>_{0-50}$ [Gyr$^{-1}$]'  # r'SSFR, most recent bin [Gyr$^{-1}$]'
+        ylabel = r'$<$SFR$_{100-1000}>$/M$_{\rm tot}$ [Gyr$^{-1}$]'
+        # r'$<$SSFR$>_{50-100}$ [Gyr$^{-1}$]'  # r'SSFR, second most recent bin [Gyr$^{-1}$]'
+        '''
+        left, width = 0.12, 0.55
+        bottom, height = 0.12, 0.55
+        bottom_h = left_h = left + width + 0.02
+
+        # Set up the geometry of the three plots
+        rect_temperature = [left, bottom, width, height]  # dimensions of temp plot
+        rect_histx = [left, bottom_h, width, 0.25]  # dimensions of x-histogram
+        rect_histy = [left_h, bottom, 0.25, height]  # dimensions of y-histogram
+        # Make the three plots
+        axTemperature = plt.axes(rect_temperature)  # temperature plot
+        axHistx = plt.axes(rect_histx)  # x histogram
+        axHisty = plt.axes(rect_histy)  # y histogram
+        '''
+        print('hi later')
+        from matplotlib.ticker import NullFormatter, MaxNLocator
+        nullfmt = NullFormatter()
+        axHistx.xaxis.set_major_formatter(nullfmt)
+        axHistx.yaxis.set_major_formatter(nullfmt)
+        axHisty.xaxis.set_major_formatter(nullfmt)
+        axHisty.yaxis.set_major_formatter(nullfmt)
+
+        axHistx.hist(x, bins=x_bins, color='purple', normed=True)
+        axHistx.hist(x2, bins=x_bins2, edgecolor='b', facecolor='none', hatch='/', lw=1.5, normed=True)
+        axHisty.hist(y, bins=y_bins, orientation='horizontal', color='purple', normed=True)
+        axHisty.hist(y2, bins=y_bins2, orientation='horizontal', facecolor='none', lw=1.5, edgecolor='b', hatch='/',
+                     normed=True)
+
+        # Set up the histogram limits
+        axHisty.xaxis.set_major_locator(MaxNLocator(4))
+        axHistx.yaxis.set_major_locator(MaxNLocator(4))
+        # plt.draw()
+    else:
+        xlabel = r'$<$SFR$_{0-50}>$/M$_{\rm tot}$ [Gyr$^{-1}$]'
+        # r'$<$SSFR$>_{0-50}$ [Gyr$^{-1}$]'  # r'SSFR, most recent bin [Gyr$^{-1}$]'
+        ylabel = r'$<$SFR$_{50-100}>$/M$_{\rm tot}$ [Gyr$^{-1}$]'
+        # r'$<$SSFR$>_{50-100}$ [Gyr$^{-1}$]'  # r'SSFR, second most recent bin [Gyr$^{-1}$]'
     ax1.set_xlabel(xlabel, fontsize=30)
     ax1.set_ylabel(ylabel, fontsize=30)
     #ax2.set_xlabel(xlabel, fontsize=30)
@@ -406,7 +461,7 @@ def simpler(recentx, secondy, logit=False):
     plt.show()
 
 
-def simpler_mass(recentx, secondy, logit=False):
+def simpler_mass(recentx, secondy, logit=False, later=False):
     if logit:
         x = [np.log10(rx) for rx in recentx[0]]
         y = [np.log10(sy) for sy in secondy[0]]
@@ -426,9 +481,16 @@ def simpler_mass(recentx, secondy, logit=False):
 
     # start with a rectangular Figure
     fig1 = plt.figure(1, figsize=(12,12))#(16, 16)) #(19.5, 12))
-    #ax1 = plt.subplot(121)
-    #ax2 = plt.subplot(122, sharex=ax1, sharey=ax1)
-    ax1 = plt.subplot(111)
+    if later:
+        gs = gridspec.GridSpec(3, 3)
+        ax1 = plt.subplot(gs[1:, :-1])
+        axHisty = plt.subplot(gs[1:, -1])
+        axHistx = plt.subplot(gs[0, :-1])
+        print('hi later')
+    else:
+        #ax1 = plt.subplot(121)
+        #ax2 = plt.subplot(122, sharex=ax1, sharey=ax1)
+        ax1 = plt.subplot(111)
     #plt.subplots_adjust(wspace=0., hspace=0.)
 
     print(xlims, ylims)
@@ -509,9 +571,46 @@ def simpler_mass(recentx, secondy, logit=False):
     #ax2.plot(xlims, ylims, ls='--', color='k')  # [0., 17.]
 
     # Set up your x and y labels
-    xlabel = r'M$_{0-50}$/M$_{\rm tot}$'
-    # r'$<$SSFR$>_{0-50}$ [Gyr$^{-1}$]'  # r'SSFR, most recent bin [Gyr$^{-1}$]'
-    ylabel = r'M$_{50-100}$/M$_{\rm tot}$'
+    if later:
+        xlabel = r'M$_{50-100}$/M$_{\rm tot}$'
+        ylabel = r'M$_{100-1000}$/M$_{\rm tot}$'
+
+        '''
+        left, width = 0.12, 0.55
+        bottom, height = 0.12, 0.55
+        bottom_h = left_h = left + width + 0.02
+
+        # Set up the geometry of the three plots
+        rect_temperature = [left, bottom, width, height]  # dimensions of temp plot
+        rect_histx = [left, bottom_h, width, 0.25]  # dimensions of x-histogram
+        rect_histy = [left_h, bottom, 0.25, height]  # dimensions of y-histogram
+        # Make the three plots
+        axTemperature = plt.axes(rect_temperature)  # temperature plot
+        axHistx = plt.axes(rect_histx)  # x histogram
+        axHisty = plt.axes(rect_histy)  # y histogram
+        '''
+        print('hi later')
+        from matplotlib.ticker import NullFormatter, MaxNLocator
+        nullfmt = NullFormatter()
+        #axHistx.xaxis.set_major_formatter(nullfmt)
+        #axHisty.yaxis.set_major_formatter(nullfmt)
+
+        axHistx.hist(x, bins=x_bins, color='purple')
+        axHistx.hist(x, bins=x_bins2, color='b')
+        axHisty.hist(y, bins=y_bins, orientation='horizontal', color='purple')
+        axHisty.hist(y, bins=y_bins2, orientation='horizontal', color='b')
+
+        # Set up the histogram limits
+        axHistx.set_xlim(min(x), max(x))
+        axHisty.set_ylim(min(y), max(y))
+        #axHisty.xaxis.set_major_locator(MaxNLocator(4))
+        #axHistx.yaxis.set_major_locator(MaxNLocator(4))
+        #plt.draw()
+
+    else:
+        xlabel = r'M$_{0-50}$/M$_{\rm tot}$'
+        # r'$<$SSFR$>_{0-50}$ [Gyr$^{-1}$]'  # r'SSFR, most recent bin [Gyr$^{-1}$]'
+        ylabel = r'M$_{50-100}$/M$_{\rm tot}$'
     # r'$<$SSFR$>_{50-100}$ [Gyr$^{-1}$]'  # r'SSFR, second most recent bin [Gyr$^{-1}$]'
     ax1.set_xlabel(xlabel, fontsize=30)
     ax1.set_ylabel(ylabel, fontsize=30)
@@ -608,6 +707,8 @@ if __name__ == "__main__":
     l_out = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/out/' + 'out_nfico/'
 
     # START STACKING
+    n_samps = 10**3  # 10**4
+
     t1 = []
     draws = []
     boots = []
@@ -629,16 +730,17 @@ if __name__ == "__main__":
             sfgs1.append(file)
     for glxy in eelgs:
         c += 1
+        print(c)
         # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
         file = pkls + glxy + '_extra_out.pkl'
         if os.path.exists(file):
             for mfile in eelgs1:
                 if mfile.startswith(glxy):
                     use_mfile = mfile
-            get_e = gmd.printer(out + use_mfile, percs=False)
+            get_e = gmd.printer(out + use_mfile, percs=False, quiet=True)
             nummy += 1
             # temp = randraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
-            temp = randraw(file, get_e[np.random.randint(len(get_e))])  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
+            temp = randraw(file, get_e[np.random.randint(len(get_e))], num=n_samps)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
             # temp = bootdraw(file)  # temp[0] lists num=1000 random posterior samples; temp[1] = time vector
             draws.append(temp[0])  # append random draw of ssfr
             # boots.append(bootstrap(temp[0]))
@@ -650,6 +752,7 @@ if __name__ == "__main__":
     lfile_loc = '/home/jonathan/.conda/envs/snowflakes/lib/python2.7/site-packages/prospector/git/sfg_ssfrs'
     for glxy in lbgs:
         cl += 1
+        print(cl)
         # file = glxy[0] + '_' + glxy[1] + '_' + glxy[2] + '_extra_out.pkl'
         file = l_pkls + glxy + '_extra_out.pkl'
 
@@ -657,10 +760,10 @@ if __name__ == "__main__":
             for mfile in sfgs1:
                 if mfile.startswith(glxy):
                     use_mfile = mfile
-            get_l = gmd.printer(l_out + use_mfile, percs=False)
+            get_l = gmd.printer(l_out + use_mfile, percs=False, quiet=True)
             numl += 1
             # temp = randraw(file)
-            temp = randraw(file, get_l[np.random.randint(len(get_l))])
+            temp = randraw(file, get_l[np.random.randint(len(get_l))], num=n_samps)
             # temp = bootdraw(file)
             draws2.append(temp[0])
             # t2.append(temp[1])
@@ -672,11 +775,11 @@ if __name__ == "__main__":
     all1 = stacker(draws, sigma=sig)
     all2 = stacker(draws2, sigma=sig)
 
-    means1 = np.zeros(shape=(10**3))
-    means2 = np.zeros(shape=(10**3))
+    means1 = np.zeros(shape=(n_samps))
+    means2 = np.zeros(shape=(n_samps))
     # len(gal_draws) = number of galaxies in stack; len(gal_draws[0]) = 22, len(gal_draws[0][0]) = num (1000)
     # print(len(draws), len(draws[0]), len(draws[0][0]))  # 19, 22, 1000
-    for nu in range(1000):
+    for nu in range(n_samps):
         each = []
         each2 = []
         for gal in range(len(draws)):
@@ -691,34 +794,48 @@ if __name__ == "__main__":
 
     rec1 = []
     sec1 = []
+    thi1 = []
     mr1 = []
     ms1 = []
+    mt1 = []
     for i in range(len(all1[0])):
         recent = []
         second = []
+        third = []
         for j in (0, 1, 2):
             recent.append(all1[j][i])
         for k in (3, 4, 5, 6):
             second.append(all1[k][i])
+        for l in (7, 8, 9, 10):
+            third.append(all2[l][i])
         rec1.append(sum(recent) * 10**9 / 3)
         sec1.append(sum(second) * 10**9 / 4)
+        thi1.append(sum(third) * 10**9 / 4)
         mr1.append(sum(recent) * 5*10**7 / 3)
         ms1.append(sum(second) * 5 * 10 ** 7 / 4)
+        mt1.append(sum(third) * 5 * 10 ** 7 / 4)
     rec2 = []
     sec2 = []
+    thi2 = []
     mr2 = []
     ms2 = []
+    mt2 = []
     for i in range(len(all2[0])):
         recent = []
         second = []
+        third = []
         for j in (0, 1, 2):
             recent.append(all2[j][i])
         for k in (3, 4, 5, 6):
             second.append(all2[k][i])
-        rec2.append(sum(recent) * 10**9 / 3)
-        sec2.append(sum(second) * 10**9 / 4)
+        for l in (7, 8, 9, 10):
+            third.append(all2[l][i])
+        rec2.append(sum(recent) * 10**9 / 3)  # convert Gyr to yr, and average all three samples within the bin
+        sec2.append(sum(second) * 10**9 / 4)  # convert Gyr to yr, and average all four samples within the bin
+        thi2.append(sum(third) * 10**9 / 4)
         mr2.append(sum(recent) * 5*10**7 / 3)
         ms2.append(sum(second) * 5 * 10 ** 7 / 4)
+        mt2.append(sum(third) * 5 * 10 ** 7 / 4)
 
     randome1 = []
     randome2 = []
@@ -761,10 +878,13 @@ if __name__ == "__main__":
 
     recents = [rec1, rec2]
     seconds = [sec1, sec2]
+    thirds = [thi1, thi2]
     massrec = [mr1, mr2]
     masssec = [ms1, ms2]
 
-    simpler(recents, seconds)
+    simpler(seconds, thirds, later=True, n_samps=n_samps)
+
+    simpler(recents, seconds, n_samps=n_samps)
     # simpler(rec2, sec2, col='b')
 
     simpler_mass(massrec, masssec)
