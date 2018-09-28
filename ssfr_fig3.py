@@ -365,7 +365,7 @@ def simpler(recentx, secondy, logit=False, later=False, n_samps=10**4):
         ax1.hist2d(x, y, bins=100, cmap=new_cmap, cmin=19)#, legend='EELGs')  # 19
         # bins with counts < cmin won't be displayed! cmin=len(x)/1000
 
-    ax1.plot(xlims, ylims, ls='--', color='k')  # [0., 17.]
+    ax1.plot(xlims, ylims, ls='--', color='k')#, lw=2)  # [0., 17.]
     #ax2.plot(xlims, ylims, ls='--', color='k')  # [0., 17.]
 
     # Set up your x and y labels
@@ -396,11 +396,30 @@ def simpler(recentx, secondy, logit=False, later=False, n_samps=10**4):
         axHisty.xaxis.set_major_formatter(nullfmt)
         axHisty.yaxis.set_major_formatter(nullfmt)
 
-        axHistx.hist(x, bins=x_bins, color='purple', normed=True)
-        axHistx.hist(x2, bins=x_bins2, edgecolor='b', facecolor='none', hatch='/', lw=1.5, normed=True)
-        axHisty.hist(y, bins=y_bins, orientation='horizontal', color='purple', normed=True)
-        axHisty.hist(y2, bins=y_bins2, orientation='horizontal', facecolor='none', lw=1.5, edgecolor='b', hatch='/',
-                     normed=True)
+        H1x = H1.sum(axis=-1)
+        H1y = H1.sum(axis=0)
+
+        H2x = H2.sum(axis=-1)
+        H2y = H2.sum(axis=0)
+
+        print(np.amax(H1x))
+        print(len(H1x))
+        print(len(x_bins))
+        x_binsx = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), len(H1x))
+        x_binsx2 = np.logspace(np.log10(xlims[0]), np.log10(xlims[1]), len(H2x))
+        y_binsy = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), len(H1y))
+        y_binsy2 = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), len(H2y))
+        print(len(x_binsx), len(x_binsx2))
+        print(H1x)
+
+        # axHistx.hist(H1x, bins=x_bins, color='purple', normed=True, alpha=0.7)
+        axHistx.plot(x_binsx, H1x / np.amax(H1x), color='purple', lw=2)
+        # axHistx.plot(range(len(H2x)), H2x / np.amax(H2x), color='b')
+        axHistx.plot(x_binsx2, H2x / np.amax(H2x), 'b--', lw=2)
+        axHisty.plot(H1y / np.amax(H1y), y_binsy, color='purple', lw=2)
+        axHisty.plot(H2y / np.amax(H2y), y_binsy2, 'b--', lw=2)
+        # axHisty.hist(H2.sum(axis=-1), bins=y_bins2, orientation='horizontal', facecolor='none', lw=1.5, edgecolor='b', hatch='/',
+                     # normed=True)  # , range=[min(y2) * 10., max(y2)]
 
         # Set up the histogram limits
         axHisty.xaxis.set_major_locator(MaxNLocator(4))
