@@ -236,7 +236,8 @@ def simpler(recentx, secondy, logit=False, later=False, n_samps=10**4):
     else:
         ax1 = plt.subplot(111)
     '''
-    if later:
+    forced = True
+    if later or forced:
         gs = gridspec.GridSpec(5, 5)
         gs.update(wspace=0, hspace=0)
         ax1 = plt.subplot(gs[1:, :-1])
@@ -369,10 +370,16 @@ def simpler(recentx, secondy, logit=False, later=False, n_samps=10**4):
     #ax2.plot(xlims, ylims, ls='--', color='k')  # [0., 17.]
 
     # Set up your x and y labels
-    if later:
-        xlabel = r'$<$SFR$_{50-100}>$/M$_{\rm tot}$ [Gyr$^{-1}$]'
-        # r'$<$SSFR$>_{0-50}$ [Gyr$^{-1}$]'  # r'SSFR, most recent bin [Gyr$^{-1}$]'
-        ylabel = r'$<$SFR$_{100-1000}>$/M$_{\rm tot}$ [Gyr$^{-1}$]'
+    if later or forced:
+        if not later:
+            xlabel = r'$<$SF\_bin1$>/$M$_{\rm tot}$ [Gyr$^{-1}$]'
+            ylabel = r'$<$SF\_bin2$>/$M$_{\rm tot}$ [Gyr$^{-1}$]'
+        else:
+            xlabel = r'$<$SF\_bin2$>/$M$_{\rm tot}$ [Gyr$^{-1}$]'
+            # xlabel = r'$<$SFR$_{50-100}>$/M$_{\rm tot}$ [Gyr$^{-1}$]'
+            # r'$<$SSFR$>_{0-50}$ [Gyr$^{-1}$]'  # r'SSFR, most recent bin [Gyr$^{-1}$]'
+            ylabel = r'$<$SF\_bin3$>/$M$_{\rm tot}$ [Gyr$^{-1}$]'
+        # ylabel = r'$<$SFR$_{100-1000}>$/M$_{\rm tot}$ [Gyr$^{-1}$]'
         # r'$<$SSFR$>_{50-100}$ [Gyr$^{-1}$]'  # r'SSFR, second most recent bin [Gyr$^{-1}$]'
         '''
         left, width = 0.12, 0.55
@@ -411,8 +418,10 @@ def simpler(recentx, secondy, logit=False, later=False, n_samps=10**4):
         y_binsy2 = np.logspace(np.log10(ylims[0]), np.log10(ylims[1]), len(H2y))
         print(len(x_binsx), len(x_binsx2))
         print(H1x)
+        print(x_binsx)
 
-        # axHistx.hist(H1x, bins=x_bins, color='purple', normed=True, alpha=0.7)
+        # H1x = np.asarray([2.] * len(H1x))
+        # axHistx.hist(H1x, bins=x_binsx, color='purple', normed=True, alpha=0.7)
         axHistx.plot(x_binsx, H1x / np.amax(H1x), color='purple', lw=2)
         # axHistx.plot(range(len(H2x)), H2x / np.amax(H2x), color='b')
         axHistx.plot(x_binsx2, H2x / np.amax(H2x), 'b--', lw=2)
@@ -900,6 +909,25 @@ if __name__ == "__main__":
     thirds = [thi1, thi2]
     massrec = [mr1, mr2]
     masssec = [ms1, ms2]
+
+    ee_sf1 = 0.
+    sf_sf1 = 0.
+    ee_sf2 = 0.
+    sf_sf2 = 0.
+    for i in range(len(rec1)):
+        if rec1[i] / sec1[i] > 1.:
+            ee_sf1 += 1.
+    for i in range(len(rec2)):
+        if rec2[i] / sec2[i] > 1.:
+            sf_sf1 += 1.
+    for i in range(len(thi1)):
+        if sec1[i] / thi1[i] > 1.:
+            ee_sf2 += 1.
+    for i in range(len(thi2)):
+        if sec2[i] / thi2[i] > 1.:
+            sf_sf2 += 1.
+    print(ee_sf1 / len(rec1), ee_sf2 / len(rec1))
+    print(sf_sf1 / len(rec2), sf_sf2 / len(rec2))
 
     simpler(seconds, thirds, later=True, n_samps=n_samps)
 
