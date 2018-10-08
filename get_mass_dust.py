@@ -13,7 +13,7 @@ np.errstate(invalid='ignore')
 
 
 def md(sample_results, start=0, thin=1, percs=True, sfhtest=False, masstest=False, fast=False, five=False, quiet=False,
-       draw1=False):
+       draw1=False, fixmet=False):
     """Make a triangle plot of the (thinned, latter) samples of the posterior
     parameter space.  Optionally make the plot only for a supplied subset of
     the parameters.
@@ -33,6 +33,7 @@ def md(sample_results, start=0, thin=1, percs=True, sfhtest=False, masstest=Fals
     flatchain = flatchain.reshape(flatchain.shape[0] * flatchain.shape[1],
                                   flatchain.shape[2])
 
+    # print(parnames)
     # print(np.percentile(flatchain[:, 0], [16, 50, 84]), len(flatchain[0]))  len(flatchain[0]) = 8 = len(parnames)
     # print(parnames) = [u'logmass' u'sfr_fraction_1' u'sfr_fraction_2' u'sfr_fraction_3' u'sfr_fraction_4'
     # u'sfr_fraction_5' u'dust2' u'logzsol' u'gas_logz']
@@ -40,11 +41,16 @@ def md(sample_results, start=0, thin=1, percs=True, sfhtest=False, masstest=Fals
     if percs:
         mass = np.percentile(flatchain[:, 0], [16, 50, 84])[1]
         dust = np.percentile(flatchain[:, 6], [16, 50, 84])[1]
-        gasmet = np.percentile(flatchain[:, -1], [16, 50, 84])[1]
         metal = None
+        gasmet = None
         if parnames[7] == u'logzsol':
             metal = np.percentile(flatchain[:, 7], [16, 50, 84])[1]
+            gasmet = np.percentile(flatchain[:, -1], [16, 50, 84])[1]
         ret = [mass, dust, metal, gasmet]
+    elif fixmet:
+        mass = np.random.choice(flatchain[:, 0], size=(10**3))
+        dust = np.random.choice(flatchain[:, 6], size=(10**3))
+        ret = np.asarray([mass, dust])
     elif sfhtest and draw1:
         mass = np.random.choice(flatchain[:, 0], size=(10**3))
         ssfr1 = np.random.choice(flatchain[:, 1], size=(10**3))
@@ -101,7 +107,8 @@ def md(sample_results, start=0, thin=1, percs=True, sfhtest=False, masstest=Fals
     return ret
 
 
-def printer(out_file, percs=True, sfhtest=False, masstest=False, fast=False, five=False, quiet=False, draw1=False):
+def printer(out_file, percs=True, sfhtest=False, masstest=False, fast=False, five=False, quiet=False, draw1=False,
+            fixmet=False):
     if not quiet:
         print(out_file)
         print(masstest)
@@ -110,7 +117,7 @@ def printer(out_file, percs=True, sfhtest=False, masstest=False, fast=False, fiv
 
     # PRINT CORNERFIG CONTOURS/HISTOGRAMS FOR EACH PARAMETER
     return md(res, start=-1000, thin=5, percs=percs, sfhtest=sfhtest, masstest=masstest, fast=fast, five=five,
-              quiet=quiet, draw1=draw1)  # -650
+              quiet=quiet, draw1=draw1, fixmet=fixmet)  # -650
     # set start by when kl converges!  # returns mass, dust, stellar Z, gas Z
 
 
@@ -124,7 +131,8 @@ if __name__ == "__main__":
     masstest = 0
     fivemet = 0
     tt = 0
-    sfhtest = 1
+    sfhtest = 0
+    tenmet = 1
 
     massmatch = 0
 
@@ -136,6 +144,10 @@ if __name__ == "__main__":
         folders = ['out_efico/', 'out_nfico/']
         pars = ['eelg_fifty_params.py', 'eelg_fifty_params.py']
         base = ['fico', 'fico']
+    elif tenmet:
+        folders = ['out_etenmet/', 'out_nfico/']
+        pars = ['eelg_tenmet_params.py', 'eelg_fifty_params.py']
+        base = ['tenmet', 'fico']
     elif fivemet:
         folders = ['out_efivemet/', 'out_efico/']
         pars = ['eelg_fivemet_params.py', 'eelg_fifty_params.py']
@@ -356,6 +368,19 @@ RUNNING WITH:
 python get_mass_dust.py
 
 For dust2 values: convert to A_V by multiplying by 1.86
+
+# TENMET
+('masse', array([ 8.88606308,  9.2459774 ,  9.6234944 ]))
+('duste', array([ 0.11443192,  0.28719273,  0.39732726]))
+('mete', array([-0.96755197, -0.90360114, -0.80587448]))
+('gasmete', array([-0.39200348, -0.33855876, -0.30372495]))
+('mass', array([  9.90069426,  10.14381647,  10.44132971]))
+('dust', array([ 0.33243034,  0.55183363,  0.76055876]))
+('met', array([-1.86135451, -1.71223199, -1.26867414]))
+('gasmet', array([-1.2800012 , -0.62593657, -0.00709531]))
+
+
+
 
 # MASSTEST
 # 12105 --> less mass?!
