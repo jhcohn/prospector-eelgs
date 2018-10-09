@@ -269,6 +269,20 @@ print(np.mean(chisq_per_nphot))
 print(np.percentile(lchisq_per_nphot, [16., 50., 84.]), 'tenmet')
 print(np.mean(lchisq_per_nphot))
 
+delt = np.asarray(lchisq_per_nphot) - np.asarray(chisq_per_nphot)
+delt_percs = np.percentile(delt, [16., 50., 84.])
+siz = 10**3  # 10**4
+delt_ran = np.zeros(shape=(siz, siz))
+delt_means = []
+for j in range(siz):
+    for k in range(siz):
+        delt_ran[j, k] = np.random.choice(delt)
+    delt_means.append(np.mean(delt_ran[j]))
+print(delt)
+print(delt_percs[1], "-", delt_percs[1] - delt_percs[0], "+", delt_percs[2] - delt_percs[1])
+delt_emeans = np.percentile(delt_means, [16., 50., 84.])
+print('errors on mean', delt_emeans[1], '-', delt_emeans[1] - delt_emeans[0], '+', delt_emeans[2] - delt_emeans[1])
+
 for i in range(len(lall_chis_cdf)):
     lall_chis_cdf[i] /= lnum_cdf[i]
 for i in range(len(lall_chis_cos)):
